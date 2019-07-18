@@ -12,9 +12,8 @@ app.config.from_pyfile("../config.py")
 
 db = SQLAlchemy(app)
 
-
-from .bprints import *
-init_bps()
+# Import all the blueprints
+from .blueprints import *
 
 migrate = Migrate(app, db)
 
