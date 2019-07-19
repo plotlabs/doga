@@ -55,7 +55,35 @@ class ContentType(Resource):
         create_model(dir_path, data)
         create_resources(data["content_name"], dir_path)
         append_blueprint(data["content_name"])
+        migrate()
         return jsonify({"message": "Successfully created module"})
+
+    def put(self):
+        """Edit a content type"""
+        data = request.get_json()
+        # sample data
+        # data = {
+        #     "content_name": "user",
+        #     "table_name": "user",
+        #     "columns": [
+        #         {
+        #             "name": "name",
+        #             "type": "String(32, 'utf8mb4_unicode_ci')",
+        #             "nullable": "False",
+        #             "unique": "True"
+        #         },
+        #         {
+        #             "name": "desc",
+        #             "type": "String(1024, 'utf8mb4_unicode_ci')",
+        #             "nullable": "False",
+        #             "unique": "False"
+        #         }
+        #     ]
+        # }
+        dir_path = 'app/' + data["content_name"]
+        create_model(dir_path, data)
+        migrate()
+        return jsonify({"message": "Successfully edited model"})
 
     def delete(self, content_type):
         """Delete a content type"""
@@ -69,6 +97,7 @@ class ContentType(Resource):
                         != "app.register_blueprint(mod_model, url_prefix='/" + \
                         content_type + "')":
                     f.write(line)
+        migrate()
         return jsonify({"message": "Successfully deleted module"})
 
 

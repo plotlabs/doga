@@ -1,5 +1,6 @@
 import os
 import shutil
+import subprocess
 
 
 def create_dir(model_name):
@@ -20,6 +21,8 @@ def create_model(dir_path, data):
     o.write("    __tablename__ = '" + data["table_name"].lower() + "'\n\n")
     o.write("    id = Column(BigInteger, primary_key=True)\n")
     for column in data["columns"]:
+        if column["name"] == "id":
+            pass
         line = "    " + column["name"] + " = Column(" + column["type"] \
                + ", nullable=" + column["nullable"] \
                + ", unique=" + column["unique"] + ")\n"
@@ -48,3 +51,21 @@ def append_blueprint(model_name):
         "app.register_blueprint(mod_model, url_prefix='/" + model_name +
         "')\n\n")
     o.close()
+
+
+def migrate():
+    """Function to stop the app to migrate and then restart it."""
+
+    migrate_folder = os.path.exists('migrations')
+    if not migrate_folder:
+        subprocess.check_output('flask db init', shell=True)
+
+    command = "ps -eaf | grep 'python runserver.py' | grep -v grep | awk '{" \
+              "print $2}'"
+    process = subprocess.check_output(command, shell=True)
+    pid = process.decode("utf-8").split('\n')[0]
+
+    if pid != '':
+        subprocess.Popen('kill -9 ' + str(pid), shell=True)
+        subprocess.check_output('flask db migrate; flask db upgrade; python '
+                                'runserver.py', shell=True)
