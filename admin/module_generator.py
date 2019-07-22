@@ -119,6 +119,11 @@ def add_new_db(conn_name):
     add_alembic_model(conn_name)
     dir_migration_versions = "migrations/versions/"
     version_files = os.listdir(dir_migration_versions)
+
+    # check if old_migration folder exists, if not, create one
+    if not os.path.exists("old_migrations"):
+        os.makedirs("old_migrations", mode=0o777)
+
     for file_name in version_files:
         full_file_name = os.path.join(dir_migration_versions, file_name)
         if os.path.isfile(full_file_name):
