@@ -1,5 +1,3 @@
-import shutil
-
 from flask import Blueprint, jsonify, request
 from flask_restful import Api, Resource
 
@@ -41,13 +39,15 @@ class ContentType(Resource):
         #             "name": "name",
         #             "type": "String(32, 'utf8mb4_unicode_ci')",
         #             "nullable": "False",
-        #             "unique": "True"
+        #             "unique": "True",
+        #             "foreign_key": "",
         #         },
         #         {
         #             "name": "desc",
         #             "type": "String(1024, 'utf8mb4_unicode_ci')",
         #             "nullable": "False",
-        #             "unique": "False"
+        #             "unique": "False",
+        #             "foreign_key": "",
         #         }
         #     ]
         # }
@@ -101,5 +101,49 @@ class ContentType(Resource):
         return jsonify({"message": "Successfully deleted module"})
 
 
+class DatabaseInit(Resource):
+
+    def post(self):
+        """Create a database connection string"""
+        data = request.get_json()
+        # sample data
+        # data = {
+        #     "type": "mysql/mongo/postgres",
+        #     "connection_name": "db1",
+        #     "username": "user",
+        #     "password": "pass",
+        #     "host": "localhost",
+        #     "database_name": "database_name",
+        # }
+
+        string = ''
+        if data['type'] == 'mysql':
+            string = '"mysql://{}:{}@{}:3306/{}?charset=utf8mb4"'.format(
+                data['username'], data['password'], data['host'],
+                data['database_name'])
+
+        if data['type'] == 'postgres':
+            string = '"postgresql+psycopg2://{}:{}@{}/{}"'.format(
+                data['username'], data['password'], data['host'],
+                data['database_name'])
+
+        with open('dbs.py', 'r') as f:
+            lines = f.readlines()
+
+        with open('dbs.py', 'w') as f:
+            for i, line in enumerate(lines):
+                if line.startswith('}'):
+                    line = '    "' + data['connection_name'] + '": ' + string\
+                           + ',\n' + line
+                f.write(line)
+
+        migrate()
+
+        return jsonify(
+            {"message": "Successfully created database connection string"})
+
+
 api_admin.add_resource(ContentType, '/content/types',
                        '/content/types/<string:content_type>')
+api_admin.add_resource(DatabaseInit, '/dbinit/',
+                       '/dbinit/types/<string:content_type>')

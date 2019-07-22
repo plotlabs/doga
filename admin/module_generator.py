@@ -67,5 +67,5 @@ def migrate():
 
     if pid != '':
         subprocess.Popen('kill -9 ' + str(pid), shell=True)
-        subprocess.check_output('flask db migrate; flask db upgrade; python '
-                                'runserver.py', shell=True)
+        os.system('flask db migrate && flask db upgrade && python '
+                  'runserver.py')
