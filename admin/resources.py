@@ -32,7 +32,6 @@ class ContentType(Resource):
         data = request.get_json()
         # sample data
         # data = {
-        #     "content_name": "user",
         #     "table_name": "user",
         #     "columns": [
         #         {
@@ -58,10 +57,13 @@ class ContentType(Resource):
         #         },
         #     ]
         # }
-        dir_path = create_dir(data["content_name"])
+        if os.path.isdir("app/" + data["table_name"]):
+            return jsonify({"message": "Module with this name is already "
+                                       "present."})
+        dir_path = create_dir(data["table_name"])
         create_model(dir_path, data)
-        create_resources(data["content_name"], dir_path)
-        append_blueprint(data["content_name"])
+        create_resources(data["table_name"], dir_path)
+        append_blueprint(data["table_name"])
         migrate()
         return jsonify({"message": "Successfully created module"})
 
@@ -70,7 +72,6 @@ class ContentType(Resource):
         data = request.get_json()
         # sample data
         # data = {
-        #     "content_name": "user",
         #     "table_name": "user",
         #     "columns": [
         #         {
@@ -89,7 +90,7 @@ class ContentType(Resource):
         #         }
         #     ]
         # }
-        dir_path = 'app/' + data["content_name"]
+        dir_path = 'app/' + data["table_name"]
         create_model(dir_path, data)
         migrate()
         return jsonify({"message": "Successfully edited model"})

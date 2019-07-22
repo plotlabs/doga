@@ -17,7 +17,7 @@ def create_model(dir_path, data):
     shutil.copy2('templates/models.py', dir_path)
 
     o = open(dir_path + "/models.py", "a")
-    o.write("class " + data["content_name"].title() + "(Base):\n")
+    o.write("class " + data["table_name"].title() + "(Base):\n")
     o.write("    __tablename__ = '" + data["table_name"].lower() + "'\n\n")
     o.write("    id = Column(BigInteger, primary_key=True)\n")
     for column in data["columns"]:
