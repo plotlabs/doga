@@ -33,6 +33,7 @@ class ContentType(Resource):
         # sample data
         # data = {
         #     "table_name": "user",
+        #     "connection_name": "default",
         #     "columns": [
         #         {
         #             "name": "name",
@@ -73,6 +74,7 @@ class ContentType(Resource):
         # sample data
         # data = {
         #     "table_name": "user",
+        #     "connection_name": "default",
         #     "columns": [
         #         {
         #             "name": "name",
@@ -165,7 +167,7 @@ class DatabaseInit(Resource):
                            + ',\n' + line
                 f.write(line)
 
-        migrate()
+        add_new_db(data['connection_name'])
 
         return jsonify(
             {"message": "Successfully created database connection string"})

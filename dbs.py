@@ -3,3 +3,6 @@ DB_DICT = {
 }
 
 
+ALEMBIC_LIST = [
+    "AlembicVersionDefault",
+]
