@@ -40,15 +40,22 @@ class ContentType(Resource):
         #             "type": "String(32, 'utf8mb4_unicode_ci')",
         #             "nullable": "False",
         #             "unique": "True",
-        #             "foreign_key": "",
+        #             "foreign_key": ""
         #         },
         #         {
         #             "name": "desc",
         #             "type": "String(1024, 'utf8mb4_unicode_ci')",
         #             "nullable": "False",
         #             "unique": "False",
-        #             "foreign_key": "",
-        #         }
+        #             "foreign_key": ""
+        #         },
+        #         {
+        #             "name": "teacher_id",
+        #             "type": "ForeignKey('teacher.id)",
+        #             "nullable": "False",
+        #             "unique": "False",
+        #             "foreign_key": "Teacher"
+        #         },
         #     ]
         # }
         dir_path = create_dir(data["content_name"])
@@ -70,13 +77,15 @@ class ContentType(Resource):
         #             "name": "name",
         #             "type": "String(32, 'utf8mb4_unicode_ci')",
         #             "nullable": "False",
-        #             "unique": "True"
+        #             "unique": "True",
+        #             "foreign_key": ""
         #         },
         #         {
         #             "name": "desc",
         #             "type": "String(1024, 'utf8mb4_unicode_ci')",
         #             "nullable": "False",
-        #             "unique": "False"
+        #             "unique": "False",
+        #             "foreign_key": ""
         #         }
         #     ]
         # }
@@ -87,7 +96,25 @@ class ContentType(Resource):
 
     def delete(self, content_type):
         """Delete a content type"""
-        shutil.rmtree('app/' + content_type)
+        tables_list = []
+        for table in metadata.sorted_tables:
+            f = (table.__dict__['foreign_keys'])
+            for s in f:
+                table_name = s.column.table
+                if str(table_name) == content_type:
+                    tables_list.append(table.name)
+
+        if len(tables_list) > 0:
+            return jsonify({"message": "The table {} is linked to "
+                                       "another table(s). Delete table(s) "
+                                       "{} first.".format(
+                content_type, ', '.join(tables_list))})
+
+        try:
+            shutil.rmtree('app/' + content_type)
+        except FileNotFoundError:
+            return jsonify({"message": "Module does not exist."})
+
         with open("app/blueprints.py", "r") as f:
             lines = f.readlines()
         with open("app/blueprints.py", "w") as f:

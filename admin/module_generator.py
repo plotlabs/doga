@@ -26,6 +26,9 @@ def create_model(dir_path, data):
         line = "    " + column["name"] + " = Column(" + column["type"] \
                + ", nullable=" + column["nullable"] \
                + ", unique=" + column["unique"] + ")\n"
+        if column["foreign_key"] != "":
+            line = line + "\n    " + column["foreign_key"].lower() + \
+                   " = relationship('" + column["foreign_key"] + "')\n"
         o.write(line)
     o.close()
 
