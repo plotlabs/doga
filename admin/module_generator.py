@@ -2,6 +2,8 @@ import os
 import shutil
 import subprocess
 
+from sqlalchemy.exc import OperationalError
+
 from admin.version_models import *
 from dbs import ALEMBIC_LIST
 
@@ -97,7 +99,10 @@ def remove_alembic_versions():
     """Remove all alembic versions from existing databases"""
 
     for version in ALEMBIC_LIST:
-        eval(version).query.delete()
+        try:
+            eval(version).query.delete()
+        except OperationalError:
+            pass
     db.session.commit()
 
 
@@ -127,17 +132,19 @@ def add_new_db(conn_name):
     and initialize migrations again"""
     remove_alembic_versions()
     add_alembic_model(conn_name)
-    dir_migration_versions = "migrations/versions/"
-    version_files = os.listdir(dir_migration_versions)
 
-    # check if old_migration folder exists, if not, create one
-    if not os.path.exists("old_migrations"):
-        os.makedirs("old_migrations", mode=0o777)
+    if os.path.exists("migrations"):
+        dir_migration_versions = "migrations/versions/"
+        version_files = os.listdir(dir_migration_versions)
 
-    for file_name in version_files:
-        full_file_name = os.path.join(dir_migration_versions, file_name)
-        if os.path.isfile(full_file_name):
-            shutil.copy(full_file_name, 'old_migrations/')
-    shutil.rmtree('migrations')
+        # check if old_migration folder exists, if not, create one
+        if not os.path.exists("old_migrations"):
+            os.makedirs("old_migrations", mode=0o777)
+
+        for file_name in version_files:
+            full_file_name = os.path.join(dir_migration_versions, file_name)
+            if os.path.isfile(full_file_name):
+                shutil.copy(full_file_name, 'old_migrations/')
+        shutil.rmtree('migrations')
     migrate()
 
