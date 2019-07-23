@@ -70,10 +70,10 @@ class ContentType(Resource):
                 if not check_table(column["foreign_key"]):
                     return jsonify({"message": "The Foreign Key module does "
                                                "not exist."})
-
-        if data['connection_name'] not in get_bind_keys():
-            return jsonify({"message": "The database connection given does "
-                                       "not exist."})
+        if "connection_name" in data:
+            if data['connection_name'] not in get_bind_keys():
+                return jsonify({"message": "The database connection given "
+                                           "does not exist."})
 
         dir_path = create_dir(data["table_name"])
         create_model(dir_path, data)
@@ -116,9 +116,10 @@ class ContentType(Resource):
                     return jsonify({"message": "The Foreign Key module does "
                                                "not exist."})
 
-        if data['connection_name'] not in get_bind_keys():
-            return jsonify({"message": "The database connection given does "
-                                       "not exist."})
+        if "connection_name" in data:
+            if data['connection_name'] not in get_bind_keys():
+                return jsonify({"message": "The database connection given "
+                                           "does not exist."})
 
         dir_path = 'app/' + data["table_name"]
         create_model(dir_path, data)
