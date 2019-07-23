@@ -5,7 +5,7 @@ import subprocess
 from sqlalchemy.exc import OperationalError
 
 from admin.version_models import *
-from dbs import ALEMBIC_LIST
+from dbs import ALEMBIC_LIST, DB_DICT
 
 
 def create_dir(model_name):
@@ -30,16 +30,19 @@ def create_model(dir_path, data):
     o.write("class " + data["table_name"].title() + "(Base):\n")
     o.write("    __tablename__ = '" + data["table_name"].lower() + "'\n")
     o.write("    __bind_key__ = '" + conn_name + "'\n\n")
-    o.write("    id = Column(BigInteger, primary_key=True)\n")
-    for column in data["columns"]:
-        if column["name"] == "id":
+    if DB_DICT[conn_name].startswith("sqlite"):
+        o.write("    id = Column(Integer, primary_key=True)\n")
+    else:
+        o.write("    id = Column(BigInteger, primary_key=True)\n")
+    for col in data["columns"]:
+        if col["name"] == "id":
             pass
-        line = "    " + column["name"] + " = Column(" + column["type"] \
-               + ", nullable=" + column["nullable"] \
-               + ", unique=" + column["unique"] + ")\n"
-        if column["foreign_key"] != "":
-            line = line + "\n    " + column["foreign_key"].lower() + \
-                   " = relationship('" + column["foreign_key"] + "')\n"
+        line = "    " + col["name"] + " = Column(" + col["type"] \
+               + ", nullable=" + col["nullable"] \
+               + ", unique=" + col["unique"] + ")\n"
+        if col["foreign_key"] != "":
+            line = line + "\n    " + col["foreign_key"].lower() + \
+                   " = relationship('" + col["foreign_key"] + "')\n"
         o.write(line)
     o.close()
 
@@ -121,7 +124,7 @@ def add_alembic_model(conn_name):
     o.write("    __tablename__ = 'alembic_version'\n")
     o.write("    __bind_key__ = '" + str(conn_name) + "'\n")
     o.write("    __table_args__ = {'extend_existing': True}\n")
-    o.write("    version_num = Column(String(32), primary_key=True)\n\n")
+    o.write("    version_num = Column(String(32), primary_key=True)\n\n\n")
     o.close()
 
     with open('dbs.py', 'r') as f:
