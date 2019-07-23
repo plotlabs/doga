@@ -65,6 +65,16 @@ def append_blueprint(model_name):
     o.close()
 
 
+def check_table(table_name):
+    """Checks if the table exists or not"""
+    exists = False
+    for table in metadata.sorted_tables:
+        if table.name == table_name:
+            exists = True
+
+    return exists
+
+
 def migrate():
     """Function to stop the app to migrate and then restart it."""
 

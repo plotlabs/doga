@@ -58,9 +58,16 @@ class ContentType(Resource):
         #         },
         #     ]
         # }
-        if os.path.isdir("app/" + data["table_name"]):
+        if check_table(data["table_name"]):
             return jsonify({"message": "Module with this name is already "
                                        "present."})
+
+        for column in data["columns"]:
+            if column["foreign_key"] != "":
+                if not check_table(column["foreign_key"]):
+                    return jsonify({"message": "The Foreign Key module does "
+                                               "not exist."})
+
         dir_path = create_dir(data["table_name"])
         create_model(dir_path, data)
         create_resources(data["table_name"], dir_path)
@@ -92,6 +99,16 @@ class ContentType(Resource):
         #         }
         #     ]
         # }
+        if not check_table(data["table_name"]):
+            return jsonify({"message": "Module with this name does not "
+                                       "exist."})
+
+        for column in data["columns"]:
+            if column["foreign_key"] != "":
+                if not check_table(column["foreign_key"]):
+                    return jsonify({"message": "The Foreign Key module does "
+                                               "not exist."})
+
         dir_path = 'app/' + data["table_name"]
         create_model(dir_path, data)
         migrate()
