@@ -1,6 +1,7 @@
 import os
 import shutil
 import subprocess
+import datetime
 
 from sqlalchemy.exc import OperationalError
 
@@ -100,10 +101,14 @@ def migrate():
     process = subprocess.check_output(command, shell=True)
     pid = process.decode("utf-8").split('\n')[0]
 
+    revision_id = datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
+    migrate_command = "flask db migrate --rev-id " + revision_id
+    upgrade_command = "flask db upgrade"
+    run_command = "python runserver.py"
     if pid != '':
         subprocess.Popen('kill -9 ' + str(pid), shell=True)
-        os.system('flask db migrate && flask db upgrade && python '
-                  'runserver.py')
+        os.system(migrate_command + " && " + upgrade_command + " && "
+                  + run_command)
 
 
 def remove_alembic_versions():
@@ -112,9 +117,9 @@ def remove_alembic_versions():
     for version in ALEMBIC_LIST:
         try:
             eval(version).query.delete()
+            db.session.commit()
         except OperationalError:
             pass
-    db.session.commit()
 
 
 def add_alembic_model(conn_name):
@@ -124,7 +129,9 @@ def add_alembic_model(conn_name):
     o.write("    __tablename__ = 'alembic_version'\n")
     o.write("    __bind_key__ = '" + str(conn_name) + "'\n")
     o.write("    __table_args__ = {'extend_existing': True}\n")
-    o.write("    version_num = Column(String(32), primary_key=True)\n\n\n")
+    o.write("    version_num_" + str(conn_name) + " = Column('version_num', "
+                                                  "String(32), "
+                                                  "primary_key=True)\n\n\n")
     o.close()
 
     with open('dbs.py', 'r') as f:
@@ -138,12 +145,8 @@ def add_alembic_model(conn_name):
             f.write(line)
 
 
-def add_new_db(conn_name):
-    """Save old migrations in another folder, delete current migration folder
-    and initialize migrations again"""
-    remove_alembic_versions()
-    add_alembic_model(conn_name)
-
+def move_migration_files():
+    """Move migration files to the old migrations folder"""
     if os.path.exists("migrations"):
         dir_migration_versions = "migrations/versions/"
         version_files = os.listdir(dir_migration_versions)
@@ -155,7 +158,16 @@ def add_new_db(conn_name):
         for file_name in version_files:
             full_file_name = os.path.join(dir_migration_versions, file_name)
             if os.path.isfile(full_file_name):
-                shutil.copy(full_file_name, 'old_migrations/')
+                shutil.move(full_file_name, 'old_migrations/')
+
+
+def add_new_db(conn_name):
+    """Save old migrations in another folder, delete current migration folder
+    and initialize migrations again"""
+    remove_alembic_versions()
+    add_alembic_model(conn_name)
+    move_migration_files()
+    if os.path.exists("migrations"):
         shutil.rmtree('migrations')
     migrate()
 

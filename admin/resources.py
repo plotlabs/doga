@@ -79,6 +79,8 @@ class ContentType(Resource):
         create_model(dir_path, data)
         create_resources(data["table_name"], dir_path)
         append_blueprint(data["table_name"])
+        remove_alembic_versions()
+        move_migration_files()
         migrate()
         return jsonify({"message": "Successfully created module"})
 
@@ -123,6 +125,8 @@ class ContentType(Resource):
 
         dir_path = 'app/' + data["table_name"]
         create_model(dir_path, data)
+        remove_alembic_versions()
+        move_migration_files()
         migrate()
         return jsonify({"message": "Successfully edited model"})
 
@@ -156,6 +160,8 @@ class ContentType(Resource):
                         != "app.register_blueprint(mod_model, url_prefix='/" + \
                         content_type + "')":
                     f.write(line)
+        remove_alembic_versions()
+        move_migration_files()
         migrate()
         return jsonify({"message": "Successfully deleted module"})
 
