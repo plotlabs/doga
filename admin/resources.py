@@ -15,6 +15,9 @@ class ContentType(Resource):
         """Get a list of all the content types"""
         table_list = {}
         for table in metadata.sorted_tables:
+            if table.name == "alembic_version":
+                continue
+
             objs = []
             for c in table.columns:
                 obj = {
@@ -68,6 +71,10 @@ class ContentType(Resource):
                     return jsonify({"message": "The Foreign Key module does "
                                                "not exist."})
 
+        if data['connection_name'] not in get_bind_keys():
+            return jsonify({"message": "The database connection given does "
+                                       "not exist."})
+
         dir_path = create_dir(data["table_name"])
         create_model(dir_path, data)
         create_resources(data["table_name"], dir_path)
@@ -108,6 +115,10 @@ class ContentType(Resource):
                 if not check_table(column["foreign_key"]):
                     return jsonify({"message": "The Foreign Key module does "
                                                "not exist."})
+
+        if data['connection_name'] not in get_bind_keys():
+            return jsonify({"message": "The database connection given does "
+                                       "not exist."})
 
         dir_path = 'app/' + data["table_name"]
         create_model(dir_path, data)
@@ -162,6 +173,11 @@ class DatabaseInit(Resource):
         #     "host": "localhost",
         #     "database_name": "database_name",
         # }
+        if data['connection_name'] in get_bind_keys():
+            return jsonify(
+                {"message": "Connection with name: {} is already present. "
+                            "Use a different name.".format(
+                    data['connection_name'])})
 
         string = ''
         if data['type'] == 'mysql':

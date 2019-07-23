@@ -77,6 +77,14 @@ def check_table(table_name):
     return exists
 
 
+def get_bind_keys():
+    bind_keys = []
+    for table in metadata.sorted_tables:
+        bind_keys.append(table.info['bind_key'])
+
+    return list(set(bind_keys))
+
+
 def migrate():
     """Function to stop the app to migrate and then restart it."""
 
@@ -113,7 +121,7 @@ def add_alembic_model(conn_name):
     o.write("    __tablename__ = 'alembic_version'\n")
     o.write("    __bind_key__ = '" + str(conn_name) + "'\n")
     o.write("    __table_args__ = {'extend_existing': True}\n")
-    o.write("    version_num = Column(String(32), primary_key=True)\n\n\n")
+    o.write("    version_num = Column(String(32), primary_key=True)\n\n")
     o.close()
 
     with open('dbs.py', 'r') as f:
