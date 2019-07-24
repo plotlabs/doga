@@ -181,7 +181,7 @@ class DatabaseInit(Resource):
         #     "host": "localhost",
         #     "database_name": "database_name",
         # }
-        if data['connection_name'] in get_bind_keys():
+        if data['connection_name'] in DB_DICT:
             return jsonify(
                 {"message": "Connection with name: {} is already present. "
                             "Use a different name.".format(

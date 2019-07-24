@@ -35,6 +35,8 @@ def create_model(dir_path, data):
         o.write("    id = Column(Integer, primary_key=True)\n")
     else:
         o.write("    id = Column(BigInteger, primary_key=True)\n")
+    o.write("    create_dt = Column(DateTime(), server_default=text("
+            "'CURRENT_TIMESTAMP'))\n")
     for col in data["columns"]:
         if col["name"] == "id":
             pass
@@ -96,7 +98,7 @@ def migrate():
     revision_id = datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
     migrate_command = "flask db migrate --rev-id " + revision_id
     upgrade_command = "flask db upgrade"
-    run_command = "python runserver.py"
+    run_command = "sh restart.sh"
     if pid != '':
         subprocess.Popen('kill -9 ' + str(pid), shell=True)
         os.system(migrate_command + " && " + upgrade_command + " && "
