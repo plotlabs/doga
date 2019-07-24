@@ -81,14 +81,6 @@ def check_table(table_name):
     return exists
 
 
-def get_bind_keys():
-    bind_keys = []
-    for table in metadata.sorted_tables:
-        bind_keys.append(table.info['bind_key'])
-
-    return list(set(bind_keys))
-
-
 def migrate():
     """Function to stop the app to migrate and then restart it."""
 
@@ -116,8 +108,13 @@ def remove_alembic_versions():
 
     for version in ALEMBIC_LIST:
         try:
+            conn_name = version.split("AlembicVersion")[1].lower()
+            if conn_name == "default":
+                session_stm = "db.session.commit()"
+            else:
+                session_stm = conn_name + ".session.commit()"
             eval(version).query.delete()
-            db.session.commit()
+            eval(session_stm)
         except OperationalError:
             pass
 
@@ -125,13 +122,17 @@ def remove_alembic_versions():
 def add_alembic_model(conn_name):
     """Add alembic version table model for new database connection"""
     o = open("admin/version_models.py", "a")
-    o.write("class AlembicVersion" + conn_name.title() + "(Base):\n")
+    conn_name = str(conn_name).lower()
+    base = "Base_" + conn_name
+    column_name = "Column" + conn_name
+    o.write(conn_name + " = SQLAlchemy(app)\n")
+    o.write(base + " = " + conn_name + ".Model\n")
+    o.write(column_name + " = " + conn_name + ".Column\n\n\n")
+    o.write("class AlembicVersion" + conn_name.title() + "(" + base + "):\n")
     o.write("    __tablename__ = 'alembic_version'\n")
-    o.write("    __bind_key__ = '" + str(conn_name) + "'\n")
-    o.write("    __table_args__ = {'extend_existing': True}\n")
-    o.write("    version_num_" + str(conn_name) + " = Column('version_num', "
-                                                  "String(32), "
-                                                  "primary_key=True)\n\n\n")
+    o.write("    __bind_key__ = '" + conn_name + "'\n")
+    o.write("    version_num = " + column_name + "(String(32), "
+                                                 "primary_key=True)\n\n\n")
     o.close()
 
     with open('dbs.py', 'r') as f:

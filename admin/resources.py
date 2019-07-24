@@ -3,6 +3,7 @@ from flask_restful import Api, Resource
 
 from templates.models import metadata
 from admin.module_generator import *
+from dbs import DB_DICT
 
 mod_admin = Blueprint("admin", __name__)
 api_admin = Api()
@@ -71,7 +72,7 @@ class ContentType(Resource):
                     return jsonify({"message": "The Foreign Key module does "
                                                "not exist."})
         if "connection_name" in data:
-            if data['connection_name'] not in get_bind_keys():
+            if data['connection_name'] not in DB_DICT:
                 return jsonify({"message": "The database connection given "
                                            "does not exist."})
 
@@ -119,7 +120,7 @@ class ContentType(Resource):
                                                "not exist."})
 
         if "connection_name" in data:
-            if data['connection_name'] not in get_bind_keys():
+            if data['connection_name'] not in DB_DICT:
                 return jsonify({"message": "The database connection given "
                                            "does not exist."})
 
