@@ -88,7 +88,12 @@ class Apis(Resource):
         except OperationalError as e:
             return {"result": e.orig.args[1].split(' at ')[0]}
         except IntegrityError as e:
-            return {"result": str(e.orig).split('\n')[0]}
+            try:
+                return {"result": str(e.orig).split('\n')[0].replace(
+                    '"', '').split(',')[1].replace(")", '').title()}
+            except IndexError:
+                return {"result": str(e.orig).split('\n')[0].replace(
+                    '"', '').title()}
         except StatementError as e:
             return {"result": str(e.orig)}
         return {"result": 'Created row.'}
@@ -152,7 +157,12 @@ class Apis(Resource):
             except OperationalError as e:
                 return {"result": e.orig.args[1].split(' at ')[0]}
             except IntegrityError as e:
-                return {"result": str(e.orig).split('\n')[0]}
+                try:
+                    return {"result": str(e.orig).split('\n')[0].replace(
+                        '"', '').split(',')[1].replace(")", '').title()}
+                except IndexError:
+                    return {"result": str(e.orig).split('\n')[0].replace(
+                        '"', '').title()}
             except StatementError as e:
                 return {"result": str(e.orig)}
             return {"result": 'Created row.'}
@@ -160,8 +170,16 @@ class Apis(Resource):
             return {"result": 'Does not exist'}
 
     def delete(self, id):
-        model_name.query.filter_by(id=id).delete()
-        db.session.commit()
+        try:
+            model_name.query.filter_by(id=id).delete()
+            db.session.commit()
+        except IntegrityError as e:
+            try:
+                return {"result": str(e.orig).split('\n')[0].replace(
+                    '"', '').split(',')[1].split(' (')[0].title()}
+            except IndexError:
+                return {"result": str(e.orig).split('\n')[0].replace(
+                    '"', '').title()}
         return {"result": "Successfully deleted."}
 
 
