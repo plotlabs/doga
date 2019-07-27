@@ -62,19 +62,21 @@ class ContentType(Resource):
         #         },
         #     ]
         # }
+        if "connection_name" in data:
+            if data['connection_name'] not in DB_DICT:
+                return jsonify({"message": "The database connection given "
+                                           "does not exist."})
+
         if check_table(data["table_name"]):
             return jsonify({"message": "Module with this name is already "
                                        "present."})
 
         for column in data["columns"]:
             if column["foreign_key"] != "":
-                if not check_table(column["foreign_key"]):
+                if not check_table(column["foreign_key"],
+                                   data['connection_name']):
                     return jsonify({"message": "The Foreign Key module does "
                                                "not exist."})
-        if "connection_name" in data:
-            if data['connection_name'] not in DB_DICT:
-                return jsonify({"message": "The database connection given "
-                                           "does not exist."})
 
         dir_path = create_dir(data["table_name"])
         create_model(dir_path, data)
@@ -109,20 +111,21 @@ class ContentType(Resource):
         #         }
         #     ]
         # }
-        if not check_table(data["table_name"]):
-            return jsonify({"message": "Module with this name does not "
-                                       "exist."})
-
-        for column in data["columns"]:
-            if column["foreign_key"] != "":
-                if not check_table(column["foreign_key"]):
-                    return jsonify({"message": "The Foreign Key module does "
-                                               "not exist."})
-
         if "connection_name" in data:
             if data['connection_name'] not in DB_DICT:
                 return jsonify({"message": "The database connection given "
                                            "does not exist."})
+
+        if not check_table(data["table_name"]):
+            return jsonify({"message": "Module with this name is already "
+                                       "present."})
+
+        for column in data["columns"]:
+            if column["foreign_key"] != "":
+                if not check_table(column["foreign_key"],
+                                   data['connection_name']):
+                    return jsonify({"message": "The Foreign Key module does "
+                                               "not exist."})
 
         dir_path = 'app/' + data["table_name"]
         create_model(dir_path, data)

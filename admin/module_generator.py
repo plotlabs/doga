@@ -31,12 +31,14 @@ def create_model(dir_path, data):
     o.write("class " + data["table_name"].title() + "(Base):\n")
     o.write("    __tablename__ = '" + data["table_name"].lower() + "'\n")
     o.write("    __bind_key__ = '" + conn_name + "'\n\n")
+
     if DB_DICT[conn_name].startswith("sqlite"):
         o.write("    id = Column(Integer, primary_key=True)\n")
     else:
         o.write("    id = Column(BigInteger, primary_key=True)\n")
     o.write("    create_dt = Column(DateTime(), server_default=text("
             "'CURRENT_TIMESTAMP'))\n")
+
     for col in data["columns"]:
         if col["name"] == "id":
             pass
@@ -73,14 +75,18 @@ def append_blueprint(model_name):
     o.close()
 
 
-def check_table(table_name):
+def check_table(table_name, connection_name=''):
     """Checks if the table exists or not"""
-    exists = False
+    exist = False
     for table in metadata.sorted_tables:
-        if table.name == table_name:
-            exists = True
+        if table.name == table_name.lower():
+            if connection_name != '':
+                if table.info['bind_key'] == connection_name:
+                    exist = True
+            else:
+                exist = True
 
-    return exists
+    return exist
 
 
 def migrate():
