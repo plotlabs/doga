@@ -41,7 +41,7 @@ class Apis(Resource):
         for col in model_name.__table__.columns:
             col_name = col.name
             if col_name not in ['id', 'create_dt']:
-                if str(col.type) == 'DATETIME':
+                if str(col.type).upper() in ['DATETIME', 'DATE']:
                     try:
                         data[col.name] = datetime.datetime.strptime(
                             data[col.name], "%Y/%m/%d")
@@ -68,9 +68,9 @@ class Apis(Resource):
 
                 if len(col.foreign_keys) > 0:
                     for f in col.foreign_keys:
-                        model_endpoint = str(f).split("'")[1].split('.')[0]
+                        model_endp = str(f).split("'")[1].split('.')[0]
                         foreign_obj = requests.get(
-                            'http://localhost:8080/' + model_endpoint +
+                            'http://localhost:8080/' + model_endp +
                             '/' + str(data[col.name]))
                         result = json.loads(foreign_obj.content)["result"]
 
@@ -131,9 +131,9 @@ class Apis(Resource):
 
                     if len(col.foreign_keys) > 0:
                         for f in col.foreign_keys:
-                            model_endpoint = str(f).split("'")[1].split('.')[0]
+                            model_endp = str(f).split("'")[1].split('.')[0]
                             foreign_obj = requests.get(
-                                'http://localhost:8080/' + model_endpoint +
+                                'http://localhost:8080/' + model_endp +
                                 '/' + str(data[col.name]))
                             result = json.loads(foreign_obj.content)[
                                 "result"]
