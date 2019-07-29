@@ -129,8 +129,18 @@ class ContentType(Resource):
         #         }
         #     ]
         # }
-        valid, msg = column_validation(data["columns"],
-                                       data['connection_name'])
+        if "connection_name" in data:
+            if data['connection_name'] not in DB_DICT:
+                return jsonify({
+                    "result": "The database connection given does not exist."
+                }, 400)
+
+        if not check_table(data["table_name"]):
+            return jsonify({
+                "result": "Module with this name is already present."
+            }, 400)
+
+        valid, msg = column_validation(data["columns"], data['connection_name'])
         if valid is False:
             return jsonify({"result": msg}, 400)
 
@@ -179,6 +189,40 @@ class ContentType(Resource):
 
 
 class DatabaseInit(Resource):
+
+    def get(self):
+        """Get properties of all connections"""
+        connection_list = []
+        for key, value in DB_DICT.items():
+            if value.startswith("sqlite"):
+                database_name = value.split("/")[-1]
+                database_type = "sqlite"
+                host = ""
+                username = ""
+                password = ""
+            elif value.startswith("mysql"):
+                database_name = value.split("/")[-1].split("?")[0]
+                database_type = "mysql"
+                host = value.split("@")[1].split(":")[0]
+                username = value.split("@")[0].split("/")[-1].split(":")[0]
+                password = value.split("@")[0].split("/")[-1].split(":")[1]
+            elif value.startswith("postgresql"):
+                database_name = value.split("/")[-1]
+                database_type = "postgresql"
+                host = value.split("@")[-1].split("/")[0]
+                username = value.split("@")[0].split("/")[-1].split(":")[0]
+                password = value.split("@")[0].split("/")[-1].split(":")[1]
+
+            connection_list.append({
+                "connection_name": key,
+                "database_type": database_type,
+                "database_name": database_name,
+                "host": host,
+                "username": username,
+                "password": password
+            })
+
+        return connection_list
 
     def post(self):
         """Create a database connection string"""
