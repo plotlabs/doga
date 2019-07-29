@@ -13,22 +13,41 @@ api_admin.init_app(mod_admin)
 
 class ContentType(Resource):
 
-    def get(self):
+    def get(self, content_type=None):
         """Get a list of all the content types"""
         table_list = {}
         for table in metadata.sorted_tables:
-            if table.name == "alembic_version":
-                continue
+            if content_type is None:
+                if table.name == "alembic_version":
+                    continue
 
-            objs = []
-            for c in table.columns:
-                obj = {
-                    "name": c.name,
-                    "type": str(c.type),
-                    "nullable": c.nullable
-                }
-                objs.append(obj)
-            table_list[table.name] = objs
+                objs = []
+                for c in table.columns:
+                    obj = {
+                        "name": c.name,
+                        "type": str(c.type),
+                        "nullable": c.nullable
+                    }
+                    objs.append(obj)
+                table_list[table.name] = {}
+                table_list[table.name]['connection_name'] = table.info[
+                    'bind_key']
+                table_list[table.name]['columns'] = objs
+
+            else:
+                if table.name == content_type:
+                    objs = []
+                    for c in table.columns:
+                        obj = {
+                            "name": c.name,
+                            "type": str(c.type),
+                            "nullable": c.nullable
+                        }
+                        objs.append(obj)
+                    table_list[table.name] = {}
+                    table_list[table.name]['connection_name'] = table.info[
+                        'bind_key']
+                    table_list[table.name]['columns'] = objs
 
         return jsonify(table_list)
 
