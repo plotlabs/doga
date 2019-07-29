@@ -26,8 +26,8 @@ class ContentType(Resource):
                     obj = {
                         "name": c.name,
                         "type": str(c.type),
-                        "nullable": c.nullable,
-                        "unique": c.unique
+                        "nullable": c.nullable.lower(),
+                        "unique": c.unique.lower()
                     }
                     objs.append(obj)
                 table_list.append({'table_name': table.name,
@@ -40,8 +40,8 @@ class ContentType(Resource):
                         obj = {
                             "name": c.name,
                             "type": str(c.type),
-                            "nullable": c.nullable,
-                            "unique": c.unique
+                            "nullable": c.nullable.lower(),
+                            "unique": c.unique.lower()
                         }
                         objs.append(obj)
                     table_list.append({'table_name': table.name,

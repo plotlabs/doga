@@ -3,7 +3,7 @@ import shutil
 import subprocess
 import datetime
 
-from sqlalchemy.exc import OperationalError
+from sqlalchemy.exc import OperationalError, ProgrammingError
 
 from admin.version_models import *
 from dbs import ALEMBIC_LIST, DB_DICT
@@ -43,8 +43,8 @@ def create_model(dir_path, data):
         if col["name"] == "id":
             pass
         line = "    " + col["name"] + " = Column(" + col["type"] \
-               + ", nullable=" + col["nullable"] \
-               + ", unique=" + col["unique"] + ")\n"
+               + ", nullable=" + str(col["nullable"]).title() \
+               + ", unique=" + str(col["unique"]).title() + ")\n"
         if col["foreign_key"] != "":
             line = line + "\n    " + col["foreign_key"].lower() + \
                    " = relationship('" + col["foreign_key"] + "')\n"
@@ -124,6 +124,8 @@ def remove_alembic_versions():
             eval(version).query.delete()
             eval(session_stm)
         except OperationalError:
+            pass
+        except ProgrammingError:
             pass
 
 
