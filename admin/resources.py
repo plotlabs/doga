@@ -15,7 +15,7 @@ class ContentType(Resource):
 
     def get(self, content_type=None):
         """Get a list of all the content types"""
-        table_list = {}
+        table_list = []
         for table in metadata.sorted_tables:
             if content_type is None:
                 if table.name == "alembic_version":
@@ -26,14 +26,13 @@ class ContentType(Resource):
                     obj = {
                         "name": c.name,
                         "type": str(c.type),
-                        "nullable": c.nullable
+                        "nullable": c.nullable,
+                        "unique": c.unique
                     }
                     objs.append(obj)
-                table_list[table.name] = {}
-                table_list[table.name]['connection_name'] = table.info[
-                    'bind_key']
-                table_list[table.name]['columns'] = objs
-
+                table_list.append({'table_name': table.name,
+                                   'connection_name': table.info[
+                                       'bind_key'], 'columns': objs})
             else:
                 if table.name == content_type:
                     objs = []
@@ -41,13 +40,13 @@ class ContentType(Resource):
                         obj = {
                             "name": c.name,
                             "type": str(c.type),
-                            "nullable": c.nullable
+                            "nullable": c.nullable,
+                            "unique": c.unique
                         }
                         objs.append(obj)
-                    table_list[table.name] = {}
-                    table_list[table.name]['connection_name'] = table.info[
-                        'bind_key']
-                    table_list[table.name]['columns'] = objs
+                    table_list.append({'table_name': table.name,
+                                       'connection_name': table.info[
+                                           'bind_key'], 'columns': objs})
 
         return jsonify(table_list)
 
@@ -130,18 +129,8 @@ class ContentType(Resource):
         #         }
         #     ]
         # }
-        if "connection_name" in data:
-            if data['connection_name'] not in DB_DICT:
-                return jsonify({
-                    "result": "The database connection given does not exist."
-                }, 400)
-
-        if not check_table(data["table_name"]):
-            return jsonify({
-                "result": "Module with this name is already present."
-            }, 400)
-
-        valid, msg = column_validation(data["columns"], data['connection_name'])
+        valid, msg = column_validation(data["columns"],
+                                       data['connection_name'])
         if valid is False:
             return jsonify({"result": msg}, 400)
 
@@ -196,7 +185,7 @@ class DatabaseInit(Resource):
         data = request.get_json()
         # sample data
         # data = {
-        #     "type": "mysql/mongo/postgres",
+        #     "type": "mysql/mongo/postgresql",
         #     "connection_name": "db1",
         #     "username": "user",
         #     "password": "pass",
@@ -215,7 +204,7 @@ class DatabaseInit(Resource):
                 data['username'], data['password'], data['host'],
                 data['database_name'])
 
-        if data['type'] == 'postgres':
+        if data['type'] == 'postgresql':
             string = '"postgresql+psycopg2://{}:{}@{}/{}"'.format(
                 data['username'], data['password'], data['host'],
                 data['database_name'])
@@ -234,6 +223,63 @@ class DatabaseInit(Resource):
 
         return jsonify({
             "result": "Successfully created database connection string"
+        })
+
+    def put(self):
+        """Edit a database connection string"""
+        data = request.get_json()
+        # sample data
+        # data = {
+        #     "type": "mysql/mongo/postgresql",
+        #     "connection_name": "db1",
+        #     "username": "user",
+        #     "password": "pass",
+        #     "host": "localhost",
+        #     "database_name": "database_name",
+        # }
+        if data['connection_name'] not in DB_DICT:
+            return jsonify({
+                "result": "No connection with name: {} is present.".format(
+                    data['connection_name'])}, 400)
+
+        db_type = DB_DICT[data['connection_name']].split(':')[0]
+        try:
+            db_type = db_type.split('+')[0]
+        except KeyError:
+            pass
+
+        if db_type != data['type']:
+            return jsonify({
+                "result": "The type of database string cannot be "
+                          "changed. Create a new connection or choose the "
+                          "correct type."}, 400)
+
+        string = ''
+        if data['type'] == 'mysql':
+            string = '"mysql://{}:{}@{}:3306/{}?charset=utf8mb4"'.format(
+                data['username'], data['password'], data['host'],
+                data['database_name'])
+
+        if data['type'] == 'postgresql':
+            string = '"postgresql+psycopg2://{}:{}@{}/{}"'.format(
+                data['username'], data['password'], data['host'],
+                data['database_name'])
+
+        with open('dbs.py', 'r') as f:
+            lines = f.readlines()
+
+        with open('dbs.py', 'w') as f:
+            for i, line in enumerate(lines):
+                if line.startswith('    "' + data['connection_name']):
+                    line = line.replace(line, '    "' + data[
+                        'connection_name'] + '": ' + string + ',\n')
+                f.write(line)
+
+        remove_alembic_versions()
+        move_migration_files()
+        migrate()
+        return jsonify({
+            "result": "Successfully edited database connection string."
         })
 
 

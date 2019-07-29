@@ -63,7 +63,7 @@ The following APIs are available for creating and managing content types and dat
  <br>**Request JSON**:
  ```
 	{
-			"type": "mysql/postgres",
+			"type": "mysql/postgresql",
 			"connection_name": "custom_connection_name",
 			"username": "",
 			"password": "",
