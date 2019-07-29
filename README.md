@@ -30,13 +30,13 @@ The default database is SQLite. A default sqlite file named **test.db** is creat
 The following APIs are available for creating and managing content types and databases:
 
  1. Get all content types
- Endpoint- /admin/content/types
- Method- GET
+ <br>**Endpoint-** /admin/content/types, /admin/content/types/content_type_name
+ <br>**Method-** GET
 	
  2. Create/Edit content type
-Endpoint- /admin/content/types
- Method- POST(Create), PUT(Edit)
- Request JSON:
+<br>**Endpoint-** /admin/content/types
+<br>**Method-** POST(Create), PUT(Edit)
+<br>**Request JSON**:
  ```
 	data = {
 		"table_name": "table_name",
@@ -54,13 +54,13 @@ Endpoint- /admin/content/types
 	}
 ```
  3. Delete content type
-Endpoint- /admin/content/types/content_type_name
- Method- DELETE
+<br>**Endpoint-** /admin/content/types/content_type_name
+ <br>**Method-** DELETE
  
  4. Add new DB connection
- Endpoint- /admin/dbinit/
- Method: POST
- Request JSON:
+ <br>**Endpoint-** /admin/dbinit/
+ <br>**Method-** POST
+ <br>**Request JSON**:
  ```
 	{
 			"type": "mysql/postgres",
