@@ -3,7 +3,7 @@ from flask_restful import Api, Resource
 
 from templates.models import metadata
 from admin.module_generator import *
-from admin.validators import column_types
+from admin.validators import column_types, column_validation
 from dbs import DB_DICT
 
 mod_admin = Blueprint("admin", __name__)
@@ -67,24 +67,16 @@ class ContentType(Resource):
             if data['connection_name'] not in DB_DICT:
                 return jsonify({
                     "result": "The database connection given does not exist."
-                }), 400
+                }, 400)
 
         if check_table(data["table_name"]):
             return jsonify({
                 "result": "Module with this name is already present."
-            }), 400
+            }, 400)
 
-        for column in data["columns"]:
-            if column["type"] not in dir(types):
-                return jsonify({
-                    "result": "Invalid column type for column " + column["name"]
-                }), 400
-            if column["foreign_key"] != "":
-                if not check_table(column["foreign_key"],
-                                   data['connection_name']):
-                    return jsonify({
-                        "result": "The Foreign Key module does not exist."
-                    }), 400
+        valid, msg = column_validation(data["columns"], data['connection_name'])
+        if valid is False:
+            return jsonify({"result": msg}, 400)
 
         dir_path = create_dir(data["table_name"])
         create_model(dir_path, data)
@@ -123,24 +115,16 @@ class ContentType(Resource):
             if data['connection_name'] not in DB_DICT:
                 return jsonify({
                     "result": "The database connection given does not exist."
-                }), 400
+                }, 400)
 
         if not check_table(data["table_name"]):
             return jsonify({
                 "result": "Module with this name is already present."
-            }), 400
+            }, 400)
 
-        for column in data["columns"]:
-            if column["type"] not in dir(types):
-                return jsonify({
-                    "result": "Invalid column type for column " + column["name"]
-                }), 400
-            if column["foreign_key"] != "":
-                if not check_table(column["foreign_key"],
-                                   data['connection_name']):
-                    return jsonify({
-                        "result": "The Foreign Key module does not exist."
-                    }), 400
+        valid, msg = column_validation(data["columns"], data['connection_name'])
+        if valid is False:
+            return jsonify({"result": msg}, 400)
 
         dir_path = 'app/' + data["table_name"]
         create_model(dir_path, data)
@@ -164,12 +148,12 @@ class ContentType(Resource):
                 "result": "The table {} is linked to another table(s). "
                           "Delete table(s) {} first.".format(
                     content_type, ', '.join(tables_list))
-            }), 400
+            }, 400)
 
         try:
             shutil.rmtree('app/' + content_type)
         except FileNotFoundError:
-            return jsonify({"result": "Module does not exist."}), 400
+            return jsonify({"result": "Module does not exist."}, 400)
 
         with open("app/blueprints.py", "r") as f:
             lines = f.readlines()
@@ -204,7 +188,7 @@ class DatabaseInit(Resource):
             return jsonify({
                 "result": "Connection with name: {} is already present. Use "
                           "a different name.".format(data['connection_name'])
-            }), 400
+            }, 400)
 
         string = ''
         if data['type'] == 'mysql':
