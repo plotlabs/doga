@@ -3,6 +3,7 @@ from flask_restful import Api, Resource
 
 from templates.models import metadata
 from admin.module_generator import *
+from admin.validators import column_types
 from dbs import DB_DICT
 
 mod_admin = Blueprint("admin", __name__)
@@ -64,19 +65,26 @@ class ContentType(Resource):
         # }
         if "connection_name" in data:
             if data['connection_name'] not in DB_DICT:
-                return jsonify({"message": "The database connection given "
-                                           "does not exist."})
+                return jsonify({
+                    "result": "The database connection given does not exist."
+                }), 400
 
         if check_table(data["table_name"]):
-            return jsonify({"message": "Module with this name is already "
-                                       "present."})
+            return jsonify({
+                "result": "Module with this name is already present."
+            }), 400
 
         for column in data["columns"]:
+            if column["type"] not in dir(types):
+                return jsonify({
+                    "result": "Invalid column type for column " + column["name"]
+                }), 400
             if column["foreign_key"] != "":
                 if not check_table(column["foreign_key"],
                                    data['connection_name']):
-                    return jsonify({"message": "The Foreign Key module does "
-                                               "not exist."})
+                    return jsonify({
+                        "result": "The Foreign Key module does not exist."
+                    }), 400
 
         dir_path = create_dir(data["table_name"])
         create_model(dir_path, data)
@@ -85,7 +93,7 @@ class ContentType(Resource):
         remove_alembic_versions()
         move_migration_files()
         migrate()
-        return jsonify({"message": "Successfully created module"})
+        return jsonify({"result": "Successfully created module"})
 
     def put(self):
         """Edit a content type"""
@@ -113,26 +121,33 @@ class ContentType(Resource):
         # }
         if "connection_name" in data:
             if data['connection_name'] not in DB_DICT:
-                return jsonify({"message": "The database connection given "
-                                           "does not exist."})
+                return jsonify({
+                    "result": "The database connection given does not exist."
+                }), 400
 
         if not check_table(data["table_name"]):
-            return jsonify({"message": "Module with this name is already "
-                                       "present."})
+            return jsonify({
+                "result": "Module with this name is already present."
+            }), 400
 
         for column in data["columns"]:
+            if column["type"] not in dir(types):
+                return jsonify({
+                    "result": "Invalid column type for column " + column["name"]
+                }), 400
             if column["foreign_key"] != "":
                 if not check_table(column["foreign_key"],
                                    data['connection_name']):
-                    return jsonify({"message": "The Foreign Key module does "
-                                               "not exist."})
+                    return jsonify({
+                        "result": "The Foreign Key module does not exist."
+                    }), 400
 
         dir_path = 'app/' + data["table_name"]
         create_model(dir_path, data)
         remove_alembic_versions()
         move_migration_files()
         migrate()
-        return jsonify({"message": "Successfully edited model"})
+        return jsonify({"result": "Successfully edited model"})
 
     def delete(self, content_type):
         """Delete a content type"""
@@ -145,15 +160,16 @@ class ContentType(Resource):
                     tables_list.append(table.name)
 
         if len(tables_list) > 0:
-            return jsonify({"message": "The table {} is linked to "
-                                       "another table(s). Delete table(s) "
-                                       "{} first.".format(
-                content_type, ', '.join(tables_list))})
+            return jsonify({
+                "result": "The table {} is linked to another table(s). "
+                          "Delete table(s) {} first.".format(
+                    content_type, ', '.join(tables_list))
+            }), 400
 
         try:
             shutil.rmtree('app/' + content_type)
         except FileNotFoundError:
-            return jsonify({"message": "Module does not exist."})
+            return jsonify({"result": "Module does not exist."}), 400
 
         with open("app/blueprints.py", "r") as f:
             lines = f.readlines()
@@ -167,7 +183,7 @@ class ContentType(Resource):
         remove_alembic_versions()
         move_migration_files()
         migrate()
-        return jsonify({"message": "Successfully deleted module"})
+        return jsonify({"result": "Successfully deleted module"})
 
 
 class DatabaseInit(Resource):
@@ -185,10 +201,10 @@ class DatabaseInit(Resource):
         #     "database_name": "database_name",
         # }
         if data['connection_name'] in DB_DICT:
-            return jsonify(
-                {"message": "Connection with name: {} is already present. "
-                            "Use a different name.".format(
-                    data['connection_name'])})
+            return jsonify({
+                "result": "Connection with name: {} is already present. Use "
+                          "a different name.".format(data['connection_name'])
+            }), 400
 
         string = ''
         if data['type'] == 'mysql':
@@ -213,11 +229,22 @@ class DatabaseInit(Resource):
 
         add_new_db(data['connection_name'])
 
-        return jsonify(
-            {"message": "Successfully created database connection string"})
+        return jsonify({
+            "result": "Successfully created database connection string"
+        })
+
+
+class ColumnType(Resource):
+
+    def get(self):
+        """Get a list of all valid column types available."""
+        return jsonify({
+            "result": column_types()
+        })
 
 
 api_admin.add_resource(ContentType, '/content/types',
                        '/content/types/<string:content_type>')
 api_admin.add_resource(DatabaseInit, '/dbinit/',
                        '/dbinit/types/<string:content_type>')
+api_admin.add_resource(ColumnType, '/columntypes')

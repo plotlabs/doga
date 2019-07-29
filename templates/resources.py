@@ -50,13 +50,13 @@ class Apis(Resource):
                             "result": "The format entered for column {} is "
                                       "not correct. Correct format should"
                                       " be of type: YYYY/MM/DD.".format(
-                                col.name)}
+                                col.name)}, 400
                     except TypeError:
                         return {
                             "result": "The format entered for column {} is "
                                       "not correct. Correct format should"
                                       " be of type: YYYY/MM/DD.".format(
-                                col.name)}
+                                col.name)}, 400
                     except KeyError:
                         pass
 
@@ -64,7 +64,7 @@ class Apis(Resource):
                     if isinstance(data[col.name], str):
                         return {"result": "The value entered for column {} "
                                           "is string and not of type"
-                                          " {}".format(col.name, col.type)}
+                                          " {}".format(col.name, col.type)}, 400
 
                 if len(col.foreign_keys) > 0:
                     for f in col.foreign_keys:
@@ -77,7 +77,7 @@ class Apis(Resource):
                         if len(result) == 0:
                             return {"result": "Foreign Key constraint "
                                               "failed for column "
-                                              "{}".format(col.name)}
+                                              "{}".format(col.name)}, 400
 
         for key, value in data.items():
             setattr(model_obj, key, value)
@@ -86,16 +86,16 @@ class Apis(Resource):
         try:
             db.session.commit()
         except OperationalError as e:
-            return {"result": e.orig.args[1].split(' at ')[0]}
+            return {"result": e.orig.args[1].split(' at ')[0]}, 400
         except IntegrityError as e:
             try:
                 return {"result": str(e.orig).split('\n')[0].replace(
-                    '"', '').split(',')[1].replace(")", '').title()}
+                    '"', '').split(',')[1].replace(")", '').title()}, 400
             except IndexError:
                 return {"result": str(e.orig).split('\n')[0].replace(
-                    '"', '').title()}
+                    '"', '').title()}, 400
         except StatementError as e:
-            return {"result": str(e.orig)}
+            return {"result": str(e.orig)}, 400
         return {"result": 'Created row.'}
 
     def put(self, id):
@@ -114,13 +114,13 @@ class Apis(Resource):
                                 "result": "The format entered for column {} "
                                           "is not correct. Correct format "
                                           "should be of type: "
-                                          "YYYY/MM/DD.".format(col.name)}
+                                          "YYYY/MM/DD.".format(col.name)}, 400
                         except TypeError:
                             return {
                                 "result": "The format entered for column {} "
                                           "is not correct. Correct format "
                                           "should be of type: "
-                                          "YYYY/MM/DD.".format(col.name)}
+                                          "YYYY/MM/DD.".format(col.name)}, 400
                         except KeyError:
                             pass
 
@@ -132,7 +132,7 @@ class Apis(Resource):
                             return {
                                 "result": "The value entered for column {} "
                                           "is string and not of type"
-                                          " {}".format(col.name, col.type)}
+                                          " {}".format(col.name, col.type)}, 400
 
                     if len(col.foreign_keys) > 0:
                         for f in col.foreign_keys:
@@ -146,7 +146,7 @@ class Apis(Resource):
                             if len(result) == 0:
                                 return {"result": "Foreign Key constraint "
                                                   "failed for column "
-                                                  "{}".format(col.name)}
+                                                  "{}".format(col.name)}, 400
 
             for key, value in data.items():
                 setattr(model_obj, key, value)
@@ -155,19 +155,19 @@ class Apis(Resource):
             try:
                 db.session.commit()
             except OperationalError as e:
-                return {"result": e.orig.args[1].split(' at ')[0]}
+                return {"result": e.orig.args[1].split(' at ')[0]}, 400
             except IntegrityError as e:
                 try:
                     return {"result": str(e.orig).split('\n')[0].replace(
-                        '"', '').split(',')[1].replace(")", '').title()}
+                        '"', '').split(',')[1].replace(")", '').title()}, 400
                 except IndexError:
                     return {"result": str(e.orig).split('\n')[0].replace(
-                        '"', '').title()}
+                        '"', '').title()}, 400
             except StatementError as e:
-                return {"result": str(e.orig)}
+                return {"result": str(e.orig)}, 400
             return {"result": 'Created row.'}
         else:
-            return {"result": 'Does not exist'}
+            return {"result": 'Does not exist'}, 400
 
     def delete(self, id):
         try:
@@ -176,10 +176,10 @@ class Apis(Resource):
         except IntegrityError as e:
             try:
                 return {"result": str(e.orig).split('\n')[0].replace(
-                    '"', '').split(',')[1].split(' (')[0].title()}
+                    '"', '').split(',')[1].split(' (')[0].title()}, 400
             except IndexError:
                 return {"result": str(e.orig).split('\n')[0].replace(
-                    '"', '').title()}
+                    '"', '').title()}, 400
         return {"result": "Successfully deleted."}
 
 
