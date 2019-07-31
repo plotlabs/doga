@@ -25,5 +25,9 @@ def column_validation(schema_list, connection_name):
             if not check_table(column["foreign_key"], connection_name):
                 valid = False
                 msg = "The Foreign Key module does not exist."
+        if column["type"].lower().startswith("string"):
+            if "(" not in column["type"] and ")" not in column["type"]:
+                valid = False
+                msg = "String column requires size."
 
     return valid, msg

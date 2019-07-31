@@ -1,4 +1,6 @@
-from flask import Blueprint, jsonify, request
+# import json
+
+from flask import Blueprint, request, jsonify
 from flask_restful import Api, Resource
 
 from templates.models import metadata
@@ -49,6 +51,7 @@ class ContentType(Resource):
                                            'bind_key'], 'columns': objs})
 
         return jsonify(table_list)
+        # return {"result": table_list}
 
     def post(self):
         """Create a content type"""
@@ -83,18 +86,16 @@ class ContentType(Resource):
         # }
         if "connection_name" in data:
             if data['connection_name'] not in DB_DICT:
-                return jsonify({
+                return {
                     "result": "The database connection given does not exist."
-                }, 400)
+                }, 400
 
         if check_table(data["table_name"]):
-            return jsonify({
-                "result": "Module with this name is already present."
-            }, 400)
+            return {"result": "Module with this name is already present."}, 400
 
         valid, msg = column_validation(data["columns"], data['connection_name'])
         if valid is False:
-            return jsonify({"result": msg}, 400)
+            return {"result": msg}, 400
 
         dir_path = create_dir(data["table_name"])
         create_model(dir_path, data)
@@ -103,7 +104,7 @@ class ContentType(Resource):
         remove_alembic_versions()
         move_migration_files()
         migrate()
-        return jsonify({"result": "Successfully created module"})
+        return {"result": "Successfully created module"}
 
     def put(self):
         """Edit a content type"""
@@ -131,25 +132,25 @@ class ContentType(Resource):
         # }
         if "connection_name" in data:
             if data['connection_name'] not in DB_DICT:
-                return jsonify({
+                return {
                     "result": "The database connection given does not exist."
-                }, 400)
+                }, 400
 
         if not check_table(data["table_name"]):
-            return jsonify({
+            return {
                 "result": "Module with this name is already present."
-            }, 400)
+            }, 400
 
         valid, msg = column_validation(data["columns"], data['connection_name'])
         if valid is False:
-            return jsonify({"result": msg}, 400)
+            return {"result": msg}, 400
 
         dir_path = 'app/' + data["table_name"]
         create_model(dir_path, data)
         remove_alembic_versions()
         move_migration_files()
         migrate()
-        return jsonify({"result": "Successfully edited model"})
+        return {"result": "Successfully edited model"}
 
     def delete(self, content_type):
         """Delete a content type"""
@@ -162,16 +163,16 @@ class ContentType(Resource):
                     tables_list.append(table.name)
 
         if len(tables_list) > 0:
-            return jsonify({
+            return {
                 "result": "The table {} is linked to another table(s). "
                           "Delete table(s) {} first.".format(
                     content_type, ', '.join(tables_list))
-            }, 400)
+            }, 400
 
         try:
             shutil.rmtree('app/' + content_type)
         except FileNotFoundError:
-            return jsonify({"result": "Module does not exist."}, 400)
+            return {"result": "Module does not exist."}, 400
 
         with open("app/blueprints.py", "r") as f:
             lines = f.readlines()
@@ -185,7 +186,7 @@ class ContentType(Resource):
         remove_alembic_versions()
         move_migration_files()
         migrate()
-        return jsonify({"result": "Successfully deleted module"})
+        return {"result": "Successfully deleted module"}
 
 
 class DatabaseInit(Resource):
@@ -237,10 +238,10 @@ class DatabaseInit(Resource):
         #     "database_name": "database_name",
         # }
         if data['connection_name'] in DB_DICT:
-            return jsonify({
+            return {
                 "result": "Connection with name: {} is already present. Use "
                           "a different name.".format(data['connection_name'])
-            }, 400)
+            }, 400
 
         string = ''
         if data['type'] == 'mysql':
@@ -265,9 +266,9 @@ class DatabaseInit(Resource):
 
         add_new_db(data['connection_name'])
 
-        return jsonify({
+        return {
             "result": "Successfully created database connection string"
-        })
+        }
 
     def put(self):
         """Edit a database connection string"""
@@ -282,9 +283,9 @@ class DatabaseInit(Resource):
         #     "database_name": "database_name",
         # }
         if data['connection_name'] not in DB_DICT:
-            return jsonify({
+            return {
                 "result": "No connection with name: {} is present.".format(
-                    data['connection_name'])}, 400)
+                    data['connection_name'])}, 400
 
         db_type = DB_DICT[data['connection_name']].split(':')[0]
         try:
@@ -293,10 +294,10 @@ class DatabaseInit(Resource):
             pass
 
         if db_type != data['type']:
-            return jsonify({
+            return {
                 "result": "The type of database string cannot be "
                           "changed. Create a new connection or choose the "
-                          "correct type."}, 400)
+                          "correct type."}, 400
 
         string = ''
         if data['type'] == 'mysql':
@@ -322,18 +323,18 @@ class DatabaseInit(Resource):
         remove_alembic_versions()
         move_migration_files()
         migrate()
-        return jsonify({
+        return {
             "result": "Successfully edited database connection string."
-        })
+        }
 
 
 class ColumnType(Resource):
 
     def get(self):
         """Get a list of all valid column types available."""
-        return jsonify({
+        return {
             "result": column_types()
-        })
+        }
 
 
 api_admin.add_resource(ContentType, '/content/types',
