@@ -82,7 +82,7 @@ class ContentType(Resource):
 
                 objs = []
                 for c in table.columns:
-					if c.name in ['id', 'create_dt']:
+                    if c.name in ['id', 'create_dt']:
                         continue
                     default = str(c.default)
                     if c.default is not None:
@@ -118,7 +118,7 @@ class ContentType(Resource):
                 if table.name == content_type:
                     objs = []
                     for c in table.columns:
-						if c.name in ['id', 'create_dt']:
+                        if c.name in ['id', 'create_dt']:
                             continue
                         default = str(c.default)
                         if c.default is not None:
