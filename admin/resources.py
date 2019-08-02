@@ -7,7 +7,7 @@ from templates.models import metadata
 from app.utils import AlchemyEncoder
 from admin.module_generator import *
 from admin.models import Admin
-from admin.validators import column_types, column_validation
+from admin.validators import column_types, column_validation, nullable_check
 from dbs import DB_DICT
 from passlib.handlers.sha2_crypt import sha512_crypt
 
@@ -77,11 +77,13 @@ class ContentType(Resource):
         table_list = []
         for table in metadata.sorted_tables:
             if content_type is None:
-                if table.name == "alembic_version":
+                if table.name in ["alembic_version", "admin"]:
                     continue
 
                 objs = []
                 for c in table.columns:
+                    if c.name in ['id', 'create_dt']:
+                        continue
                     obj = {
                         "name": c.name,
                         "type": str(c.type),
@@ -93,9 +95,14 @@ class ContentType(Resource):
                                    'connection_name': table.info[
                                        'bind_key'], 'columns': objs})
             else:
+                if table.name in ["alembic_version", "admin"]:
+                    continue
+
                 if table.name == content_type:
                     objs = []
                     for c in table.columns:
+                        if c.name in ['id', 'create_dt']:
+                            continue
                         obj = {
                             "name": c.name,
                             "type": str(c.type),
@@ -212,9 +219,15 @@ class ContentType(Resource):
                 "result": "Module with this name is already present."
             }, 400
 
-        valid, msg = column_validation(data["columns"], data['connection_name'])
+        valid, msg = column_validation(data["columns"],
+                                       data['connection_name'])
         if valid is False:
             return {"result": msg}, 400
+
+        check = nullable_check(data)
+        if check:
+            return {"result": "Since data is already present in the table, "
+                              "new datetime column should be nullable."}, 400
 
         dir_path = 'app/' + data["table_name"]
         create_model(dir_path, data)

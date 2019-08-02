@@ -1,5 +1,8 @@
 import keyword
+import requests
+import json
 from sqlalchemy import types
+from templates.models import metadata
 
 from admin.module_generator import check_table
 
@@ -14,7 +17,7 @@ def column_types():
     return list(type_list)
 
 
-def column_validation(schema_list, connection_name):
+def column_validation(schema_list, connection_name, table_columns = None):
     """Validate columns"""
     valid = True
     msg = ""
@@ -46,6 +49,28 @@ def column_validation(schema_list, connection_name):
             valid = False
             msg = "Column name cannot be a default keyword."
             break
+        if table_columns:
+            if column["name"] not in table_columns:
+                if column["type"] in ["Date", "DATETIME"] \
+                        and column["nullable"] == "False":
+                    valid = False
+                    break
         column_name_list.append(column["name"])
 
     return valid, msg
+
+
+def nullable_check(data):
+    for table in metadata.sorted_tables:
+        if table.name == data['table_name']:
+            valid, msg = column_validation(data["columns"],
+                              data['connection_name'], table.columns)
+            if valid is False:
+                model_data = requests.get('http://localhost:8080/' + data[
+                    'table_name'])
+                if len(json.loads(model_data.content)["result"]) != 0:
+                    return True
+                else:
+                    return False
+
+    return False
