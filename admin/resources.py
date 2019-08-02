@@ -82,13 +82,30 @@ class ContentType(Resource):
 
                 objs = []
                 for c in table.columns:
-                    if c.name in ['id', 'create_dt']:
+					if c.name in ['id', 'create_dt']:
                         continue
+                    default = str(c.default)
+                    if c.default is not None:
+                        default = default[
+                            default.find("(") + 1:default.find(")")
+                        ].replace("'", "")
+                    c_type = str(c.type)
+                    foreign_key = str(c.foreign_keys)
+                    if c.foreign_keys != "":
+                        foreign_key = foreign_key[
+                            foreign_key.find("(") + 1:foreign_key.find(")")
+                        ].replace("'", "")
+                        if foreign_key != "":
+                            foreign_key = foreign_key.split(".")[0].title()
+                    if foreign_key != "":
+                        c_type = str(c.foreign_keys).split("}")[0][1:]
                     obj = {
                         "name": c.name,
-                        "type": str(c.type),
+                        "type": c_type,
                         "nullable": str(bool(c.nullable)).lower(),
-                        "unique": str(bool(c.unique)).lower()
+                        "unique": str(bool(c.unique)).lower(),
+                        "default": default,
+                        "foreign_key": foreign_key
                     }
                     objs.append(obj)
                 table_list.append({'table_name': table.name,
@@ -101,13 +118,31 @@ class ContentType(Resource):
                 if table.name == content_type:
                     objs = []
                     for c in table.columns:
-                        if c.name in ['id', 'create_dt']:
+						if c.name in ['id', 'create_dt']:
                             continue
+                        default = str(c.default)
+                        if c.default is not None:
+                            default = default[
+                                      default.find("(") + 1:default.find(")")
+                                      ].replace("'", "")
+                        c_type = str(c.type)
+                        foreign_key = str(c.foreign_keys)
+                        if c.foreign_keys != "":
+                            foreign_key = foreign_key[
+                                          foreign_key.find(
+                                              "(") + 1:foreign_key.find(")")
+                                          ].replace("'", "")
+                            if foreign_key != "":
+                                foreign_key = foreign_key.split(".")[0].title()
+                        if foreign_key != "":
+                            c_type = str(c.foreign_keys).split("}")[0][1:]
                         obj = {
                             "name": c.name,
-                            "type": str(c.type),
+                            "type": c_type,
                             "nullable": str(bool(c.nullable)).lower(),
-                            "unique": str(bool(c.unique)).lower()
+                            "unique": str(bool(c.unique)).lower(),
+                            "default": default,
+                            "foreign_key": foreign_key
                         }
                         objs.append(obj)
                     table_list.append({'table_name': table.name,
