@@ -15,6 +15,10 @@ The python packages required to run the app are given in the requirements.txt fi
 
 ## Execution
 
+The app should be started first using the command:
+
+    sh start.sh
+    
 The app can be started using the command:
 
     python runserver.py

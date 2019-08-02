@@ -1,16 +1,73 @@
-# import json
+import json
 
 from flask import Blueprint, request, jsonify
 from flask_restful import Api, Resource
 
 from templates.models import metadata
+from app.utils import AlchemyEncoder
 from admin.module_generator import *
+from admin.models import Admin
 from admin.validators import column_types, column_validation
 from dbs import DB_DICT
+from passlib.handlers.sha2_crypt import sha512_crypt
+
+
+ALGORITHM = sha512_crypt
 
 mod_admin = Blueprint("admin", __name__)
 api_admin = Api()
 api_admin.init_app(mod_admin)
+
+
+class AdminApi(Resource):
+    """APIs to create a admin and return admin info if a admin exists"""
+
+    def get(self, email):
+        admin = Admin.query.filter_by(email=email).first()
+        if admin is not None:
+            user_obj = json.dumps(admin, cls=AlchemyEncoder)
+            return {"result": json.loads(user_obj)}
+        else:
+            return {"result": "Admin does not exist."}, 404
+
+    def post(self):
+        data = request.get_json()
+        admin_exists = Admin.query.filter_by(email=data["email"].lower(
+        )).first()
+        if admin_exists is None:
+            try:
+                password_hash = ALGORITHM.hash(data["password"])
+                admin = Admin(email=data["email"].lower(),
+                              password=password_hash, name=data["name"],
+                              create_dt=datetime.datetime.utcnow())
+                db.session.add(admin)
+                db.session.commit()
+                return {"result": "Admin created successfully.",
+                        "id": admin.id, "email": admin.email}
+            except KeyError as e:
+                return {"result": "Key error", "error": str(e)}, 500
+        else:
+            return {"result": "Admin already exists."}, 500
+
+
+class Login(Resource):
+    """API to login admin."""
+
+    def post(self):
+        data = request.get_json()
+        try:
+            admin = Admin.query.filter_by(email=data["email"]).first()
+            if admin is None:
+                return {"result": "Admin does not exist."}, 401
+            else:
+                match = ALGORITHM.verify(data["password"], admin.password)
+                if not match:
+                    return {"result": "Invalid password."}, 401
+                else:
+                    return {"result": "Successfully logged in", "email":
+                        admin.email, "name": admin.name}
+        except KeyError as e:
+            return {"result": "Key error", "error": str(e)}, 500
 
 
 class ContentType(Resource):
@@ -272,7 +329,7 @@ class DatabaseInit(Resource):
                            + '",\n' + line
                 f.write(line)
 
-        # add_new_db(data['connection_name'])
+        add_new_db(data['connection_name'])
 
         return {
             "result": "Successfully created database connection string"
@@ -353,6 +410,9 @@ class ColumnType(Resource):
         }
 
 
+api_admin.add_resource(AdminApi, '/admin_profile',
+                       '/admin_profile/<string:email>')
+api_admin.add_resource(Login, '/login')
 api_admin.add_resource(ContentType, '/content/types',
                        '/content/types/<string:content_type>')
 api_admin.add_resource(DatabaseInit, '/dbinit/',
