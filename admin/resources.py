@@ -245,14 +245,22 @@ class DatabaseInit(Resource):
 
         string = ''
         if data['type'] == 'mysql':
-            string = '"mysql://{}:{}@{}:3306/{}?charset=utf8mb4"'.format(
+            string = 'mysql://{}:{}@{}:3306/{}?charset=utf8mb4'.format(
                 data['username'], data['password'], data['host'],
                 data['database_name'])
 
         if data['type'] == 'postgresql':
-            string = '"postgresql+psycopg2://{}:{}@{}/{}"'.format(
+            string = 'postgresql+psycopg2://{}:{}@{}/{}'.format(
                 data['username'], data['password'], data['host'],
                 data['database_name'])
+
+        try:
+            engine = create_engine(string)
+            conn = engine.connect()
+            conn.invalidate()
+            engine.dispose()
+        except OperationalError:
+            return {"result": "The database credentials are not valid."}, 400
 
         with open('dbs.py', 'r') as f:
             lines = f.readlines()
@@ -260,11 +268,11 @@ class DatabaseInit(Resource):
         with open('dbs.py', 'w') as f:
             for i, line in enumerate(lines):
                 if line.startswith('}'):
-                    line = '    "' + data['connection_name'] + '": ' + string\
-                           + ',\n' + line
+                    line = '    "' + data['connection_name'] + '": "' + string\
+                           + '",\n' + line
                 f.write(line)
 
-        add_new_db(data['connection_name'])
+        # add_new_db(data['connection_name'])
 
         return {
             "result": "Successfully created database connection string"
@@ -301,14 +309,22 @@ class DatabaseInit(Resource):
 
         string = ''
         if data['type'] == 'mysql':
-            string = '"mysql://{}:{}@{}:3306/{}?charset=utf8mb4"'.format(
+            string = 'mysql://{}:{}@{}:3306/{}?charset=utf8mb4'.format(
                 data['username'], data['password'], data['host'],
                 data['database_name'])
 
         if data['type'] == 'postgresql':
-            string = '"postgresql+psycopg2://{}:{}@{}/{}"'.format(
+            string = 'postgresql+psycopg2://{}:{}@{}/{}'.format(
                 data['username'], data['password'], data['host'],
                 data['database_name'])
+
+        try:
+            engine = create_engine(string)
+            conn = engine.connect()
+            conn.invalidate()
+            engine.dispose()
+        except OperationalError:
+            return {"result": "The database credentials are not valid."}, 400
 
         with open('dbs.py', 'r') as f:
             lines = f.readlines()
@@ -317,7 +333,7 @@ class DatabaseInit(Resource):
             for i, line in enumerate(lines):
                 if line.startswith('    "' + data['connection_name']):
                     line = line.replace(line, '    "' + data[
-                        'connection_name'] + '": ' + string + ',\n')
+                        'connection_name'] + '": "' + string + '",\n')
                 f.write(line)
 
         remove_alembic_versions()
