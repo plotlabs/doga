@@ -147,8 +147,17 @@ class ContentType(Resource):
                     "result": "The database connection given does not exist."
                 }, 400
 
+        data["table_name"] = data["table_name"].lower()
+
+        if len(data["columns"]) == 0:
+            return {"result": "At least one column is required"}, 400
+
         if check_table(data["table_name"]):
             return {"result": "Module with this name is already present."}, 400
+
+        if data["table_name"] == "admin":
+            return {"result": "Table with name Admin not allowed since it is "
+                              "used to manage admin login internally"}, 400
 
         valid, msg = column_validation(data["columns"], data['connection_name'])
         if valid is False:
@@ -193,6 +202,11 @@ class ContentType(Resource):
                     "result": "The database connection given does not exist."
                 }, 400
 
+        if len(data["columns"]) == 0:
+            return {"result": "At least one column is required"}, 400
+
+        data["table_name"] = data["table_name"].lower()
+
         if not check_table(data["table_name"]):
             return {
                 "result": "Module with this name is already present."
@@ -216,7 +230,7 @@ class ContentType(Resource):
             f = (table.__dict__['foreign_keys'])
             for s in f:
                 table_name = s.column.table
-                if str(table_name) == content_type:
+                if str(table_name) == content_type.lower():
                     tables_list.append(table.name)
 
         if len(tables_list) > 0:
@@ -227,7 +241,7 @@ class ContentType(Resource):
             }, 400
 
         try:
-            shutil.rmtree('app/' + content_type)
+            shutil.rmtree('app/' + content_type.lower())
         except FileNotFoundError:
             return {"result": "Module does not exist."}, 400
 
@@ -238,7 +252,7 @@ class ContentType(Resource):
                 if line.strip("\n") != "from app." + content_type \
                         + ".resources import mod_model" and line.strip("\n") \
                         != "app.register_blueprint(mod_model, url_prefix='/" + \
-                        content_type + "')":
+                        content_type.lower() + "')":
                     f.write(line)
         remove_alembic_versions()
         move_migration_files()
