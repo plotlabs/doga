@@ -60,11 +60,15 @@ class Apis(Resource):
                     except KeyError:
                         pass
 
-                if str(col.type) in ['INTEGER', 'BIGINTEGER', 'BIGINT']:
+                if str(col.type).upper() in ['INTEGER', 'BIGINTEGER',
+                                             'BIGINT', 'FLOAT', 'INT',
+                                             'SMALLINT', 'NUMERIC',
+                                             'SMALLINTEGER', 'DECIMAL',
+                                             'REAL']:
                     if isinstance(data[col.name], str):
                         return {"result": "The value entered for column {} "
-                                          "is string and not of type"
-                                          " {}".format(col.name, col.type)}, 400
+                                          "is string and not of type {}"
+                                          "".format(col.name, col.type)}, 400
 
                 if len(col.foreign_keys) > 0:
                     for f in col.foreign_keys:
@@ -127,7 +131,8 @@ class Apis(Resource):
                     if str(col.type).upper() in ['INTEGER', 'BIGINTEGER',
                                                  'BIGINT', 'FLOAT', 'INT',
                                                  'SMALLINT', 'NUMERIC',
-                                                 'SMALLINTEGER']:
+                                                 'SMALLINTEGER', 'DECIMAL',
+                                                 'REAL']:
                         if isinstance(data[col.name], str):
                             return {
                                 "result": "The value entered for column {} "
