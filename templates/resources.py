@@ -41,26 +41,45 @@ class Apis(Resource):
         for col in model_name.__table__.columns:
             col_name = col.name
             if col_name not in ['id', 'create_dt']:
-                if str(col.type).upper() in ['DATETIME', 'DATE']:
+                if str(col.type).upper() == "DATE":
                     try:
                         data[col.name] = datetime.datetime.strptime(
-                            data[col.name], "%Y/%m/%d")
+                            data[col.name], "%Y-%m-%d")
                     except ValueError:
                         return {
                             "result": "The format entered for column {} is "
                                       "not correct. Correct format should"
-                                      " be of type: YYYY/MM/DD.".format(
+                                      " be of type: YYYY-MM-DD.".format(
                                 col.name)}, 400
                     except TypeError:
                         return {
                             "result": "The format entered for column {} is "
                                       "not correct. Correct format should"
-                                      " be of type: YYYY/MM/DD.".format(
+                                      " be of type: YYYY-MM-DD.".format(
                                 col.name)}, 400
                     except KeyError:
                         pass
 
-                if str(col.type).upper() in ['INTEGER', 'BIGINTEGER',
+                elif str(col.type).upper() == "DATETIME":
+                    try:
+                        data[col.name] = datetime.datetime.strptime(
+                            data[col.name], "%Y-%m-%d %H:%M:%S")
+                    except ValueError:
+                        return {
+                            "result": "The format entered for column {} is "
+                                      "not correct. Correct format should"
+                                      " be of type: YYYY-MM-DD H:M:S.".format(
+                                col.name)}, 400
+                    except TypeError:
+                        return {
+                            "result": "The format entered for column {} is "
+                                      "not correct. Correct format should"
+                                      " be of type: YYYY-MM-DD H:M:S.".format(
+                                col.name)}, 400
+                    except KeyError:
+                        pass
+
+                elif str(col.type).upper() in ['INTEGER', 'BIGINTEGER',
                                              'BIGINT', 'FLOAT', 'INT',
                                              'SMALLINT', 'NUMERIC',
                                              'SMALLINTEGER', 'DECIMAL',
@@ -109,22 +128,41 @@ class Apis(Resource):
             for col in model_name.__table__.columns:
                 col_name = col.name
                 if col_name not in ['id', 'create_dt']:
-                    if str(col.type).upper() in ['DATETIME', 'DATE']:
+                    if str(col.type).upper() == "DATE":
                         try:
                             data[col.name] = datetime.datetime.strptime(
-                                data[col.name], "%Y/%m/%d")
+                                data[col.name], "%Y-%m-%d")
                         except ValueError:
                             return {
-                                "result": "The format entered for column {} "
-                                          "is not correct. Correct format "
-                                          "should be of type: "
-                                          "YYYY/MM/DD.".format(col.name)}, 400
+                               "result": "The format entered for column {} is "
+                                         "not correct. Correct format should"
+                                         " be of type: YYYY-MM-DD.".format(
+                                   col.name)}, 400
                         except TypeError:
                             return {
-                                "result": "The format entered for column {} "
-                                          "is not correct. Correct format "
-                                          "should be of type: "
-                                          "YYYY/MM/DD.".format(col.name)}, 400
+                               "result": "The format entered for column {} is "
+                                         "not correct. Correct format should"
+                                         " be of type: YYYY-MM-DD.".format(
+                                   col.name)}, 400
+                        except KeyError:
+                            pass
+
+                    elif str(col.type).upper() == "DATETIME":
+                        try:
+                            data[col.name] = datetime.datetime.strptime(
+                                data[col.name], "%Y-%m-%d %H:%M:%S")
+                        except ValueError:
+                            return {
+                               "result": "The format entered for column {} is "
+                                         "not correct. Correct format should"
+                                         " be of type: YYYY-MM-DD H:M:S.".format(
+                                   col.name)}, 400
+                        except TypeError:
+                            return {
+                               "result": "The format entered for column {} is "
+                                         "not correct. Correct format should"
+                                         " be of type: YYYY-MM-DD H:M:S.".format(
+                                   col.name)}, 400
                         except KeyError:
                             pass
 
