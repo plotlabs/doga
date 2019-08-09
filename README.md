@@ -51,6 +51,7 @@ The following APIs are available for creating and managing content types and dat
 				"type": "column_type",
 				"nullable": "True/False",
 				"unique": "True/False", 
+				"default": "value" or "",
 				"foreign_key": "foreign key table name"
 			},
 			{}.....
