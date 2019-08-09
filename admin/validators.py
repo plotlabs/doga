@@ -1,5 +1,6 @@
 import keyword
 import requests
+import datetime
 import json
 from sqlalchemy import types
 from templates.models import metadata
@@ -17,7 +18,7 @@ def column_types():
     return list(type_list)
 
 
-def column_validation(schema_list, connection_name, table_columns = None):
+def column_validation(schema_list, connection_name, table_columns=None):
     """Validate columns"""
     valid = True
     msg = ""
@@ -49,6 +50,60 @@ def column_validation(schema_list, connection_name, table_columns = None):
             valid = False
             msg = "Column name cannot be a default keyword."
             break
+        if column["default"]:
+            if column["type"].upper() in ['INTEGER', 'BIGINTEGER', 'BIGINT',
+                                          'FLOAT', 'INT', 'SMALLINT',
+                                          'NUMERIC', 'SMALLINTEGER',
+                                          'DECIMAL', 'REAL']:
+                if isinstance(column["default"], str):
+                    valid = False
+                    msg = "The default value entered for column {} is string" \
+                          " and not of type {}".format(column["name"],
+                                                       column["type"])
+                    break
+
+            if column["type"].upper() in ['DATE']:
+                try:
+                    date_val = datetime.datetime.strptime(column["default"],
+                                                          "%Y-%m-%d")
+                except ValueError:
+                    valid = False
+                    msg = "The format entered for column {} is not correct. " \
+                          "Correct format should be of type: " \
+                          "YYYY-MM-DD.".format(column["name"])
+                    break
+                except TypeError:
+                    valid = False
+                    msg = "The format entered for column {} is not correct. " \
+                          "Correct format should be of type: " \
+                          "YYYY-MM-DD.".format(column["name"])
+                    break
+
+            if column["type"].upper() in ['DATETIME']:
+                try:
+                    if column["default"].lower() != "current":
+                        date_val = datetime.datetime.strptime(
+                            column["default"], "%Y-%m-%d %H:%M:%S")
+                except ValueError:
+                    valid = False
+                    msg = "The format entered for column {} is not correct. " \
+                          "Correct format should be of type: " \
+                          "YYYY-MM-DD H:M:S.".format(column["name"])
+                    break
+                except TypeError:
+                    valid = False
+                    msg = "The format entered for column {} is not correct. " \
+                          "Correct format should be of type: " \
+                          "YYYY-MM-DD H:M:S.".format(column["name"])
+                    break
+
+            if column["type"].upper() == "BOOLEAN":
+                if column["default"] not in [1, 0]:
+                    valid = False
+                    msg = "The default value entered for column {} not of " \
+                          "type {}".format(column["name"], column["type"])
+                    break
+
         if table_columns:
             if column["name"] not in table_columns:
                 if column["type"] in ["Date", "DATETIME"] \

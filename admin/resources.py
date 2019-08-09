@@ -165,6 +165,7 @@ class ContentType(Resource):
         #             "type": "String(32, 'utf8mb4_unicode_ci')",
         #             "nullable": "False",
         #             "unique": "True",
+        #             "default": "value",
         #             "foreign_key": ""
         #         },
         #         {
@@ -172,6 +173,7 @@ class ContentType(Resource):
         #             "type": "String(1024, 'utf8mb4_unicode_ci')",
         #             "nullable": "False",
         #             "unique": "False",
+        #             "default": "value",
         #             "foreign_key": ""
         #         },
         #         {
@@ -179,6 +181,7 @@ class ContentType(Resource):
         #             "type": "ForeignKey('teacher.id)",
         #             "nullable": "False",
         #             "unique": "False",
+        #             "default": "", (For no value)
         #             "foreign_key": "Teacher"
         #         },
         #     ]
@@ -201,7 +204,8 @@ class ContentType(Resource):
             return {"result": "Table with name Admin not allowed since it is "
                               "used to manage admin login internally"}, 400
 
-        valid, msg = column_validation(data["columns"], data['connection_name'])
+        valid, msg = column_validation(data["columns"],
+                                       data['connection_name'])
         if valid is False:
             return {"result": msg}, 400
 
@@ -227,6 +231,7 @@ class ContentType(Resource):
         #             "type": "String(32, 'utf8mb4_unicode_ci')",
         #             "nullable": "False",
         #             "unique": "True",
+        #             "default": "value",
         #             "foreign_key": ""
         #         },
         #         {
@@ -234,6 +239,7 @@ class ContentType(Resource):
         #             "type": "String(1024, 'utf8mb4_unicode_ci')",
         #             "nullable": "False",
         #             "unique": "False",
+        #             "default": "", (For no value)
         #             "foreign_key": ""
         #         }
         #     ]
@@ -299,8 +305,8 @@ class ContentType(Resource):
             for line in lines:
                 if line.strip("\n") != "from app." + content_type \
                         + ".resources import mod_model" and line.strip("\n") \
-                        != "app.register_blueprint(mod_model, url_prefix='/" + \
-                        content_type.lower() + "')":
+                        != "app.register_blueprint(mod_model, url_prefix='/" \
+                        + content_type.lower() + "')":
                     f.write(line)
         remove_alembic_versions()
         move_migration_files()

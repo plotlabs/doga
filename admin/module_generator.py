@@ -44,7 +44,15 @@ def create_model(dir_path, data):
             pass
         line = "    " + col["name"] + " = Column(" + col["type"] \
                + ", nullable=" + str(col["nullable"]).title() \
-               + ", unique=" + str(col["unique"]).title() + ")\n"
+               + ", unique=" + str(col["unique"]).title()
+        if col["default"] == "":
+            line = line + ")\n"
+        else:
+            if col["foreign_key"] == "":
+                if col["default"].lower() == "current":
+                    col["default"] = "CURRENT_TIMESTAMP"
+                line = line + ", server_default=text('" + str(
+                    col["default"]) + "'))\n"
         if col["foreign_key"] != "":
             line = line + "\n    " + col["foreign_key"].lower() + \
                    " = relationship('" + col["foreign_key"] + "')\n"
