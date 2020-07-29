@@ -65,7 +65,7 @@ class Login(Resource):
                     return {"result": "Invalid password."}, 401
                 else:
                     return {"result": "Successfully logged in", "email":
-                        admin.email, "name": admin.name}
+                            admin.email, "name": admin.name}
         except KeyError as e:
             return {"result": "Key error", "error": str(e)}, 500
 
@@ -123,15 +123,15 @@ class ContentType(Resource):
                         default = str(c.default)
                         if c.default is not None:
                             default = default[
-                                      default.find("(") + 1:default.find(")")
-                                      ].replace("'", "")
+                                default.find("(") + 1:default.find(")")
+                            ].replace("'", "")
                         c_type = str(c.type)
                         foreign_key = str(c.foreign_keys)
                         if c.foreign_keys != "":
                             foreign_key = foreign_key[
-                                          foreign_key.find(
-                                              "(") + 1:foreign_key.find(")")
-                                          ].replace("'", "")
+                                foreign_key.find(
+                                    "(") + 1:foreign_key.find(")")
+                            ].replace("'", "")
                             if foreign_key != "":
                                 foreign_key = foreign_key.split(".")[0].title()
                         if foreign_key != "":
@@ -211,7 +211,8 @@ class ContentType(Resource):
 
         dir_path = create_dir(data["table_name"])
         create_model(dir_path, data)
-        create_resources(data["table_name"], dir_path)
+        create_resources(data["table_name"], dir_path,
+                         data.get("jwt_required", False))
         append_blueprint(data["table_name"])
         remove_alembic_versions()
         move_migration_files()
@@ -291,7 +292,7 @@ class ContentType(Resource):
             return {
                 "result": "The table {} is linked to another table(s). "
                           "Delete table(s) {} first.".format(
-                    content_type, ', '.join(tables_list))
+                              content_type, ', '.join(tables_list))
             }, 400
 
         try:
@@ -394,7 +395,7 @@ class DatabaseInit(Resource):
             for i, line in enumerate(lines):
                 if line.startswith('}'):
                     line = '    "' + data['connection_name'] + '": "' + string\
-                           + '",\n' + line
+                        + '",\n' + line
                 f.write(line)
 
         add_new_db(data['connection_name'])

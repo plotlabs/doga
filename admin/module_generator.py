@@ -55,12 +55,12 @@ def create_model(dir_path, data):
                     col["default"]) + "'))\n"
         if col["foreign_key"] != "":
             line = line + "\n    " + col["foreign_key"].lower() + \
-                   " = relationship('" + col["foreign_key"] + "')\n"
+                " = relationship('" + col["foreign_key"] + "')\n"
         o.write(line)
     o.close()
 
 
-def create_resources(model_name, dir_path):
+def create_resources(model_name, dir_path, jwt=False):
     """Function to create the CRUD Restful APIs for the module"""
     o = open(dir_path + "/resources.py", "w")
     for line in open("templates/resources.py"):
@@ -70,6 +70,11 @@ def create_resources(model_name, dir_path):
         line = line.replace("endpoint", '"/"')
         line = line.replace("param", '"/<int:id>"')
         o.write(line)
+
+    if jwt:
+        for line in open("templates/login.py"):
+            line = line.replace("jwt_key", "\"id\"")
+            o.write(line)
     o.close()
 
 
@@ -189,4 +194,3 @@ def add_new_db(conn_name):
     if os.path.exists("migrations"):
         shutil.rmtree('migrations')
     migrate()
-
