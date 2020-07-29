@@ -10,7 +10,7 @@ from admin.models import Admin
 from admin.validators import column_types, column_validation, nullable_check
 from dbs import DB_DICT
 from passlib.handlers.sha2_crypt import sha512_crypt
-
+from admin.utils import set_jwt_secret_key
 
 ALGORITHM = sha512_crypt
 
@@ -208,11 +208,13 @@ class ContentType(Resource):
                                        data['connection_name'])
         if valid is False:
             return {"result": msg}, 400
-
+        if data.get("jwt_required", False) is True:
+            set_jwt_secret_key()
         dir_path = create_dir(data["table_name"])
         create_model(dir_path, data)
         create_resources(data["table_name"], dir_path,
-                         data.get("jwt_required", False))
+                         data.get("jwt_required", False),
+                         data.get("filter_keys", ["id"]))
         append_blueprint(data["table_name"])
         remove_alembic_versions()
         move_migration_files()

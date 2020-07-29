@@ -7,7 +7,7 @@ from flask_jwt_extended import (create_access_token, create_refresh_token, jwt_r
 
 ALGORITHM = sha512_crypt
 
-filter_key = jwt_key
+jwt_filter_keys = jwt_key
 
 
 class Login(Resource):
@@ -16,8 +16,9 @@ class Login(Resource):
     def post(self):
         data = request.get_json()
         try:
+            filter_keys = {key: data[key] for key in jwt_filter_keys} 
             model_obj = model_name.query.filter_by(
-                **{filter_key: data[filter_key]}).first()
+                **filter_keys).first()
             if model_obj is None:
                 return {"result": model_name + " does not exist."}, 401
             else:
@@ -26,9 +27,9 @@ class Login(Resource):
                 #   return {"result": "Invalid password."}, 401
                 # else:
                 access_token = create_access_token(
-                    identity=model_obj.__dict__[filter_key])
+                    identity=filter_keys)
                 refresh_token = create_refresh_token(
-                    identity=model_obj.__dict__[filter_key])
+                    identity=filter_keys
                 return {"result": "Logged in Successfully.",
                         "id": model_obj.id, 
                         'access_token': access_token,

@@ -2,7 +2,6 @@ import os
 import shutil
 import subprocess
 import datetime
-
 from sqlalchemy.exc import OperationalError, ProgrammingError
 
 from admin.version_models import *
@@ -60,7 +59,7 @@ def create_model(dir_path, data):
     o.close()
 
 
-def create_resources(model_name, dir_path, jwt=False):
+def create_resources(model_name, dir_path, jwt=False, filter_keys=["id"]):
     """Function to create the CRUD Restful APIs for the module"""
     o = open(dir_path + "/resources.py", "w")
     for line in open("templates/resources.py"):
@@ -70,10 +69,9 @@ def create_resources(model_name, dir_path, jwt=False):
         line = line.replace("endpoint", '"/"')
         line = line.replace("param", '"/<int:id>"')
         o.write(line)
-
-    if jwt:
+    if jwt is True:
         for line in open("templates/login.py"):
-            line = line.replace("jwt_key", "\"id\"")
+            line = line.replace("jwt_key", str(filter_keys))
             o.write(line)
     o.close()
 
