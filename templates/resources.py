@@ -9,7 +9,7 @@ from app import db
 from app.modulename.models import modelname
 from app.utils import AlchemyEncoder
 from sqlalchemy.exc import OperationalError, IntegrityError, StatementError
-
+from flask_jwt_extended import jwt_required
 
 mod_model = Blueprint(bname, __name__)
 api_model = Api()

@@ -208,12 +208,24 @@ class ContentType(Resource):
                                        data['connection_name'])
         if valid is False:
             return {"result": msg}, 400
+        
         if data.get("jwt_required", False) is True:
-            set_jwt_secret_key()
+            if check_jwt_present(data["connection_name"]):
+                return {"result": "Only one table is allowed to set jwt per"
+                        "database connection"}, 400
+            else:
+                set_jwt_flag(data["connection_name"], data["table_name"])
+                set_jwt_secret_key()
+
+        if (data.get("jwt_restricted", False) is True and
+               (check_jwt_present(data["connection_name"]) is None)):
+            return {"result": "Jwt not configured"}, 400
+
         dir_path = create_dir(data["table_name"])
         create_model(dir_path, data)
         create_resources(data["table_name"], dir_path,
                          data.get("jwt_required", False),
+                         data.get("jwt_restricted", False),
                          data.get("filter_keys", ["id"]))
         append_blueprint(data["table_name"])
         remove_alembic_versions()
