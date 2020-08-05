@@ -10,14 +10,13 @@ from admin.models import Admin
 from admin.validators import column_types, column_validation, nullable_check
 from dbs import DB_DICT
 from passlib.handlers.sha2_crypt import sha512_crypt
-from admin.utils import set_jwt_secret_key
+from admin.utils import *
 
 ALGORITHM = sha512_crypt
 
 mod_admin = Blueprint("admin", __name__)
 api_admin = Api()
 api_admin.init_app(mod_admin)
-
 
 class AdminApi(Resource):
     """APIs to create a admin and return admin info if a admin exists"""
@@ -186,6 +185,7 @@ class ContentType(Resource):
         #         },
         #     ]
         # }
+        pdb.set_trace()
         if "connection_name" in data:
             if data['connection_name'] not in DB_DICT:
                 return {
@@ -208,17 +208,22 @@ class ContentType(Resource):
                                        data['connection_name'])
         if valid is False:
             return {"result": msg}, 400
-        
+
+        data["database_name"] = extract_database_name(data["connection_name"])
+
         if data.get("jwt_required", False) is True:
-            if check_jwt_present(data["connection_name"]):
+            if check_jwt_present(
+                    data["connection_name"], data["database_name"]):
                 return {"result": "Only one table is allowed to set jwt per"
                         "database connection"}, 400
             else:
-                set_jwt_flag(data["connection_name"], data["table_name"])
+                set_jwt_flag(data["connection_name"],
+                             data["database_name"], data["table_name"])
                 set_jwt_secret_key()
 
         if (data.get("jwt_restricted", False) is True and
-               (check_jwt_present(data["connection_name"]) is None)):
+                (check_jwt_present(data["connection_name"],
+                                   data["database_name"]) is None)):
             return {"result": "Jwt not configured"}, 400
 
         dir_path = create_dir(data["table_name"])

@@ -25,6 +25,7 @@ class JWT(Base):
 
     id = Column(Integer, primary_key=True)
     jwt_flag = Column(Boolean, nullable=False, unique=False)
+    connection_name = Column(String(255), nullable=False, unique=False)
+    database_name = Column(String(255), nullable=False, unique=True)
     table = Column(String(255), nullable=False, unique=True)
-    database_name = Column(String(255), nullable=False, unique=True) 
     create_dt = Column(DateTime(), server_default=text('CURRENT_TIMESTAMP'))
