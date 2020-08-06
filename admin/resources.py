@@ -185,7 +185,6 @@ class ContentType(Resource):
         #         },
         #     ]
         # }
-        pdb.set_trace()
         if "connection_name" in data:
             if data['connection_name'] not in DB_DICT:
                 return {
