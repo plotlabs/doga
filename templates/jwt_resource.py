@@ -185,7 +185,6 @@ class Register(Resource):
     """API to regiter model_obj."""
 
     def post(self):
-        pdb.set
         data = request.get_json()
         try:
             filter_keys = {key: data[key] for key in jwt_filter_keys}
