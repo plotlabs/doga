@@ -15,7 +15,10 @@ def generate_secret_key():
 
 
 def set_jwt_secret_key():
-    app.config['JWT_SECRET_KEY'] = generate_secret_key()
+    JWT_SECRET_KEY = generate_secret_key()
+    o = open("./config.py", "a")
+    o.write("JWT SECRET KEY = " + JWT_SECRET_KEY+"\n")
+    o.close()
 
 
 def extract_database_name(connection_name):
