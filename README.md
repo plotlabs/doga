@@ -58,16 +58,14 @@ The following APIs are available for creating and managing content types and dat
 		]
 	}
 ```
+<br>**Using JWT with content**
+<br>**If you want to integrate JWT with the content**
 
-## Plugins
-JWT 
-
-<br>** If you want to integrate JWT with the content**
-
-In Request body-
+In the Request body-
 - Set jwt_required as True
 - Set filter_keys as list of columns to use while issuing token
 - Set expiry key to set custom expiry time for tokens giving a unit and a value 
+
 <br>**Request JSON**:
  ```
 	data = {
@@ -93,10 +91,11 @@ In Request body-
 	}
 ```
 
-<br>** If you want to authenticate content APIs using JWT** 
+<br>**If you want to authenticate content APIs using JWT** 
 
-In Request body-
+In the Request body-
 - Set jwt_restricted as True
+
 <br>**Request JSON**:
  ```
 	data = {
