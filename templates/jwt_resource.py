@@ -7,15 +7,12 @@ from app import db
 from app.modulename.models import modelname
 from app.utils import AlchemyEncoder
 from sqlalchemy.exc import OperationalError, IntegrityError, StatementError
-from flask_jwt_extended import (jwt_required, create_access_token, create_refresh_token,
-                                get_jwt_identity)
+from flask_jwt_extended import (jwt_required, create_access_token,
+                                create_refresh_token)
 
 from flask import Blueprint, request, jsonify
 from flask_restful import Resource, Api
-from passlib.handlers.sha2_crypt import sha512_crypt
 
-
-ALGORITHM = sha512_crypt
 
 jwt_filter_keys = jwt_key
 
@@ -59,16 +56,16 @@ class Apis(Resource):
                                 data[col.name], "%Y-%m-%d")
                         except ValueError:
                             return {
-                               "result": "The format entered for column {} is "
-                                         "not correct. Correct format should"
-                                         " be of type: YYYY-MM-DD.".format(
-                                   col.name)}, 400
+                                "result": "The format entered for column {} is "
+                                "not correct. Correct format should"
+                                " be of type: YYYY-MM-DD.".format(
+                                    col.name)}, 400
                         except TypeError:
                             return {
-                               "result": "The format entered for column {} is "
-                                         "not correct. Correct format should"
-                                         " be of type: YYYY-MM-DD.".format(
-                                   col.name)}, 400
+                                "result": "The format entered for column {} is "
+                                "not correct. Correct format should"
+                                " be of type: YYYY-MM-DD.".format(
+                                    col.name)}, 400
                         except KeyError:
                             pass
 
@@ -78,16 +75,16 @@ class Apis(Resource):
                                 data[col.name], "%Y-%m-%d %H:%M:%S")
                         except ValueError:
                             return {
-                               "result": "The format entered for column {} is "
-                                         "not correct. Correct format should"
-                                         " be of type: YYYY-MM-DD H:M:S.".format(
-                                   col.name)}, 400
+                                "result": "The format entered for column {} is "
+                                "not correct. Correct format should"
+                                " be of type: YYYY-MM-DD H:M:S.".format(
+                                    col.name)}, 400
                         except TypeError:
                             return {
-                               "result": "The format entered for column {} is "
-                                         "not correct. Correct format should"
-                                         " be of type: YYYY-MM-DD H:M:S.".format(
-                                   col.name)}, 400
+                                "result": "The format entered for column {} is "
+                                "not correct. Correct format should"
+                                " be of type: YYYY-MM-DD H:M:S.".format(
+                                    col.name)}, 400
                         except KeyError:
                             pass
 
@@ -153,7 +150,7 @@ class Apis(Resource):
 
 
 class Login(Resource):
-    """API to login model_obj."""
+    """API to login"""
 
     def post(self):
         data = request.get_json()
@@ -165,10 +162,6 @@ class Login(Resource):
                 return {"result": model_name.__tablename__ +
                         " does not exist."}, 401
             else:
-                # match = ALGORITHM.verify(data["password"], .password)
-                # if not match:
-                #   return {"result": "Invalid password."}, 401
-                # else:
                 access_token = create_access_token(
                     identity=filter_keys)
                 refresh_token = create_refresh_token(
@@ -191,10 +184,6 @@ class Register(Resource):
             model_obj = model_name.query.filter_by(
                 **filter_keys).first()
             if model_obj is None:
-                # match = ALGORITHM.verify(data["password"], .password)
-                # if not match:
-                #   return {"result": "Invalid password."}, 401
-                # else:
                 model_obj = model_name(**filter_keys)
                 db.session.add(model_obj)
                 db.session.commit()
@@ -213,7 +202,6 @@ class Register(Resource):
             return {"result": "Key error", "error": str(e)}, 500
         except Exception:
             return {"result": "Unable to register"}, 500
-
 
 
 api_model.add_resource(Login, "/login")
