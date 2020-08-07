@@ -58,6 +58,65 @@ The following APIs are available for creating and managing content types and dat
 		]
 	}
 ```
+
+## Plugins
+JWT 
+
+<br>** If you want to integrate JWT with the content**
+
+In Request body-
+- Set jwt_required as True
+- Set filter_keys as list of columns to use while issuing token
+- Set expiry key to set custom expiry time for tokens giving a unit and a value 
+<br>**Request JSON**:
+ ```
+	data = {
+		"table_name": "table_name",
+		"connection_name": "user defined connection name",
+		"jwt_required": true,
+		"filter_keys": ["column_name_1","column_name_2],
+		"expiry": {
+			"unit" : "weeks/days/hours/minutes/seconds/microseconds/milliseconds",
+			"value" : "integer value"
+		}
+		"columns": [
+			{
+				"name": "column_name",
+				"type": "column_type",
+				"nullable": "True/False",
+				"unique": "True/False", 
+				"default": "value" or "",
+				"foreign_key": "foreign key table name"
+			},
+			{}.....
+		]
+	}
+```
+
+<br>** If you want to authenticate content APIs using JWT** 
+
+In Request body-
+- Set jwt_restricted as True
+<br>**Request JSON**:
+ ```
+	data = {
+		"table_name": "table_name",
+		"connection_name": "user defined connection name",
+		"jwt_restricted": true,
+		"columns": [
+			{
+				"name": "column_name",
+				"type": "column_type",
+				"nullable": "True/False",
+				"unique": "True/False", 
+				"default": "value" or "",
+				"foreign_key": "foreign key table name"
+			},
+			{}.....
+		]
+	}
+```
+
  3. Delete content type
 <br>**Endpoint-** /admin/content/types/content_type_name
  <br>**Method-** DELETE
