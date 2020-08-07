@@ -71,7 +71,7 @@ def create_resources(model_name, dir_path, jwt_required,
             unit = expiry["unit"]
             value = expiry["value"]
         else:
-            unit = hours
+            unit = 'hours'
             value = 4
 
         for line in open("templates/jwt_resource.py"):
@@ -80,7 +80,7 @@ def create_resources(model_name, dir_path, jwt_required,
             line = line.replace("bname", '"' + model_name.lower() + '"')
             line = line.replace("jwt_key", str(filter_keys))
             line = line.replace("expiry_unit", unit)
-            line = line.replace("expiry_value", value)
+            line = line.replace("expiry_value", str(value))
             line = line.replace("endpoint", '"/"')
             line = line.replace("param", '"/<int:id>"')
             o.write(line)
