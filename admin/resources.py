@@ -229,6 +229,7 @@ class ContentType(Resource):
         create_model(dir_path, data)
         create_resources(data["table_name"], dir_path,
                          data.get("jwt_required", False),
+                         data.get("expiry", {}),
                          data.get("jwt_restricted", False),
                          data.get("filter_keys", ["id"]))
         append_blueprint(data["table_name"])

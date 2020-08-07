@@ -16,7 +16,6 @@ from flask_restful import Resource, Api
 
 jwt_filter_keys = jwt_key
 
-
 mod_model = Blueprint(bname, __name__)
 api_model = Api()
 api_model.init_app(mod_model)
@@ -162,8 +161,9 @@ class Login(Resource):
                 return {"result": model_name.__tablename__ +
                         " does not exist."}, 401
             else:
+                expiry_time = datetime.timedelta(expiry_unit=expiry_value)
                 access_token = create_access_token(
-                    identity=filter_keys)
+                    identity=filter_keys, expires_delta=expiry_time)
                 refresh_token = create_refresh_token(
                     identity=filter_keys)
                 return {"result": "Logged in Successfully.",
@@ -187,14 +187,8 @@ class Register(Resource):
                 model_obj = model_name(**filter_keys)
                 db.session.add(model_obj)
                 db.session.commit()
-                access_token = create_access_token(
-                    identity=filter_keys)
-                refresh_token = create_refresh_token(
-                    identity=filter_keys)
                 return {"result": "Registered Successfully.",
-                        "id": model_obj.id,
-                        'access_token': access_token,
-                        'refresh_token': refresh_token}
+                        "id": model_obj.id}
             else:
                 return {"result": model_name.__tablename__ +
                         "Already registered"}, 409

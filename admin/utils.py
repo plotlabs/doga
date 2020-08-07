@@ -17,7 +17,7 @@ def generate_secret_key():
 def set_jwt_secret_key():
     JWT_SECRET_KEY = generate_secret_key()
     o = open("./config.py", "a")
-    o.write("JWT_SECRET_KEY = " + str(JWT_SECRET_KEY) + "\n")
+    o.write("JWT_SECRET_KEY = ' " + JWT_SECRET_KEY + "'\n")
     o.close()
 
 

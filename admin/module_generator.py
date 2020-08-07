@@ -62,16 +62,25 @@ def create_model(dir_path, data):
 
 
 def create_resources(model_name, dir_path, jwt_required,
-                     jwt_restricted, filter_keys):
+                     expiry, jwt_restricted, filter_keys):
     """Function to create the CRUD Restful APIs for the module"""
     o = open(dir_path + "/resources.py", "w")
 
     if jwt_required is True:
+        if expiry:
+            unit = expiry["unit"]
+            value = expiry["value"]
+        else:
+            unit = hours
+            value = 4
+
         for line in open("templates/jwt_resource.py"):
             line = line.replace("modulename", model_name.lower())
             line = line.replace("modelname", model_name.title())
             line = line.replace("bname", '"' + model_name.lower() + '"')
             line = line.replace("jwt_key", str(filter_keys))
+            line = line.replace("expiry_unit", unit)
+            line = line.replace("expiry_value", value)
             line = line.replace("endpoint", '"/"')
             line = line.replace("param", '"/<int:id>"')
             o.write(line)
@@ -83,7 +92,8 @@ def create_resources(model_name, dir_path, jwt_required,
                 line = line.replace("def post", "@jwt_required\n    def post")
                 line = line.replace("def get", "@jwt_required\n    def get")
                 line = line.replace("def put", "@jwt_required\n    def put")
-                line = line.replace("def delete", "@jwt_required\n    def delete")
+                line = line.replace(
+                    "def delete", "@jwt_required\n    def delete")
 
             line = line.replace("modulename", model_name.lower())
             line = line.replace("modelname", model_name.title())
