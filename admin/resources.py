@@ -18,6 +18,7 @@ mod_admin = Blueprint("admin", __name__)
 api_admin = Api()
 api_admin.init_app(mod_admin)
 
+
 class AdminApi(Resource):
     """APIs to create a admin and return admin info if a admin exists"""
 
@@ -215,7 +216,13 @@ class ContentType(Resource):
                     data["connection_name"], data["database_name"]):
                 return {"result": "Only one table is allowed to set jwt per"
                         "database connection"}, 400
+            elif validate_filter_keys(
+                    data.get("filter_keys", []), data["columns"]) is False:
+                return {"result": "Only column names are allowed"
+                        " in filter keys"}, 400
             else:
+                if len(data.get("filter_keys", [])) == 0:
+                    data["filter_keys"] = ["id"]
                 set_jwt_flag(data["connection_name"],
                              data["database_name"], data["table_name"])
                 set_jwt_secret_key()

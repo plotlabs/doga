@@ -191,7 +191,7 @@ class Register(Resource):
                         "id": model_obj.id}
             else:
                 return {"result": model_name.__tablename__ +
-                        "Already registered"}, 409
+                        " Already registered"}, 409
         except KeyError as e:
             return {"result": "Key error", "error": str(e)}, 500
         except Exception:

@@ -223,11 +223,17 @@ def add_new_db(conn_name):
     migrate()
 
 
-def check_jwt_present(connection_name, database_name,):
+def check_jwt_present(connection_name, database_name):
     # check if JWT is already linked to the given database and connection
     jwt_obj = JWT.query.filter_by(
         connection_name=connection_name, database_name=database_name).first()
     return jwt_obj
+
+
+def validate_filter_keys(filter_keys, columns):
+    # check if filter keys given are are valid columns
+    column_names = [col['name'] for col in columns]
+    return (set(filter_keys).issubset(set(column_names)))
 
 
 def set_jwt_flag(connection_name, database_name, table_name):
