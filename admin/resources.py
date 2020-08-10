@@ -10,7 +10,7 @@ from admin.models import Admin
 from admin.validators import column_types, column_validation, nullable_check
 from dbs import DB_DICT
 from passlib.handlers.sha2_crypt import sha512_crypt
-
+from admin.utils import *
 
 ALGORITHM = sha512_crypt
 
@@ -65,7 +65,7 @@ class Login(Resource):
                     return {"result": "Invalid password."}, 401
                 else:
                     return {"result": "Successfully logged in", "email":
-                        admin.email, "name": admin.name}
+                            admin.email, "name": admin.name}
         except KeyError as e:
             return {"result": "Key error", "error": str(e)}, 500
 
@@ -123,15 +123,15 @@ class ContentType(Resource):
                         default = str(c.default)
                         if c.default is not None:
                             default = default[
-                                      default.find("(") + 1:default.find(")")
-                                      ].replace("'", "")
+                                default.find("(") + 1:default.find(")")
+                            ].replace("'", "")
                         c_type = str(c.type)
                         foreign_key = str(c.foreign_keys)
                         if c.foreign_keys != "":
                             foreign_key = foreign_key[
-                                          foreign_key.find(
-                                              "(") + 1:foreign_key.find(")")
-                                          ].replace("'", "")
+                                foreign_key.find(
+                                    "(") + 1:foreign_key.find(")")
+                            ].replace("'", "")
                             if foreign_key != "":
                                 foreign_key = foreign_key.split(".")[0].title()
                         if foreign_key != "":
@@ -209,9 +209,36 @@ class ContentType(Resource):
         if valid is False:
             return {"result": msg}, 400
 
+        data["database_name"] = extract_database_name(data["connection_name"])
+
+        if data.get("jwt_required", False) is True:
+            if check_jwt_present(
+                    data["connection_name"], data["database_name"]):
+                return {"result": "Only one table is allowed to set jwt per"
+                        "database connection"}, 400
+            elif validate_filter_keys(
+                    data.get("filter_keys", []), data["columns"]) is False:
+                return {"result": "Only column names are allowed"
+                        " in filter keys"}, 400
+            else:
+                if len(data.get("filter_keys", [])) == 0:
+                    data["filter_keys"] = ["id"]
+                set_jwt_flag(data["connection_name"],
+                             data["database_name"], data["table_name"])
+                set_jwt_secret_key()
+
+        if (data.get("jwt_restricted", False) is True and
+                (check_jwt_present(data["connection_name"],
+                                   data["database_name"]) is None)):
+            return {"result": "Jwt not configured"}, 400
+
         dir_path = create_dir(data["table_name"])
         create_model(dir_path, data)
-        create_resources(data["table_name"], dir_path)
+        create_resources(data["table_name"], dir_path,
+                         data.get("jwt_required", False),
+                         data.get("expiry", {}),
+                         data.get("jwt_restricted", False),
+                         data.get("filter_keys", ["id"]))
         append_blueprint(data["table_name"])
         remove_alembic_versions()
         move_migration_files()
@@ -291,7 +318,7 @@ class ContentType(Resource):
             return {
                 "result": "The table {} is linked to another table(s). "
                           "Delete table(s) {} first.".format(
-                    content_type, ', '.join(tables_list))
+                              content_type, ', '.join(tables_list))
             }, 400
 
         try:
@@ -394,7 +421,7 @@ class DatabaseInit(Resource):
             for i, line in enumerate(lines):
                 if line.startswith('}'):
                     line = '    "' + data['connection_name'] + '": "' + string\
-                           + '",\n' + line
+                        + '",\n' + line
                 f.write(line)
 
         add_new_db(data['connection_name'])

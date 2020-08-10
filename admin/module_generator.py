@@ -2,11 +2,12 @@ import os
 import shutil
 import subprocess
 import datetime
-
 from sqlalchemy.exc import OperationalError, ProgrammingError
 
+from app import db
 from admin.version_models import *
 from dbs import ALEMBIC_LIST, DB_DICT
+from admin.models import JWT
 
 
 def create_dir(model_name):
@@ -55,21 +56,52 @@ def create_model(dir_path, data):
                     col["default"]) + "'))\n"
         if col["foreign_key"] != "":
             line = line + "\n    " + col["foreign_key"].lower() + \
-                   " = relationship('" + col["foreign_key"] + "')\n"
+                " = relationship('" + col["foreign_key"] + "')\n"
         o.write(line)
     o.close()
 
 
-def create_resources(model_name, dir_path):
+def create_resources(model_name, dir_path, jwt_required,
+                     expiry, jwt_restricted, filter_keys):
     """Function to create the CRUD Restful APIs for the module"""
     o = open(dir_path + "/resources.py", "w")
-    for line in open("templates/resources.py"):
-        line = line.replace("modulename", model_name.lower())
-        line = line.replace("modelname", model_name.title())
-        line = line.replace("bname", '"' + model_name.lower() + '"')
-        line = line.replace("endpoint", '"/"')
-        line = line.replace("param", '"/<int:id>"')
-        o.write(line)
+
+    if jwt_required is True:
+        if expiry:
+            unit = expiry["unit"]
+            value = expiry["value"]
+        else:
+            unit = 'hours'
+            value = 4
+
+        for line in open("templates/jwt_resource.py"):
+            line = line.replace("modulename", model_name.lower())
+            line = line.replace("modelname", model_name.title())
+            line = line.replace("bname", '"' + model_name.lower() + '"')
+            line = line.replace("jwt_key", str(filter_keys))
+            line = line.replace("expiry_unit", unit)
+            line = line.replace("expiry_value", str(value))
+            line = line.replace("endpoint", '"/"')
+            line = line.replace("param", '"/<int:id>"')
+            o.write(line)
+
+    else:
+        for line in open("templates/resources.py"):
+
+            if jwt_restricted is True:
+                line = line.replace("def post", "@jwt_required\n    def post")
+                line = line.replace("def get", "@jwt_required\n    def get")
+                line = line.replace("def put", "@jwt_required\n    def put")
+                line = line.replace(
+                    "def delete", "@jwt_required\n    def delete")
+
+            line = line.replace("modulename", model_name.lower())
+            line = line.replace("modelname", model_name.title())
+            line = line.replace("bname", '"' + model_name.lower() + '"')
+            line = line.replace("endpoint", '"/"')
+            line = line.replace("param", '"/<int:id>"')
+            o.write(line)
+
     o.close()
 
 
@@ -190,3 +222,28 @@ def add_new_db(conn_name):
         shutil.rmtree('migrations')
     migrate()
 
+
+def check_jwt_present(connection_name, database_name):
+    # check if JWT is already linked to the given database and connection
+    jwt_obj = JWT.query.filter_by(
+        connection_name=connection_name, database_name=database_name).first()
+    return jwt_obj
+
+
+def validate_filter_keys(filter_keys, columns):
+    # check if filter keys given are are valid columns
+    column_names = [col['name'] for col in columns]
+    return (set(filter_keys).issubset(set(column_names)))
+
+
+def set_jwt_flag(connection_name, database_name, table_name):
+
+    try:
+        jwt_obj = JWT(jwt_flag=True,
+                      connection_name=connection_name,
+                      database_name=database_name,
+                      table=table_name)
+        db.session.add(jwt_obj)
+        db.session.commit()
+    except Exception as e:
+        return {"result": e}, 500

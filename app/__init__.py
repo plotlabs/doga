@@ -2,6 +2,7 @@ from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_cors import CORS
+from flask_jwt_extended import JWTManager
 
 
 # Define application object
@@ -16,6 +17,8 @@ db = SQLAlchemy(app)
 from .blueprints import *
 
 migrate = Migrate(app, db)
+
+jwt = JWTManager(app)
 
 
 @app.after_request
