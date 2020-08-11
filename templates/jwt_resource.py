@@ -179,23 +179,89 @@ class Register(Resource):
 
     def post(self):
         data = request.get_json()
+        model_obj = model_name()
+        for col in model_name.__table__.columns:
+            col_name = col.name
+            if col_name not in ['id', 'create_dt']:
+                if str(col.type).upper() == "DATE":
+                    try:
+                        data[col.name] = datetime.datetime.strptime(
+                            data[col.name], "%Y-%m-%d")
+                    except ValueError:
+                        return {
+                            "result": "The format entered for column {} is "
+                                      "not correct. Correct format should"
+                                      " be of type: YYYY-MM-DD.".format(
+                                col.name)}, 400
+                    except TypeError:
+                        return {
+                            "result": "The format entered for column {} is "
+                                      "not correct. Correct format should"
+                                      " be of type: YYYY-MM-DD.".format(
+                                col.name)}, 400
+                    except KeyError:
+                        pass
+
+                elif str(col.type).upper() == "DATETIME":
+                    try:
+                        data[col.name] = datetime.datetime.strptime(
+                            data[col.name], "%Y-%m-%d %H:%M:%S")
+                    except ValueError:
+                        return {
+                            "result": "The format entered for column {} is "
+                                      "not correct. Correct format should"
+                                      " be of type: YYYY-MM-DD H:M:S.".format(
+                                col.name)}, 400
+                    except TypeError:
+                        return {
+                            "result": "The format entered for column {} is "
+                                      "not correct. Correct format should"
+                                      " be of type: YYYY-MM-DD H:M:S.".format(
+                                col.name)}, 400
+                    except KeyError:
+                        pass
+
+                elif str(col.type).upper() in ['INTEGER', 'BIGINTEGER',
+                                             'BIGINT', 'FLOAT', 'INT',
+                                             'SMALLINT', 'NUMERIC',
+                                             'SMALLINTEGER', 'DECIMAL',
+                                             'REAL']:
+                    if isinstance(data[col.name], str):
+                        return {"result": "The value entered for column {} "
+                                          "is string and not of type {}"
+                                          "".format(col.name, col.type)}, 400
+
+                if len(col.foreign_keys) > 0:
+                    for f in col.foreign_keys:
+                        model_endp = str(f).split("'")[1].split('.')[0]
+                        foreign_obj = requests.get(
+                            'http://localhost:8080/' + model_endp +
+                            '/' + str(data[col.name]))
+                        result = json.loads(foreign_obj.content)["result"]
+
+                        if len(result) == 0:
+                            return {"result": "Foreign Key constraint "
+                                              "failed for column "
+                                              "{}".format(col.name)}, 400
+
+        for key, value in data.items():
+            setattr(model_obj, key, value)
+        db.session.add(model_obj)
+
         try:
-            filter_keys = {key: data[key] for key in jwt_filter_keys}
-            model_obj = model_name.query.filter_by(
-                **filter_keys).first()
-            if model_obj is None:
-                model_obj = model_name(**filter_keys)
-                db.session.add(model_obj)
-                db.session.commit()
-                return {"result": "Registered Successfully.",
-                        "id": model_obj.id}
-            else:
-                return {"result": model_name.__tablename__ +
-                        " Already registered"}, 409
-        except KeyError as e:
-            return {"result": "Key error", "error": str(e)}, 500
-        except Exception:
-            return {"result": "Unable to register"}, 500
+            db.session.commit()
+        except OperationalError as e:
+            return {"result": e.orig.args[1].split(' at ')[0]}, 400
+        except IntegrityError as e:
+            try:
+                return {"result": str(e.orig).split('\n')[0].replace(
+                    '"', '').split(',')[1].replace(")", '').title()}, 400
+            except IndexError:
+                return {"result": str(e.orig).split('\n')[0].replace(
+                    '"', '').title()}, 400
+        except StatementError as e:
+            return {"result": str(e.orig)}, 400
+        return {"result": 'Registered Successfully'}
 
 
 api_model.add_resource(Login, "/login")
