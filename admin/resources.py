@@ -252,9 +252,9 @@ class ContentType(Resource):
         create_model(dir_path, data)
         create_resources(data["table_name"], dir_path,
                          data["jwt_required"],
-                         data["expiry"],
+                         data.get("expiry", {}),
                          data["jwt_restricted"],
-                         data["filter_keys"])
+                         data.get("filter_keys", []))
         append_blueprint(data["table_name"])
         remove_alembic_versions()
         move_migration_files()
