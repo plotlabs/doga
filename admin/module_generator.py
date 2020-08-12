@@ -67,20 +67,14 @@ def create_resources(model_name, dir_path, jwt_required,
     o = open(dir_path + "/resources.py", "w")
 
     if jwt_required is True:
-        if expiry:
-            unit = expiry["unit"]
-            value = expiry["value"]
-        else:
-            unit = 'hours'
-            value = 4
 
         for line in open("templates/jwt_resource.py"):
             line = line.replace("modulename", model_name.lower())
             line = line.replace("modelname", model_name.title())
             line = line.replace("bname", '"' + model_name.lower() + '"')
             line = line.replace("jwt_key", str(filter_keys))
-            line = line.replace("expiry_unit", unit)
-            line = line.replace("expiry_value", str(value))
+            line = line.replace("expiry_unit", expiry['unit'])
+            line = line.replace("expiry_value", str(expiry['value']))
             line = line.replace("endpoint", '"/"')
             line = line.replace("param", '"/<int:id>"')
             o.write(line)
@@ -230,10 +224,53 @@ def check_jwt_present(connection_name, database_name):
     return jwt_obj
 
 
-def validate_filter_keys(filter_keys, columns):
+def validate_filter_keys_names(filter_keys, columns):
     # check if filter keys given are are valid columns
+    if "id" in filter_keys:
+        return True
     column_names = [col['name'] for col in columns]
     return (set(filter_keys).issubset(set(column_names)))
+
+
+def validate_filter_keys_jwt(filter_keys, columns):
+    # check if filter keys given generate a unique set
+    if "id" in filter_keys:
+        return True
+    for col in columns:
+        if col["name"] in filter_keys:
+            if col["unique"] == 'True' and col["nullable"] == 'False':
+                return True
+    return False
+
+
+def set_expiry(expiry):
+    msg = ''
+    valid = True
+    units = ['days', 'seconds', 'microseconds',
+             'milliseconds', 'minutes', 'hours', 'weeks']
+    try:
+        if bool(expiry):
+            if expiry["unit"] == "":
+                expiry["unit"] = 'hours'
+            elif expiry['unit'] not in units:
+                msg = 'unit of expiry time not a valid one'
+                valid = False
+                return msg, valid, expiry
+            if expiry["value"] == "":
+                expiry["value"] = 4
+            if type(expiry["value"]) not in [int, float]:
+                msg = 'value of expiry time should be an integer'
+                valid = False
+                return msg, valid, expiry
+        else:
+            expiry = {
+                "unit": 'hours',
+                "value": 4
+            }
+        valid = True
+        return msg, valid, expiry
+    except KeyError as e:
+        return {"result": "Key error", "error": str(e)}, 500
 
 
 def set_jwt_flag(connection_name, database_name, table_name):
