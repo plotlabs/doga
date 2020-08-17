@@ -211,23 +211,39 @@ class ContentType(Resource):
 
         data["database_name"] = extract_database_name(data["connection_name"])
 
-        if data.get("jwt_required", False) is True:
+        data["jwt_required"] = data.get("jwt_required", False)
+        if data["jwt_required"] is True:
+
             if check_jwt_present(
                     data["connection_name"], data["database_name"]):
                 return {"result": "Only one table is allowed to set jwt per"
                         "database connection"}, 400
-            elif validate_filter_keys(
-                    data.get("filter_keys", []), data["columns"]) is False:
+
+            if (data.get("filter_keys") is None or
+                    len(data.get("filter_keys", [])) == 0):
+                data["filter_keys"] = ["id"]
+
+            if validate_filter_keys_names(
+                    data["filter_keys"], data["columns"]) is False:
                 return {"result": "Only column names are allowed"
                         " in filter keys"}, 400
-            else:
-                if len(data.get("filter_keys", [])) == 0:
-                    data["filter_keys"] = ["id"]
-                set_jwt_flag(data["connection_name"],
-                             data["database_name"], data["table_name"])
-                set_jwt_secret_key()
 
-        if (data.get("jwt_restricted", False) is True and
+            if validate_filter_keys_jwt(
+                    data["filter_keys"], data["columns"]) is False:
+                return {"result": "Atleast one of the filter_keys"
+                        " should be unique and not null"}, 400
+
+            msg, valid, data["expiry"] = set_expiry(data.get("expiry", {}))
+
+            if valid is False:
+                return {"result": msg}, 400
+
+            set_jwt_flag(data["connection_name"],
+                         data["database_name"], data["table_name"])
+            set_jwt_secret_key()
+
+        data["jwt_restricted"] = data.get("jwt_restricted", False)
+        if (data["jwt_restricted"] is True and
                 (check_jwt_present(data["connection_name"],
                                    data["database_name"]) is None)):
             return {"result": "Jwt not configured"}, 400
@@ -235,10 +251,10 @@ class ContentType(Resource):
         dir_path = create_dir(data["table_name"])
         create_model(dir_path, data)
         create_resources(data["table_name"], dir_path,
-                         data.get("jwt_required", False),
+                         data["jwt_required"],
                          data.get("expiry", {}),
-                         data.get("jwt_restricted", False),
-                         data.get("filter_keys", ["id"]))
+                         data["jwt_restricted"],
+                         data.get("filter_keys", []))
         append_blueprint(data["table_name"])
         remove_alembic_versions()
         move_migration_files()
