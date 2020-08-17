@@ -84,7 +84,8 @@ class Apis(Resource):
                                              'SMALLINT', 'NUMERIC',
                                              'SMALLINTEGER', 'DECIMAL',
                                              'REAL']:
-                    if isinstance(data[col.name], str):
+               
+                    if data.get(col.name) and isinstance(data[col.name], str):
                         return {"result": "The value entered for column {} "
                                           "is string and not of type {}"
                                           "".format(col.name, col.type)}, 400
