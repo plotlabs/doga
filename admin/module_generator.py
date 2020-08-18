@@ -145,10 +145,10 @@ def migrate():
     if sys_platform in ['Linux', 'Darwin']:
         run_command = "sh restart.sh"
     else:
-        run_command = "start "" /b restart.bat"
+        run_command = "start "" /b restart.bat " + str(pid)
     if pid != '':
         os.system(migrate_command + " && " + upgrade_command + " && "
-                  + run_command + " " + str(pid))
+                  + run_command)
 
 
 def remove_alembic_versions():
