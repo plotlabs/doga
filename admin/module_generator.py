@@ -1,4 +1,5 @@
 import os
+import platform
 import shutil
 import subprocess
 import datetime
@@ -8,6 +9,7 @@ from app import db
 from admin.version_models import *
 from dbs import ALEMBIC_LIST, DB_DICT
 from admin.models import JWT
+
 
 def create_dir(model_name):
     """Function to create an empty directory for the module"""
@@ -135,20 +137,16 @@ def migrate():
     migrate_folder = os.path.exists('migrations')
     if not migrate_folder:
         subprocess.check_output('flask db init --multidb', shell=True)
-    """
-     command = "ps -eaf | grep 'python runserver.py' | grep -v grep | awk '{" \
-              "print $2}'"
-    process = subprocess.check_output(command, shell=True)
-    pid = process.decode("utf-8").split('\n')[0]
-    """
     pid = os.getpid()
     revision_id = datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
     migrate_command = "flask db migrate --rev-id " + revision_id
     upgrade_command = "flask db upgrade"
-    #  run_command = "sh restart.sh"
-    run_command = "start "" /b  restart.bat"
+    sys_platform = platform.system()
+    if sys_platform in ['Linux', 'Darwin']:
+        run_command = "sh restart.sh"
+    else:
+        run_command = "start "" /b restart.bat"
     if pid != '':
-        # subprocess.Popen('taskkill /f /pid ' + str(pid), shell=True)
         os.system(migrate_command + " && " + upgrade_command + " && "
                   + run_command + " " + str(pid))
 
