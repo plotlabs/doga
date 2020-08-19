@@ -98,6 +98,10 @@ def column_validation(schema_list, connection_name, table_columns=None):
                     break
 
             if column["type"].upper() == "BOOLEAN":
+                if connection_name == "default":
+                    valid = False
+                    msg = "{} datatype for columns is not supported by " \
+                        "default database connection".format(column["type"])
                 if column["default"] not in ['1', '0', 'true', 'false']:
                     valid = False
                     msg = "The default value entered for column {} is not of" \
