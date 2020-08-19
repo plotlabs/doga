@@ -98,7 +98,7 @@ def column_validation(schema_list, connection_name, table_columns=None):
                     break
 
             if column["type"].upper() == "BOOLEAN":
-                if column["default"] not in [1, 0, 'true', 'false']:
+                if column["default"] not in ['1', '0', 'true', 'false']:
                     valid = False
                     msg = "The default value entered for column {} is not of" \
                           " type {}".format(column["name"], column["type"])

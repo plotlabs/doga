@@ -526,6 +526,6 @@ api_admin.add_resource(AdminApi, '/admin_profile',
 api_admin.add_resource(Login, '/login')
 api_admin.add_resource(ContentType, '/content/types',
                        '/content/types/<string:content_type>')
-api_admin.add_resource(DatabaseInit, '/dbinit/',
+api_admin.add_resource(DatabaseInit, '/dbinit',
                        '/dbinit/types/<string:content_type>')
 api_admin.add_resource(ColumnType, '/columntypes')
