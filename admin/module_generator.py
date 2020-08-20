@@ -56,6 +56,9 @@ def create_model(dir_path, data):
                         col["default"] = "CURRENT_TIMESTAMP"
                         line = line + ", server_default=text('" + str(
                             col["default"]) + "'))\n"
+                    elif col["type"].upper() == "BOOLEAN":
+                        line = line + ", server_default=text('" + str(
+                            col["default"]) + "'))\n"
                     else:
                         line = line + ", server_default='" + str(
                             col["default"]) + "')\n"
