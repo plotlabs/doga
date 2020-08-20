@@ -12,7 +12,7 @@ class AlchemyEncoder(json.JSONEncoder):
             fields = {}
 
             for field in [x for x in dir(obj) if not x.startswith('_') and
-                                                 x != 'metadata']:
+                          x != 'metadata']:
                 data = obj.__getattribute__(field)
 
                 if field in ["password", "keys", "query", "query_class",

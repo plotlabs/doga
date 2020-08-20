@@ -262,13 +262,15 @@ def set_expiry(expiry):
             if expiry["unit"] == "":
                 expiry["unit"] = 'hours'
             elif expiry['unit'] not in units:
-                msg = 'unit of expiry time not a valid one'
+                msg = "Unit of expiry time for JWT token is not" \
+                    " a valid one."
                 valid = False
                 return msg, valid, expiry
             if expiry["value"] == "":
                 expiry["value"] = 4
             if type(expiry["value"]) not in [int, float]:
-                msg = 'value of expiry time should be an integer'
+                msg = 'Value of expiry time for JWT token should' \
+                    ' be an integer.'
                 valid = False
                 return msg, valid, expiry
         else:

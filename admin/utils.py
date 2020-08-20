@@ -1,13 +1,13 @@
 import secrets
 import string
 import random
-from app import app
+
 from dbs import DB_DICT
 
 
 def generate_secret_key():
     N = random.randint(7, 15)
-    # length of key in range [7,15]
+    # length of secret key in range [7,15]
     res = ''.join(secrets.choice(string.ascii_uppercase +
                                  string.ascii_lowercase + string.digits)
                   for i in range(N))
