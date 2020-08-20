@@ -3,14 +3,16 @@ import json
 from flask import Blueprint, request, jsonify
 from flask_restful import Api, Resource
 
+from passlib.handlers.sha2_crypt import sha512_crypt
+
 from templates.models import metadata
 from app.utils import AlchemyEncoder
 from admin.module_generator import *
 from admin.models import Admin
 from admin.validators import column_types, column_validation, nullable_check
-from dbs import DB_DICT
-from passlib.handlers.sha2_crypt import sha512_crypt
 from admin.utils import *
+
+from dbs import DB_DICT
 
 ALGORITHM = sha512_crypt
 
@@ -27,8 +29,8 @@ class AdminApi(Resource):
         if admin is not None:
             user_obj = json.dumps(admin, cls=AlchemyEncoder)
             return {"result": json.loads(user_obj)}
-        else:
-            return {"result": "Admin does not exist."}, 404
+
+        return {"result": "Admin does not exist."}, 404
 
     def post(self):
         data = request.get_json()
@@ -217,7 +219,7 @@ class ContentType(Resource):
             if check_jwt_present(
                     data["connection_name"], data["database_name"]):
                 return {"result": "Only one table is allowed to set jwt per"
-                        "database connection."}, 400
+                                  "database connection."}, 400
 
             if (data.get("filter_keys") is None or
                     len(data.get("filter_keys", [])) == 0):
@@ -226,12 +228,12 @@ class ContentType(Resource):
             if validate_filter_keys_names(
                     data["filter_keys"], data["columns"]) is False:
                 return {"result": "Only column names are allowed"
-                        " in filter keys."}, 400
+                                  " in filter keys."}, 400
 
             if validate_filter_keys_jwt(
                     data["filter_keys"], data["columns"]) is False:
                 return {"result": "Atleast one of the filter_keys"
-                        " should be unique and not null."}, 400
+                                  " should be unique and not null."}, 400
 
             msg, valid, data["expiry"] = set_expiry(data.get("expiry", {}))
 

@@ -1,7 +1,9 @@
 import keyword
-import requests
-import datetime
 import json
+import datetime
+import requests
+
+
 from sqlalchemy import types
 from templates.models import metadata
 
@@ -68,7 +70,7 @@ def column_validation(schema_list, connection_name, table_columns=None):
                     valid = False
                     msg = "The default value entered for column {} is string" \
                           " and not of type {}.".format(column["name"],
-                                                       column["type"])
+                                                        column["type"])
                     break
 
             if column["type"].upper() in ['DATE']:
@@ -140,7 +142,7 @@ def nullable_check(data):
                     'table_name'])
                 if len(json.loads(model_data.content)["result"]) != 0:
                     return True
-                else:
-                    return False
+
+                return False
 
     return False
