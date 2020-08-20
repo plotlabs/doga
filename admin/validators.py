@@ -12,9 +12,9 @@ from admin.module_generator import check_table
 def column_types():
     """Get a list of all possible column types"""
     type_list = filter(lambda t: not (
-            t[0:1] == "_" or
-            t.endswith(("type", "TYPE", "Type", "instance")) or
-            t.startswith(("Type", "Unicode", "VARBINARY", "Variant"))
+        t[0:1] == "_" or
+        t.endswith(("type", "TYPE", "Type", "instance")) or
+        t.startswith(("Type", "Unicode", "VARBINARY", "Variant"))
     ), dir(types))
     return list(type_list)
 
@@ -35,7 +35,8 @@ def column_validation(schema_list, connection_name, table_columns=None):
             break
         if column["type"].split("(")[0] not in column_types():
             valid = False
-            msg = "Invalid column type for column " + column["name"]
+            msg = "Invalid column type for column {}.".format(
+                column["name"])
             break
         if column["foreign_key"] != "":
             if not check_table(column["foreign_key"], connection_name):
@@ -52,7 +53,7 @@ def column_validation(schema_list, connection_name, table_columns=None):
                 column["unique"] == 'True':
             valid = False
             msg = "Unique constraint on TEXT column type is not" \
-                " allowed for mysql database"
+                " allowed for mysql database."
             break
         if column["name"] in keyword.kwlist:
             valid = False
@@ -66,7 +67,7 @@ def column_validation(schema_list, connection_name, table_columns=None):
                 if isinstance(column["default"], str):
                     valid = False
                     msg = "The default value entered for column {} is string" \
-                          " and not of type {}".format(column["name"],
+                          " and not of type {}.".format(column["name"],
                                                        column["type"])
                     break
 
@@ -109,12 +110,12 @@ def column_validation(schema_list, connection_name, table_columns=None):
                 if connection_name == "default":
                     valid = False
                     msg = "{} datatype for columns is not supported by " \
-                        "default database connection".format(column["type"])
+                        "default database connection.".format(column["type"])
                     break
                 if column["default"] not in ['1', '0', 'true', 'false']:
                     valid = False
                     msg = "The default value entered for column {} is not of" \
-                          " type {}".format(column["name"], column["type"])
+                          " type {}.".format(column["name"], column["type"])
                     break
 
         if table_columns:
@@ -132,7 +133,8 @@ def nullable_check(data):
     for table in metadata.sorted_tables:
         if table.name == data['table_name']:
             valid, msg = column_validation(data["columns"],
-                            data['connection_name'], table.columns)
+                                           data['connection_name'],
+                                           table.columns)
             if valid is False:
                 model_data = requests.get('http://localhost:8080/' + data[
                     'table_name'])
