@@ -9,7 +9,7 @@ from templates.models import metadata
 
 from dbs import DB_DICT
 from admin.module_generator import check_table
-
+from config import PORT
 
 def column_types():
     """Get a list of all possible column types"""
@@ -138,8 +138,8 @@ def nullable_check(data):
                                            data['connection_name'],
                                            table.columns)
             if valid is False:
-                model_data = requests.get('http://localhost:8080/' + data[
-                    'table_name'])
+                model_data = requests.get('http://localhost:' + PORT + '/'
+                 + data['table_name'])
                 if len(json.loads(model_data.content)["result"]) != 0:
                     return True
 
