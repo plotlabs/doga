@@ -1,4 +1,5 @@
 import os
+import platform
 import shutil
 import subprocess
 import datetime
@@ -53,6 +54,9 @@ def create_model(dir_path, data):
                 if isinstance(col["default"], str):
                     if col["default"].lower() == "current":
                         col["default"] = "CURRENT_TIMESTAMP"
+                        line = line + ", server_default=text('" + str(
+                            col["default"]) + "'))\n"
+                    elif col["type"].upper() == "BOOLEAN":
                         line = line + ", server_default=text('" + str(
                             col["default"]) + "'))\n"
                     else:
@@ -136,20 +140,18 @@ def migrate():
     migrate_folder = os.path.exists('migrations')
     if not migrate_folder:
         subprocess.check_output('flask db init --multidb', shell=True)
-
-    command = "ps -eaf | grep 'python runserver.py' | grep -v grep | awk '{" \
-              "print $2}'"
-    process = subprocess.check_output(command, shell=True)
-    pid = process.decode("utf-8").split('\n')[0]
-
+    pid = os.getpid()
     revision_id = datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
     migrate_command = "flask db migrate --rev-id " + revision_id
     upgrade_command = "flask db upgrade"
-    run_command = "sh restart.sh"
+    sys_platform = platform.system()
+    if sys_platform in ['Linux', 'Darwin']:
+        run_command = "sh restart.sh"
+    else:
+        run_command = "start "" /b restart.bat"
     if pid != '':
-        subprocess.Popen('kill -9 ' + str(pid), shell=True)
         os.system(migrate_command + " && " + upgrade_command + " && "
-                  + run_command)
+                  + run_command + " " + str(pid))
 
 
 def remove_alembic_versions():
@@ -260,13 +262,15 @@ def set_expiry(expiry):
             if expiry["unit"] == "":
                 expiry["unit"] = 'hours'
             elif expiry['unit'] not in units:
-                msg = 'unit of expiry time not a valid one'
+                msg = "Unit of expiry time for JWT token is not" \
+                    " a valid one."
                 valid = False
                 return msg, valid, expiry
             if expiry["value"] == "":
                 expiry["value"] = 4
             if type(expiry["value"]) not in [int, float]:
-                msg = 'value of expiry time should be an integer'
+                msg = 'Value of expiry time for JWT token should' \
+                    ' be an integer.'
                 valid = False
                 return msg, valid, expiry
         else:

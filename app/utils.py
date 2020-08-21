@@ -1,5 +1,6 @@
-from sqlalchemy.ext.declarative import DeclarativeMeta
 import json
+from sqlalchemy.ext.declarative import DeclarativeMeta
+
 
 
 class AlchemyEncoder(json.JSONEncoder):
@@ -12,7 +13,7 @@ class AlchemyEncoder(json.JSONEncoder):
             fields = {}
 
             for field in [x for x in dir(obj) if not x.startswith('_') and
-                                                 x != 'metadata']:
+                          x != 'metadata']:
                 data = obj.__getattribute__(field)
 
                 if field in ["password", "keys", "query", "query_class",

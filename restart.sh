@@ -1,3 +1,3 @@
 #!/bin/bash/
-pkill -f runserver.py
+kill -9 $1
 python runserver.py

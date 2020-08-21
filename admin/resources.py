@@ -3,14 +3,16 @@ import json
 from flask import Blueprint, request, jsonify
 from flask_restful import Api, Resource
 
+from passlib.handlers.sha2_crypt import sha512_crypt
+
 from templates.models import metadata
 from app.utils import AlchemyEncoder
 from admin.module_generator import *
 from admin.models import Admin
 from admin.validators import column_types, column_validation, nullable_check
-from dbs import DB_DICT
-from passlib.handlers.sha2_crypt import sha512_crypt
 from admin.utils import *
+
+from dbs import DB_DICT
 
 ALGORITHM = sha512_crypt
 
@@ -27,8 +29,8 @@ class AdminApi(Resource):
         if admin is not None:
             user_obj = json.dumps(admin, cls=AlchemyEncoder)
             return {"result": json.loads(user_obj)}
-        else:
-            return {"result": "Admin does not exist."}, 404
+
+        return {"result": "Admin does not exist."}, 404
 
     def post(self):
         data = request.get_json()
@@ -195,14 +197,14 @@ class ContentType(Resource):
         data["table_name"] = data["table_name"].lower()
 
         if len(data["columns"]) == 0:
-            return {"result": "At least one column is required"}, 400
+            return {"result": "At least one column is required."}, 400
 
         if check_table(data["table_name"]):
             return {"result": "Module with this name is already present."}, 400
 
         if data["table_name"] == "admin":
-            return {"result": "Table with name Admin not allowed since it is "
-                              "used to manage admin login internally"}, 400
+            return {"result": "Table with name Admin is not allowed since it "
+                              "is used to manage admin login internally."}, 400
 
         valid, msg = column_validation(data["columns"],
                                        data['connection_name'])
@@ -217,7 +219,7 @@ class ContentType(Resource):
             if check_jwt_present(
                     data["connection_name"], data["database_name"]):
                 return {"result": "Only one table is allowed to set jwt per"
-                        "database connection"}, 400
+                                  "database connection."}, 400
 
             if (data.get("filter_keys") is None or
                     len(data.get("filter_keys", [])) == 0):
@@ -226,12 +228,12 @@ class ContentType(Resource):
             if validate_filter_keys_names(
                     data["filter_keys"], data["columns"]) is False:
                 return {"result": "Only column names are allowed"
-                        " in filter keys"}, 400
+                                  " in filter keys."}, 400
 
             if validate_filter_keys_jwt(
                     data["filter_keys"], data["columns"]) is False:
                 return {"result": "Atleast one of the filter_keys"
-                        " should be unique and not null"}, 400
+                                  " should be unique and not null."}, 400
 
             msg, valid, data["expiry"] = set_expiry(data.get("expiry", {}))
 
@@ -246,7 +248,7 @@ class ContentType(Resource):
         if (data["jwt_restricted"] is True and
                 (check_jwt_present(data["connection_name"],
                                    data["database_name"]) is None)):
-            return {"result": "Jwt not configured"}, 400
+            return {"result": "JWT is not configured."}, 400
 
         dir_path = create_dir(data["table_name"])
         create_model(dir_path, data)
@@ -259,7 +261,7 @@ class ContentType(Resource):
         remove_alembic_versions()
         move_migration_files()
         migrate()
-        return {"result": "Successfully created module"}
+        return {"result": "Successfully created module."}
 
     def put(self):
         """Edit a content type"""
@@ -294,7 +296,7 @@ class ContentType(Resource):
                 }, 400
 
         if len(data["columns"]) == 0:
-            return {"result": "At least one column is required"}, 400
+            return {"result": "At least one column is required."}, 400
 
         data["table_name"] = data["table_name"].lower()
 
@@ -318,7 +320,7 @@ class ContentType(Resource):
         remove_alembic_versions()
         move_migration_files()
         migrate()
-        return {"result": "Successfully edited model"}
+        return {"result": "Successfully edited model."}
 
     def delete(self, content_type):
         """Delete a content type"""
@@ -354,7 +356,7 @@ class ContentType(Resource):
         remove_alembic_versions()
         move_migration_files()
         migrate()
-        return {"result": "Successfully deleted module"}
+        return {"result": "Successfully deleted module."}
 
 
 class DatabaseInit(Resource):
@@ -443,7 +445,7 @@ class DatabaseInit(Resource):
         add_new_db(data['connection_name'])
 
         return {
-            "result": "Successfully created database connection string"
+            "result": "Successfully created database connection string."
         }
 
     def put(self):
@@ -526,6 +528,6 @@ api_admin.add_resource(AdminApi, '/admin_profile',
 api_admin.add_resource(Login, '/login')
 api_admin.add_resource(ContentType, '/content/types',
                        '/content/types/<string:content_type>')
-api_admin.add_resource(DatabaseInit, '/dbinit/',
+api_admin.add_resource(DatabaseInit, '/dbinit',
                        '/dbinit/types/<string:content_type>')
 api_admin.add_resource(ColumnType, '/columntypes')

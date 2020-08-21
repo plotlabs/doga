@@ -2,16 +2,16 @@ import json
 import datetime
 import requests
 
+from flask import Blueprint, request
+from flask_restful import Resource, Api
+from flask_jwt_extended import (jwt_required, create_access_token,
+                                create_refresh_token)
+
+from sqlalchemy.exc import OperationalError, IntegrityError, StatementError
 
 from app import db
 from app.modulename.models import modelname
 from app.utils import AlchemyEncoder
-from sqlalchemy.exc import OperationalError, IntegrityError, StatementError
-from flask_jwt_extended import (jwt_required, create_access_token,
-                                create_refresh_token)
-
-from flask import Blueprint, request, jsonify
-from flask_restful import Resource, Api
 
 
 jwt_filter_keys = jwt_key
@@ -56,15 +56,15 @@ class Apis(Resource):
                         except ValueError:
                             return {
                                 "result": "The format entered for column {} is "
-                                "not correct. Correct format should"
-                                " be of type: YYYY-MM-DD.".format(
-                                    col.name)}, 400
+                                          "not correct. Correct format should"
+                                          " be of type: YYYY-MM-DD.".format(
+                                              col.name)}, 400
                         except TypeError:
                             return {
                                 "result": "The format entered for column {} is "
-                                "not correct. Correct format should"
-                                " be of type: YYYY-MM-DD.".format(
-                                    col.name)}, 400
+                                          "not correct. Correct format should"
+                                          " be of type: YYYY-MM-DD.".format(
+                                              col.name)}, 400
                         except KeyError:
                             pass
 
@@ -75,15 +75,15 @@ class Apis(Resource):
                         except ValueError:
                             return {
                                 "result": "The format entered for column {} is "
-                                "not correct. Correct format should"
-                                " be of type: YYYY-MM-DD H:M:S.".format(
-                                    col.name)}, 400
+                                          "not correct. Correct format should"
+                                          " be of type: YYYY-MM-DD H:M:S.".format(
+                                              col.name)}, 400
                         except TypeError:
                             return {
                                 "result": "The format entered for column {} is "
-                                "not correct. Correct format should"
-                                " be of type: YYYY-MM-DD H:M:S.".format(
-                                    col.name)}, 400
+                                          "not correct. Correct format should"
+                                          " be of type: YYYY-MM-DD H:M:S.".format(
+                                              col.name)}, 400
                         except KeyError:
                             pass
 
@@ -159,7 +159,7 @@ class Login(Resource):
                 **filter_keys).first()
             if model_obj is None:
                 return {"result": model_name.__tablename__ +
-                        " does not exist."}, 401
+                                  " does not exist."}, 401
             else:
                 expiry_time = datetime.timedelta(expiry_unit=expiry_value)
                 access_token = create_access_token(
@@ -192,13 +192,13 @@ class Register(Resource):
                             "result": "The format entered for column {} is "
                                       "not correct. Correct format should"
                                       " be of type: YYYY-MM-DD.".format(
-                                col.name)}, 400
+                                          col.name)}, 400
                     except TypeError:
                         return {
                             "result": "The format entered for column {} is "
                                       "not correct. Correct format should"
                                       " be of type: YYYY-MM-DD.".format(
-                                col.name)}, 400
+                                          col.name)}, 400
                     except KeyError:
                         pass
 
@@ -211,21 +211,21 @@ class Register(Resource):
                             "result": "The format entered for column {} is "
                                       "not correct. Correct format should"
                                       " be of type: YYYY-MM-DD H:M:S.".format(
-                                col.name)}, 400
+                                          col.name)}, 400
                     except TypeError:
                         return {
                             "result": "The format entered for column {} is "
                                       "not correct. Correct format should"
                                       " be of type: YYYY-MM-DD H:M:S.".format(
-                                col.name)}, 400
+                                          col.name)}, 400
                     except KeyError:
                         pass
 
                 elif str(col.type).upper() in ['INTEGER', 'BIGINTEGER',
-                                             'BIGINT', 'FLOAT', 'INT',
-                                             'SMALLINT', 'NUMERIC',
-                                             'SMALLINTEGER', 'DECIMAL',
-                                             'REAL']:
+                                               'BIGINT', 'FLOAT', 'INT',
+                                               'SMALLINT', 'NUMERIC',
+                                               'SMALLINTEGER', 'DECIMAL',
+                                               'REAL']:
                     if isinstance(data[col.name], str):
                         return {"result": "The value entered for column {} "
                                           "is string and not of type {}"

@@ -4,12 +4,13 @@ import requests
 
 from flask import request, Blueprint
 from flask_restful import Resource, Api
+from flask_jwt_extended import jwt_required
+from sqlalchemy.exc import OperationalError, IntegrityError, StatementError
 
 from app import db
 from app.modulename.models import modelname
 from app.utils import AlchemyEncoder
-from sqlalchemy.exc import OperationalError, IntegrityError, StatementError
-from flask_jwt_extended import jwt_required
+
 
 mod_model = Blueprint(bname, __name__)
 api_model = Api()
@@ -50,13 +51,13 @@ class Apis(Resource):
                             "result": "The format entered for column {} is "
                                       "not correct. Correct format should"
                                       " be of type: YYYY-MM-DD.".format(
-                                col.name)}, 400
+                                          col.name)}, 400
                     except TypeError:
                         return {
                             "result": "The format entered for column {} is "
                                       "not correct. Correct format should"
                                       " be of type: YYYY-MM-DD.".format(
-                                col.name)}, 400
+                                          col.name)}, 400
                     except KeyError:
                         pass
 
@@ -69,22 +70,22 @@ class Apis(Resource):
                             "result": "The format entered for column {} is "
                                       "not correct. Correct format should"
                                       " be of type: YYYY-MM-DD H:M:S.".format(
-                                col.name)}, 400
+                                          col.name)}, 400
                     except TypeError:
                         return {
                             "result": "The format entered for column {} is "
                                       "not correct. Correct format should"
                                       " be of type: YYYY-MM-DD H:M:S.".format(
-                                col.name)}, 400
+                                          col.name)}, 400
                     except KeyError:
                         pass
 
                 elif str(col.type).upper() in ['INTEGER', 'BIGINTEGER',
-                                             'BIGINT', 'FLOAT', 'INT',
-                                             'SMALLINT', 'NUMERIC',
-                                             'SMALLINTEGER', 'DECIMAL',
-                                             'REAL']:
-               
+                                               'BIGINT', 'FLOAT', 'INT',
+                                               'SMALLINT', 'NUMERIC',
+                                               'SMALLINTEGER', 'DECIMAL',
+                                               'REAL']:
+
                     if data.get(col.name) and isinstance(data[col.name], str):
                         return {"result": "The value entered for column {} "
                                           "is string and not of type {}"
@@ -135,16 +136,16 @@ class Apis(Resource):
                                 data[col.name], "%Y-%m-%d")
                         except ValueError:
                             return {
-                               "result": "The format entered for column {} is "
-                                         "not correct. Correct format should"
-                                         " be of type: YYYY-MM-DD.".format(
-                                   col.name)}, 400
+                                "result": "The format entered for column {} is "
+                                          "not correct. Correct format should"
+                                          " be of type: YYYY-MM-DD.".format(
+                                              col.name)}, 400
                         except TypeError:
                             return {
-                               "result": "The format entered for column {} is "
-                                         "not correct. Correct format should"
-                                         " be of type: YYYY-MM-DD.".format(
-                                   col.name)}, 400
+                                "result": "The format entered for column {} is "
+                                          "not correct. Correct format should"
+                                          " be of type: YYYY-MM-DD.".format(
+                                              col.name)}, 400
                         except KeyError:
                             pass
 
@@ -154,16 +155,16 @@ class Apis(Resource):
                                 data[col.name], "%Y-%m-%d %H:%M:%S")
                         except ValueError:
                             return {
-                               "result": "The format entered for column {} is "
-                                         "not correct. Correct format should"
-                                         " be of type: YYYY-MM-DD H:M:S.".format(
-                                   col.name)}, 400
+                                "result": "The format entered for column {} is "
+                                          "not correct. Correct format should"
+                                          " be of type: YYYY-MM-DD H:M:S.".format(
+                                              col.name)}, 400
                         except TypeError:
                             return {
-                               "result": "The format entered for column {} is "
-                                         "not correct. Correct format should"
-                                         " be of type: YYYY-MM-DD H:M:S.".format(
-                                   col.name)}, 400
+                                "result": "The format entered for column {} is "
+                                          "not correct. Correct format should"
+                                          " be of type: YYYY-MM-DD H:M:S.".format(
+                                              col.name)}, 400
                         except KeyError:
                             pass
 
