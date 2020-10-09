@@ -1,4 +1,5 @@
 import json
+import re
 
 from flask import Blueprint, request, jsonify
 from flask_restful import Api, Resource
@@ -12,7 +13,7 @@ from admin.models import Admin
 from admin.validators import column_types, column_validation, nullable_check
 from admin.utils import *
 
-from dbs import DB_DICT
+from dbs import DB_DICT, DEFAULT_PORTS
 
 ALGORITHM = sha512_crypt
 
@@ -369,18 +370,21 @@ class DatabaseInit(Resource):
                 database_name = value.split("/")[-1]
                 database_type = "sqlite"
                 host = ""
+                port = ""
                 username = ""
                 password = ""
             elif value.startswith("mysql"):
                 database_name = value.split("/")[-1].split("?")[0]
                 database_type = "mysql"
-                host = value.split("@")[1].split(":")[0]
+                host = value.split("@")[-1].split("/")[0].split(":")[0]
+                port = value.split("@")[-1].split("/")[0].split(":")[1]
                 username = value.split("@")[0].split("/")[-1].split(":")[0]
                 password = value.split("@")[0].split("/")[-1].split(":")[1]
             elif value.startswith("postgresql"):
                 database_name = value.split("/")[-1]
                 database_type = "postgresql"
-                host = value.split("@")[-1].split("/")[0]
+                host = value.split("@")[-1].split("/")[0].split(":")[0]
+                port = value.split("@")[-1].split("/")[0].split(":")[1]
                 username = value.split("@")[0].split("/")[-1].split(":")[0]
                 password = value.split("@")[0].split("/")[-1].split(":")[1]
 
@@ -389,6 +393,7 @@ class DatabaseInit(Resource):
                 "database_type": database_type,
                 "database_name": database_name,
                 "host": host,
+                "port": port,
                 "username": username,
                 "password": password
             })
@@ -405,6 +410,7 @@ class DatabaseInit(Resource):
         #     "username": "user",
         #     "password": "pass",
         #     "host": "localhost",
+        #     "port": "port_number"
         #     "database_name": "database_name",
         # }
         if data['connection_name'] in DB_DICT:
@@ -413,24 +419,51 @@ class DatabaseInit(Resource):
                           "a different name.".format(data['connection_name'])
             }, 400
 
+        if 'host_port' not in data.keys():
+            data['host_port'] = DEFAULT_PORTS[data['type']]
+
         string = ''
         if data['type'] == 'mysql':
-            string = 'mysql://{}:{}@{}:3306/{}?charset=utf8mb4'.format(
+            string = 'mysql://{}:{}@{}:{}/{}?charset=utf8mb4'.format(
                 data['username'], data['password'], data['host'],
-                data['database_name'])
+                data['host_port'],data['database_name'])
 
         if data['type'] == 'postgresql':
-            string = 'postgresql+psycopg2://{}:{}@{}/{}'.format(
+            string = 'postgresql+psycopg2://{}:{}@{}:{}/{}'.format(
                 data['username'], data['password'], data['host'],
-                data['database_name'])
+                data['host_port'],data['database_name'])
+
+        if data['type'] == 'sqlite':
+            string = 'sqlite:////{}/{}.db'.format(
+                data['host'],data['database_name'])
 
         try:
             engine = create_engine(string)
             conn = engine.connect()
             conn.invalidate()
             engine.dispose()
-        except OperationalError:
-            return {"result": "The database credentials are not valid."}, 400
+        except OperationalError as err:
+            if "unknown database" or data['database_name'] + "does not exist" \
+                in str(err).lower():
+                try:
+                    string = re.split(data['database_name'],string)[0]
+                    engine = create_engine(string)
+                    conn = engine.connect()
+                    conn.execute("commit")
+                    conn.execute("CREATE DATABASE "+ data['database_name'])
+                    conn.invalidate()
+                    engine.dispose()
+                    return {
+                            "result": "New database and connection"
+                            " successfully created"}
+                except OperationalError:
+                    return {
+                        "result": "Could not create database,"
+                        " connection not valid."}, 400
+            else:
+                return {
+                    "result": "The database credentials are not valid."
+                    }, 400
 
         with open('dbs.py', 'r') as f:
             lines = f.readlines()
