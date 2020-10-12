@@ -13,6 +13,7 @@ from app import db
 from app.modulename.models import modelname
 from app.utils import AlchemyEncoder
 
+from config import HOST, PORT
 
 jwt_filter_keys = jwt_key
 
@@ -55,14 +56,14 @@ class Apis(Resource):
                                 data[col.name], "%Y-%m-%d")
                         except ValueError:
                             return {
-                                "result": "The format entered for column {} is "
-                                          "not correct. Correct format should"
+                                "result": "The format entered for column {} is"
+                                          " not correct. Correct format should"
                                           " be of type: YYYY-MM-DD.".format(
                                               col.name)}, 400
                         except TypeError:
                             return {
-                                "result": "The format entered for column {} is "
-                                          "not correct. Correct format should"
+                                "result": "The format entered for column {} is"
+                                          " not correct. Correct format should"
                                           " be of type: YYYY-MM-DD.".format(
                                               col.name)}, 400
                         except KeyError:
@@ -74,16 +75,16 @@ class Apis(Resource):
                                 data[col.name], "%Y-%m-%d %H:%M:%S")
                         except ValueError:
                             return {
-                                "result": "The format entered for column {} is "
-                                          "not correct. Correct format should"
-                                          " be of type: YYYY-MM-DD H:M:S.".format(
-                                              col.name)}, 400
+                                "result": "The format entered for column {} is"
+                                          " not correct. Correct format should"
+                                          " be of type: YYYY-MM-DD H:M:S."
+                                          .format(col.name)}, 400
                         except TypeError:
                             return {
-                                "result": "The format entered for column {} is "
-                                          "not correct. Correct format should"
-                                          " be of type: YYYY-MM-DD H:M:S.".format(
-                                              col.name)}, 400
+                                "result": "The format entered for column {} is"
+                                          " not correct. Correct format should"
+                                          " be of type: YYYY-MM-DD H:M:S."
+                                          .format(col.name)}, 400
                         except KeyError:
                             pass
 
@@ -102,8 +103,8 @@ class Apis(Resource):
                         for f in col.foreign_keys:
                             model_endp = str(f).split("'")[1].split('.')[0]
                             foreign_obj = requests.get(
-                                'http://localhost:8080/' + model_endp +
-                                '/' + str(data[col.name]))
+                                'http://{}:{}/'.format(HOST, PORT) + model_endp
+                                + '/' + str(data[col.name]))
                             result = json.loads(foreign_obj.content)[
                                 "result"]
 
@@ -159,7 +160,7 @@ class Login(Resource):
                 **filter_keys).first()
             if model_obj is None:
                 return {"result": model_name.__tablename__ +
-                                  " does not exist."}, 401
+                        " does not exist."}, 401
             else:
                 expiry_time = datetime.timedelta(expiry_unit=expiry_value)
                 access_token = create_access_token(
@@ -171,7 +172,7 @@ class Login(Resource):
                         'access_token': access_token,
                         'refresh_token': refresh_token}
         except KeyError as e:
-            return {"result": "missing field: " + str(e)}, 400
+            return {"result": "Missing field: " + str(e)}, 400
 
 
 class Register(Resource):
@@ -235,7 +236,7 @@ class Register(Resource):
                     for f in col.foreign_keys:
                         model_endp = str(f).split("'")[1].split('.')[0]
                         foreign_obj = requests.get(
-                            'http://localhost:8080/' + model_endp +
+                            'http://{}:{}/'.format(HOST,PORT) + model_endp +
                             '/' + str(data[col.name]))
                         result = json.loads(foreign_obj.content)["result"]
 

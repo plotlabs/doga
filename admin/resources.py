@@ -1,17 +1,20 @@
 import json
+import re
 
 from flask import Blueprint, request, jsonify
 from flask_restful import Api, Resource
 
 from passlib.handlers.sha2_crypt import sha512_crypt
 
-from templates.models import metadata
-from app.utils import AlchemyEncoder
 from admin.module_generator import *
 from admin.models import Admin
-from admin.validators import column_types, column_validation, nullable_check
 from admin.utils import *
+from admin.validators import column_types, column_validation, nullable_check
 
+from app.utils import AlchemyEncoder
+from templates.models import metadata
+
+from config import DEFAULT_PORTS
 from dbs import DB_DICT
 
 ALGORITHM = sha512_crypt
@@ -49,7 +52,7 @@ class AdminApi(Resource):
             except KeyError as e:
                 return {"result": "Key error", "error": str(e)}, 500
         else:
-            return {"result": "Admin already exists."}, 500
+            return {"result": "Admin already exists."}, 403
 
 
 class Login(Resource):
@@ -60,7 +63,7 @@ class Login(Resource):
         try:
             admin = Admin.query.filter_by(email=data["email"]).first()
             if admin is None:
-                return {"result": "Admin does not exist."}, 401
+                return {"result": "Admin does not exist."}, 404
             else:
                 match = ALGORITHM.verify(data["password"], admin.password)
                 if not match:
@@ -74,7 +77,7 @@ class Login(Resource):
 
 class ContentType(Resource):
 
-    def get(self, content_type=None):
+    def get(self, db_name=None, content_type=None):
         """Get a list of all the content types"""
         table_list = []
         for table in metadata.sorted_tables:
@@ -202,7 +205,8 @@ class ContentType(Resource):
         if check_table(data["table_name"]):
             return {"result": "Module with this name is already present."}, 400
 
-        if data["table_name"] == "admin":
+        if data["table_name"] == "admin" and data["connection_name"] == \
+                "default":
             return {"result": "Table with name Admin is not allowed since it "
                               "is used to manage admin login internally."}, 400
 
@@ -250,20 +254,29 @@ class ContentType(Resource):
                                    data["database_name"]) is None)):
             return {"result": "JWT is not configured."}, 400
 
-        dir_path = create_dir(data["table_name"])
+        dir_path = create_dir(data["database_name"]+"/"+data["table_name"])
+
+        isExisting = os.path.isfile(dir_path)
+
+        if isExisting:
+            return {"result": "Content must be unique for databases with the"
+                    " same name."}
+
         create_model(dir_path, data)
-        create_resources(data["table_name"], dir_path,
+        create_resources(data["database_name"]+"."+data["table_name"],
+                         dir_path,
                          data["jwt_required"],
                          data.get("expiry", {}),
                          data["jwt_restricted"],
                          data.get("filter_keys", []))
-        append_blueprint(data["table_name"])
+        append_blueprint(data["database_name"]+"."+data["table_name"])
         remove_alembic_versions()
         move_migration_files()
-        migrate()
+        # migrate()
         return {"result": "Successfully created module."}
 
     def put(self):
+        """TODO: CHECK RELAVANCE NOW THAT WE HAVE BOTH DB_NAME & MODULE NAME"""
         """Edit a content type"""
         data = request.get_json()
         # sample data
@@ -315,14 +328,14 @@ class ContentType(Resource):
             return {"result": "Since data is already present in the table, "
                               "new datetime column should be nullable."}, 400
 
-        dir_path = 'app/' + data["table_name"]
+        dir_path = 'app/' + data["database_name"]+"/"+data["table_name"]
         create_model(dir_path, data)
         remove_alembic_versions()
         move_migration_files()
-        migrate()
+        # migrate()
         return {"result": "Successfully edited model."}
 
-    def delete(self, content_type):
+    def delete(self, db_name, content_type):
         """Delete a content type"""
         tables_list = []
         for table in metadata.sorted_tables:
@@ -340,7 +353,7 @@ class ContentType(Resource):
             }, 400
 
         try:
-            shutil.rmtree('app/' + content_type.lower())
+            shutil.rmtree('app/'+db_name.lower()+'/'+content_type.lower())
         except FileNotFoundError:
             return {"result": "Module does not exist."}, 400
 
@@ -348,14 +361,14 @@ class ContentType(Resource):
             lines = f.readlines()
         with open("app/blueprints.py", "w") as f:
             for line in lines:
-                if line.strip("\n") != "from app." + content_type \
+                if line.strip("\n") != "from app."+db_name+"." + content_type \
                         + ".resources import mod_model" and line.strip("\n") \
                         != "app.register_blueprint(mod_model, url_prefix='/" \
-                        + content_type.lower() + "')":
+                        + db_name.lower()+"/" + content_type.lower() + "')":
                     f.write(line)
         remove_alembic_versions()
         move_migration_files()
-        migrate()
+        # migrate()
         return {"result": "Successfully deleted module."}
 
 
@@ -369,18 +382,21 @@ class DatabaseInit(Resource):
                 database_name = value.split("/")[-1]
                 database_type = "sqlite"
                 host = ""
+                port = ""
                 username = ""
                 password = ""
             elif value.startswith("mysql"):
                 database_name = value.split("/")[-1].split("?")[0]
                 database_type = "mysql"
-                host = value.split("@")[1].split(":")[0]
+                host = value.split("@")[-1].split("/")[0].split(":")[0]
+                port = value.split("@")[-1].split("/")[0].split(":")[1]
                 username = value.split("@")[0].split("/")[-1].split(":")[0]
                 password = value.split("@")[0].split("/")[-1].split(":")[1]
             elif value.startswith("postgresql"):
                 database_name = value.split("/")[-1]
                 database_type = "postgresql"
-                host = value.split("@")[-1].split("/")[0]
+                host = value.split("@")[-1].split("/")[0].split(":")[0]
+                port = value.split("@")[-1].split("/")[0].split(":")[1]
                 username = value.split("@")[0].split("/")[-1].split(":")[0]
                 password = value.split("@")[0].split("/")[-1].split(":")[1]
 
@@ -389,6 +405,7 @@ class DatabaseInit(Resource):
                 "database_type": database_type,
                 "database_name": database_name,
                 "host": host,
+                "port": port,
                 "username": username,
                 "password": password
             })
@@ -405,6 +422,7 @@ class DatabaseInit(Resource):
         #     "username": "user",
         #     "password": "pass",
         #     "host": "localhost",
+        #     "port": "port_number"
         #     "database_name": "database_name",
         # }
         if data['connection_name'] in DB_DICT:
@@ -413,24 +431,52 @@ class DatabaseInit(Resource):
                           "a different name.".format(data['connection_name'])
             }, 400
 
+        if 'host_port' not in data.keys():
+            data['host_port'] = DEFAULT_PORTS[data['type']]
+
         string = ''
         if data['type'] == 'mysql':
-            string = 'mysql://{}:{}@{}:3306/{}?charset=utf8mb4'.format(
+            string = 'mysql://{}:{}@{}:{}/{}?charset=utf8mb4'.format(
                 data['username'], data['password'], data['host'],
-                data['database_name'])
+                data['host_port'], data['database_name'])
 
         if data['type'] == 'postgresql':
-            string = 'postgresql+psycopg2://{}:{}@{}/{}'.format(
+            string = 'postgresql+psycopg2://{}:{}@{}:{}/{}'.format(
                 data['username'], data['password'], data['host'],
+                data['host_port'], data['database_name'])
+
+        if data['type'] == 'sqlite':
+            string = 'sqlite:////tmp/{}.db'.format(
                 data['database_name'])
+            # data['host'],data['database_name'])
 
         try:
             engine = create_engine(string)
             conn = engine.connect()
             conn.invalidate()
             engine.dispose()
-        except OperationalError:
-            return {"result": "The database credentials are not valid."}, 400
+            db_created = ""
+        except OperationalError as err:
+            if "unknown database" or data['database_name'] + "does not exist" \
+                   in str(err).lower():
+                try:
+                    string = re.split(data['database_name'], string)[0]
+                    engine = create_engine(string)
+                    conn = engine.connect()
+                    conn.execute("commit")
+                    conn.execute("CREATE DATABASE " + data['database_name'])
+                    conn.invalidate()
+                    engine.dispose()
+                    db_created = " New database " + data['database_name'] +\
+                        " created."
+                except OperationalError:
+                    return {
+                        "result": "Could not create database,"
+                        " connection not valid."}, 400
+            else:
+                return {
+                    "result": "The database credentials are not valid."
+                    }, 400
 
         with open('dbs.py', 'r') as f:
             lines = f.readlines()
@@ -445,7 +491,8 @@ class DatabaseInit(Resource):
         add_new_db(data['connection_name'])
 
         return {
-            "result": "Successfully created database connection string."
+            "result": "Successfully created database connection string." +
+            db_created
         }
 
     def put(self):
@@ -508,7 +555,7 @@ class DatabaseInit(Resource):
 
         remove_alembic_versions()
         move_migration_files()
-        migrate()
+        # migrate()
         return {
             "result": "Successfully edited database connection string."
         }
@@ -526,8 +573,10 @@ class ColumnType(Resource):
 api_admin.add_resource(AdminApi, '/admin_profile',
                        '/admin_profile/<string:email>')
 api_admin.add_resource(Login, '/login')
+
 api_admin.add_resource(ContentType, '/content/types',
-                       '/content/types/<string:content_type>')
+                       '/content/types/<string:db_name>/<string:content_type>')
 api_admin.add_resource(DatabaseInit, '/dbinit',
                        '/dbinit/types/<string:content_type>')
+
 api_admin.add_resource(ColumnType, '/columntypes')

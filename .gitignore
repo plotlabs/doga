@@ -6,6 +6,7 @@ __pycache__/
 # C extensions
 *.so
 .idea
+.vscode
 
 # Distribution / packaging
 .Python
@@ -65,3 +66,7 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+
+# all migrations
+/migrations
+/old_migrations

@@ -11,6 +11,8 @@ from app import db
 from app.modulename.models import modelname
 from app.utils import AlchemyEncoder
 
+from config import HOST,PORT
+
 
 mod_model = Blueprint(bname, __name__)
 api_model = Api()
@@ -95,7 +97,7 @@ class Apis(Resource):
                     for f in col.foreign_keys:
                         model_endp = str(f).split("'")[1].split('.')[0]
                         foreign_obj = requests.get(
-                            'http://localhost:8080/' + model_endp +
+                            'http://{}:{}/'.format(HOST,PORT) + model_endp +
                             '/' + str(data[col.name]))
                         result = json.loads(foreign_obj.content)["result"]
 
@@ -183,7 +185,7 @@ class Apis(Resource):
                         for f in col.foreign_keys:
                             model_endp = str(f).split("'")[1].split('.')[0]
                             foreign_obj = requests.get(
-                                'http://localhost:8080/' + model_endp +
+                                'http://{}:{}/'.format(HOST,PORT) + model_endp +
                                 '/' + str(data[col.name]))
                             result = json.loads(foreign_obj.content)[
                                 "result"]
@@ -193,9 +195,12 @@ class Apis(Resource):
                                                   "failed for column "
                                                   "{}".format(col.name)}, 400
 
-            for key, value in data.items():
-                setattr(model_obj, key, value)
-            db.session.add(model_obj)
+            try:
+                for key, value in data.items():
+                    setattr(model_obj, key, value)
+                db.session.add(model_obj)
+            except AttributeError:
+                return {"result": "Request body not found."}, 400
 
             try:
                 db.session.commit()
