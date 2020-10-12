@@ -101,7 +101,7 @@ def create_resources(model_name, dir_path, jwt_required,
                     "def delete", "@jwt_required\n    def delete")
 
             line = line.replace("modulename", model_name.lower())
-            line = line.replace("modelname", model_name.title())
+            line = line.replace("modelname", model_name.title().split('.')[1])
             line = line.replace("bname", '"' + model_name.lower() + '"')
             line = line.replace("endpoint", '"/"')
             line = line.replace("param", '"/<int:id>"')
@@ -115,8 +115,8 @@ def append_blueprint(model_name):
     o = open("app/blueprints.py", "a")
     o.write("from app." + model_name + ".resources import mod_model\n")
     o.write(
-        "app.register_blueprint(mod_model, url_prefix='/" + model_name +
-        "')\n\n")
+        "app.register_blueprint(mod_model, url_prefix='/" +
+        model_name.replace('.','/') + "')\n\n")
     o.close()
 
 

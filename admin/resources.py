@@ -74,7 +74,7 @@ class Login(Resource):
 
 class ContentType(Resource):
 
-    def get(self, content_type=None):
+    def get(self, db_name, content_type=None):
         """Get a list of all the content types"""
         table_list = []
         for table in metadata.sorted_tables:
@@ -250,14 +250,14 @@ class ContentType(Resource):
                                    data["database_name"]) is None)):
             return {"result": "JWT is not configured."}, 400
 
-        dir_path = create_dir(data["table_name"])
+        dir_path = create_dir(data["database_name"]+"/"+data["table_name"])
         create_model(dir_path, data)
-        create_resources(data["table_name"], dir_path,
+        create_resources(data["database_name"]+"."+data["table_name"], dir_path,
                          data["jwt_required"],
                          data.get("expiry", {}),
                          data["jwt_restricted"],
                          data.get("filter_keys", []))
-        append_blueprint(data["table_name"])
+        append_blueprint(data["database_name"]+"."+data["table_name"])
         remove_alembic_versions()
         move_migration_files()
         migrate()
@@ -315,14 +315,14 @@ class ContentType(Resource):
             return {"result": "Since data is already present in the table, "
                               "new datetime column should be nullable."}, 400
 
-        dir_path = 'app/' + data["table_name"]
+        dir_path = 'app/' + data["database_name"]+"/"+data["table_name"]
         create_model(dir_path, data)
         remove_alembic_versions()
         move_migration_files()
         migrate()
         return {"result": "Successfully edited model."}
 
-    def delete(self, content_type):
+    def delete(self,db_name ,content_type):
         """Delete a content type"""
         tables_list = []
         for table in metadata.sorted_tables:
@@ -340,7 +340,7 @@ class ContentType(Resource):
             }, 400
 
         try:
-            shutil.rmtree('app/' + content_type.lower())
+            shutil.rmtree('app/'+db_name.lower()+'/'+content_type.lower())
         except FileNotFoundError:
             return {"result": "Module does not exist."}, 400
 
@@ -348,10 +348,10 @@ class ContentType(Resource):
             lines = f.readlines()
         with open("app/blueprints.py", "w") as f:
             for line in lines:
-                if line.strip("\n") != "from app." + content_type \
+                if line.strip("\n") != "from app."+db_name+"."+ content_type \
                         + ".resources import mod_model" and line.strip("\n") \
                         != "app.register_blueprint(mod_model, url_prefix='/" \
-                        + content_type.lower() + "')":
+                        + db_name.lower()+"/"+ content_type.lower() + "')":
                     f.write(line)
         remove_alembic_versions()
         move_migration_files()
@@ -526,8 +526,10 @@ class ColumnType(Resource):
 api_admin.add_resource(AdminApi, '/admin_profile',
                        '/admin_profile/<string:email>')
 api_admin.add_resource(Login, '/login')
+
 api_admin.add_resource(ContentType, '/content/types',
-                       '/content/types/<string:content_type>')
+                       '/content/types/<string:db_name>/<string:content_type>')
 api_admin.add_resource(DatabaseInit, '/dbinit',
                        '/dbinit/types/<string:content_type>')
+
 api_admin.add_resource(ColumnType, '/columntypes')
