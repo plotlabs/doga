@@ -81,7 +81,7 @@ def create_resources(model_name, dir_path, jwt_required,
 
         for line in open("templates/jwt_resource.py"):
             line = line.replace("modulename", model_name.lower())
-            line = line.replace("modelname", model_name.title())
+            line = line.replace("modelname", model_name.title().split('.')[1])
             line = line.replace("bname", '"' + model_name.lower() + '"')
             line = line.replace("jwt_key", str(filter_keys))
             line = line.replace("expiry_unit", expiry['unit'])
