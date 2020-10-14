@@ -13,6 +13,7 @@ from app import db
 from app.modulename.models import modelname
 from app.utils import AlchemyEncoder
 
+from config import HOST,PORT
 
 jwt_filter_keys = jwt_key
 
@@ -102,7 +103,7 @@ class Apis(Resource):
                         for f in col.foreign_keys:
                             model_endp = str(f).split("'")[1].split('.')[0]
                             foreign_obj = requests.get(
-                                'http://localhost:8080/' + model_endp +
+                                'http://{}:{}/'.format(HOST,PORT) + model_endp +
                                 '/' + str(data[col.name]))
                             result = json.loads(foreign_obj.content)[
                                 "result"]
@@ -235,7 +236,7 @@ class Register(Resource):
                     for f in col.foreign_keys:
                         model_endp = str(f).split("'")[1].split('.')[0]
                         foreign_obj = requests.get(
-                            'http://localhost:8080/' + model_endp +
+                            'http://{}:{}/'.format(HOST,PORT) + model_endp +
                             '/' + str(data[col.name]))
                         result = json.loads(foreign_obj.content)["result"]
 
