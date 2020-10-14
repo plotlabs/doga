@@ -442,6 +442,7 @@ class DatabaseInit(Resource):
             conn = engine.connect()
             conn.invalidate()
             engine.dispose()
+            db_created = ""
         except OperationalError as err:
             if "unknown database" or data['database_name'] + "does not exist" \
                 in str(err).lower():
@@ -453,9 +454,8 @@ class DatabaseInit(Resource):
                     conn.execute("CREATE DATABASE "+ data['database_name'])
                     conn.invalidate()
                     engine.dispose()
-                    return {
-                            "result": "New database and connection"
-                            " successfully created"}
+                    db_created = "New database " + data['database_name'] +\
+                        " created, "
                 except OperationalError:
                     return {
                         "result": "Could not create database,"
@@ -478,7 +478,8 @@ class DatabaseInit(Resource):
         add_new_db(data['connection_name'])
 
         return {
-            "result": "Successfully created database connection string."
+            "result": "Successfully created database connection string." + \
+                db_created
         }
 
     def put(self):
