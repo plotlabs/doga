@@ -13,7 +13,8 @@ from admin.models import Admin
 from admin.validators import column_types, column_validation, nullable_check
 from admin.utils import *
 
-from dbs import DB_DICT, DEFAULT_PORTS
+from config import  DEFAULT_PORTS
+from dbs import DB_DICT
 
 ALGORITHM = sha512_crypt
 
@@ -252,6 +253,13 @@ class ContentType(Resource):
             return {"result": "JWT is not configured."}, 400
 
         dir_path = create_dir(data["database_name"]+"/"+data["table_name"])
+
+        isExisting = os.path.isfile(dir_path)
+
+        if isExisting:
+            return {"result": "Content must be unique for databases with the"\
+                " same name."}
+
         create_model(dir_path, data)
         create_resources(data["database_name"]+"."+data["table_name"], dir_path,
                          data["jwt_required"],
@@ -261,7 +269,7 @@ class ContentType(Resource):
         append_blueprint(data["database_name"]+"."+data["table_name"])
         remove_alembic_versions()
         move_migration_files()
-        migrate()
+        #migrate()
         return {"result": "Successfully created module."}
 
     def put(self):
@@ -320,7 +328,7 @@ class ContentType(Resource):
         create_model(dir_path, data)
         remove_alembic_versions()
         move_migration_files()
-        migrate()
+        #migrate()
         return {"result": "Successfully edited model."}
 
     def delete(self,db_name ,content_type):
@@ -356,7 +364,7 @@ class ContentType(Resource):
                     f.write(line)
         remove_alembic_versions()
         move_migration_files()
-        migrate()
+        #migrate()
         return {"result": "Successfully deleted module."}
 
 
@@ -434,8 +442,9 @@ class DatabaseInit(Resource):
                 data['host_port'],data['database_name'])
 
         if data['type'] == 'sqlite':
-            string = 'sqlite:////{}/{}.db'.format(
-                data['host'],data['database_name'])
+            string = 'sqlite:////tmp/{}.db'.format(
+                data['database_name'])
+                #data['host'],data['database_name'])
 
         try:
             engine = create_engine(string)
@@ -454,8 +463,8 @@ class DatabaseInit(Resource):
                     conn.execute("CREATE DATABASE "+ data['database_name'])
                     conn.invalidate()
                     engine.dispose()
-                    db_created = "New database " + data['database_name'] +\
-                        " created, "
+                    db_created = " New database " + data['database_name'] +\
+                        " created."
                 except OperationalError:
                     return {
                         "result": "Could not create database,"
@@ -542,7 +551,7 @@ class DatabaseInit(Resource):
 
         remove_alembic_versions()
         move_migration_files()
-        migrate()
+        #migrate()
         return {
             "result": "Successfully edited database connection string."
         }

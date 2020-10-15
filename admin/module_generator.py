@@ -133,27 +133,6 @@ def check_table(table_name, connection_name=''):
 
     return exist
 
-
-def migrate():
-    """Function to stop the app to migrate and then restart it."""
-
-    migrate_folder = os.path.exists('migrations')
-    if not migrate_folder:
-        subprocess.check_output('flask db init --multidb', shell=True)
-    pid = os.getpid()
-    revision_id = datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
-    migrate_command = "flask db migrate --rev-id " + revision_id
-    upgrade_command = "flask db upgrade"
-    sys_platform = platform.system()
-    if sys_platform in ['Linux', 'Darwin']:
-        run_command = "sh restart.sh"
-    else:
-        run_command = "start "" /b restart.bat"
-    if pid != '':
-        os.system(migrate_command + " && " + upgrade_command + " && "
-                  + run_command + " " + str(pid))
-
-
 def remove_alembic_versions():
     """Remove all alembic versions from existing databases"""
 
@@ -223,7 +202,7 @@ def add_new_db(conn_name):
     move_migration_files()
     if os.path.exists("migrations"):
         shutil.rmtree('migrations')
-    migrate()
+    #migrate()
 
 
 def check_jwt_present(connection_name, database_name):
