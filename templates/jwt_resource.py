@@ -171,7 +171,7 @@ class Login(Resource):
                         'access_token': access_token,
                         'refresh_token': refresh_token}
         except KeyError as e:
-            return {"result": "missing field: " + str(e)}, 400
+            return {"result": "Missing field: " + str(e)}, 400
 
 
 class Register(Resource):
