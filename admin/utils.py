@@ -1,6 +1,6 @@
+import random
 import secrets
 import string
-import random
 
 from dbs import DB_DICT
 

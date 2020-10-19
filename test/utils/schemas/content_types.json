@@ -1,0 +1,151 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "type": "array",
+    "items": [
+      {
+        "type": "object",
+        "properties": {
+          "columns": {
+            "type": "array",
+            "items": [
+              {
+                "type": "object",
+                "properties": {
+                  "default": {
+                    "type": "string"
+                  },
+                  "foreign_key": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "nullable": {
+                    "type": "string"
+                  },
+                  "type": {
+                    "type": "string"
+                  },
+                  "unique": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "default",
+                  "foreign_key",
+                  "name",
+                  "nullable",
+                  "type",
+                  "unique"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "default": {
+                    "type": "string"
+                  },
+                  "foreign_key": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "nullable": {
+                    "type": "string"
+                  },
+                  "type": {
+                    "type": "string"
+                  },
+                  "unique": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "default",
+                  "foreign_key",
+                  "name",
+                  "nullable",
+                  "type",
+                  "unique"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "default": {
+                    "type": "string"
+                  },
+                  "foreign_key": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "nullable": {
+                    "type": "string"
+                  },
+                  "type": {
+                    "type": "string"
+                  },
+                  "unique": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "default",
+                  "foreign_key",
+                  "name",
+                  "nullable",
+                  "type",
+                  "unique"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "default": {
+                    "type": "string"
+                  },
+                  "foreign_key": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "nullable": {
+                    "type": "string"
+                  },
+                  "type": {
+                    "type": "string"
+                  },
+                  "unique": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "default",
+                  "foreign_key",
+                  "name",
+                  "nullable",
+                  "type",
+                  "unique"
+                ]
+              }
+            ]
+          },
+          "connection_name": {
+            "type": "string"
+          },
+          "table_name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "columns",
+          "connection_name",
+          "table_name"
+        ]
+      }
+    ]
+  }

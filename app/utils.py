@@ -8,7 +8,6 @@ import subprocess
 from sqlalchemy.ext.declarative import DeclarativeMeta
 
 
-
 class AlchemyEncoder(json.JSONEncoder):
     """A JSON encoder that takes a sqlalchemy result object and converts it
     into a JSON encodable dict of the form 'column': 'value' using the model
@@ -33,6 +32,7 @@ class AlchemyEncoder(json.JSONEncoder):
                         fields[field] = str(data)
             return fields
         return json.JSONEncoder.default(self, obj)
+
 
 def migrate():
     """Function to stop the app to migrate and then restart it."""

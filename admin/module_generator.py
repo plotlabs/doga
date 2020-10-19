@@ -3,6 +3,7 @@ import platform
 import shutil
 import subprocess
 import datetime
+
 from sqlalchemy.exc import OperationalError, ProgrammingError
 
 from app import db
@@ -116,7 +117,7 @@ def append_blueprint(model_name):
     o.write("from app." + model_name + ".resources import mod_model\n")
     o.write(
         "app.register_blueprint(mod_model, url_prefix='/" +
-        model_name.replace('.','/') + "')\n\n")
+        model_name.replace('.', '/') + "')\n\n")
     o.close()
 
 
@@ -132,6 +133,7 @@ def check_table(table_name, connection_name=''):
                 exist = True
 
     return exist
+
 
 def remove_alembic_versions():
     """Remove all alembic versions from existing databases"""
@@ -202,7 +204,7 @@ def add_new_db(conn_name):
     move_migration_files()
     if os.path.exists("migrations"):
         shutil.rmtree('migrations')
-    #migrate()
+    # migrate()
 
 
 def check_jwt_present(connection_name, database_name):
