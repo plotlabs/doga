@@ -65,3 +65,10 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+
+#for docs
+_site
+.sass-cache
+.jekyll-cache
+.jekyll-metadata
+vendor

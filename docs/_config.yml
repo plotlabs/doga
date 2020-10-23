@@ -1,0 +1,8 @@
+---
+exclude: ['README.markdown']
+permalink: ':title'
+highlighter: pygments
+safe: false
+title: 'DOGA'
+github: PlotLabs
+twitter: PlotLabs
