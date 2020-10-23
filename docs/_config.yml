@@ -6,3 +6,5 @@ safe: false
 title: 'DOGA'
 github: PlotLabs
 twitter: PlotLabs
+
+theme: jekyll-theme-midnight
