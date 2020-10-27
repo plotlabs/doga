@@ -195,9 +195,12 @@ class Apis(Resource):
                                                   "failed for column "
                                                   "{}".format(col.name)}, 400
 
-            for key, value in data.items():
-                setattr(model_obj, key, value)
-            db.session.add(model_obj)
+            try:
+                for key, value in data.items():
+                    setattr(model_obj, key, value)
+                db.session.add(model_obj)
+            except AttributeError:
+                return {"result": "Request body not found."}, 400
 
             try:
                 db.session.commit()

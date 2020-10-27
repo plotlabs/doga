@@ -44,6 +44,12 @@ def migrate():
     migrate_command = "flask db migrate --rev-id " + revision_id
     upgrade_command = "flask db upgrade"
     sys_platform = platform.system()
+
+    global to_reload
+    to_reload = True
+
+
+"""
     if sys_platform in ['Linux', 'Darwin']:
         run_command = "sh restart.sh"
     else:
@@ -51,3 +57,4 @@ def migrate():
     if pid != '':
         os.system(migrate_command + " && " + upgrade_command + " && "
                   + run_command + " " + str(pid))
+"""
