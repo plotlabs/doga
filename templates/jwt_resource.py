@@ -172,7 +172,7 @@ class Login(Resource):
                         'access_token': access_token,
                         'refresh_token': refresh_token}
         except KeyError as e:
-            return {"result": "missing field: " + str(e)}, 400
+            return {"result": "Missing field: " + str(e)}, 400
 
 
 class Register(Resource):
@@ -236,7 +236,7 @@ class Register(Resource):
                     for f in col.foreign_keys:
                         model_endp = str(f).split("'")[1].split('.')[0]
                         foreign_obj = requests.get(
-                            'http://localhost:8080/' + model_endp +
+                            'http://{}:{}/'.format(HOST,PORT) + model_endp +
                             '/' + str(data[col.name]))
                         result = json.loads(foreign_obj.content)["result"]
 

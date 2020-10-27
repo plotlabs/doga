@@ -67,5 +67,6 @@ venv.bak/
 # mypy
 .mypy_cache/
 
+# all migrations
 /migrations
 /old_migrations
