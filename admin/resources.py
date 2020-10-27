@@ -51,7 +51,7 @@ class AdminApi(Resource):
             except KeyError as e:
                 return {"result": "Key error", "error": str(e)}, 500
         else:
-            return {"result": "Admin already exists."}, 500
+            return {"result": "Admin already exists."}, 403
 
 
 class Login(Resource):
@@ -62,7 +62,7 @@ class Login(Resource):
         try:
             admin = Admin.query.filter_by(email=data["email"]).first()
             if admin is None:
-                return {"result": "Admin does not exist."}, 401
+                return {"result": "Admin does not exist."}, 404
             else:
                 match = ALGORITHM.verify(data["password"], admin.password)
                 if not match:
@@ -204,7 +204,8 @@ class ContentType(Resource):
         if check_table(data["table_name"]):
             return {"result": "Module with this name is already present."}, 400
 
-        if data["table_name"] == "admin":
+        if data["table_name"] == "admin" and data["connection_name"] == \
+                "default":
             return {"result": "Table with name Admin is not allowed since it "
                               "is used to manage admin login internally."}, 400
 
@@ -274,6 +275,7 @@ class ContentType(Resource):
         return {"result": "Successfully created module."}
 
     def put(self):
+        """TODO: CHECK RELAVANCE NOW THAT WE HAVE BOTH DB_NAME & MODULE NAME"""
         """Edit a content type"""
         data = request.get_json()
         # sample data
