@@ -5,13 +5,15 @@ from flask_restful import Api, Resource
 
 from passlib.handlers.sha2_crypt import sha512_crypt
 
-from templates.models import metadata
-from app.utils import AlchemyEncoder
 from admin.module_generator import *
 from admin.models import Admin
-from admin.validators import column_types, column_validation, nullable_check
 from admin.utils import *
+from admin.validators import column_types, column_validation, nullable_check
 
+from app.utils import AlchemyEncoder
+from templates.models import metadata
+
+from config import DEFAULT_PORTS
 from dbs import DB_DICT
 
 ALGORITHM = sha512_crypt
@@ -74,7 +76,7 @@ class Login(Resource):
 
 class ContentType(Resource):
 
-    def get(self, db_name, content_type=None):
+    def get(self, content_type=None):
         """Get a list of all the content types"""
         table_list = []
         for table in metadata.sorted_tables:
@@ -251,8 +253,16 @@ class ContentType(Resource):
             return {"result": "JWT is not configured."}, 400
 
         dir_path = create_dir(data["database_name"]+"/"+data["table_name"])
+
+        isExisting = os.path.isfile(dir_path)
+
+        if isExisting:
+            return {"result": "Content must be unique for databases with the"
+                    " same name."}
+
         create_model(dir_path, data)
-        create_resources(data["database_name"]+"."+data["table_name"], dir_path,
+        create_resources(data["database_name"]+"."+data["table_name"],
+                         dir_path,
                          data["jwt_required"],
                          data.get("expiry", {}),
                          data["jwt_restricted"],
@@ -260,7 +270,7 @@ class ContentType(Resource):
         append_blueprint(data["database_name"]+"."+data["table_name"])
         remove_alembic_versions()
         move_migration_files()
-        migrate()
+        # migrate()
         return {"result": "Successfully created module."}
 
     def put(self):
@@ -319,10 +329,10 @@ class ContentType(Resource):
         create_model(dir_path, data)
         remove_alembic_versions()
         move_migration_files()
-        migrate()
+        # migrate()
         return {"result": "Successfully edited model."}
 
-    def delete(self,db_name ,content_type):
+    def delete(self, db_name, content_type):
         """Delete a content type"""
         tables_list = []
         for table in metadata.sorted_tables:
@@ -348,14 +358,14 @@ class ContentType(Resource):
             lines = f.readlines()
         with open("app/blueprints.py", "w") as f:
             for line in lines:
-                if line.strip("\n") != "from app."+db_name+"."+ content_type \
+                if line.strip("\n") != "from app."+db_name+"." + content_type \
                         + ".resources import mod_model" and line.strip("\n") \
                         != "app.register_blueprint(mod_model, url_prefix='/" \
-                        + db_name.lower()+"/"+ content_type.lower() + "')":
+                        + db_name.lower()+"/" + content_type.lower() + "')":
                     f.write(line)
         remove_alembic_versions()
         move_migration_files()
-        migrate()
+        # migrate()
         return {"result": "Successfully deleted module."}
 
 
@@ -417,20 +427,45 @@ class DatabaseInit(Resource):
         if data['type'] == 'mysql':
             string = 'mysql://{}:{}@{}:3306/{}?charset=utf8mb4'.format(
                 data['username'], data['password'], data['host'],
-                data['database_name'])
+                data['host_port'], data['database_name'])
 
         if data['type'] == 'postgresql':
             string = 'postgresql+psycopg2://{}:{}@{}/{}'.format(
                 data['username'], data['password'], data['host'],
+                data['host_port'], data['database_name'])
+
+        if data['type'] == 'sqlite':
+            string = 'sqlite:////tmp/{}.db'.format(
                 data['database_name'])
+            # data['host'],data['database_name'])
 
         try:
             engine = create_engine(string)
             conn = engine.connect()
             conn.invalidate()
             engine.dispose()
-        except OperationalError:
-            return {"result": "The database credentials are not valid."}, 400
+            db_created = ""
+        except OperationalError as err:
+            if "unknown database" or data['database_name'] + "does not exist" \
+                   in str(err).lower():
+                try:
+                    string = re.split(data['database_name'], string)[0]
+                    engine = create_engine(string)
+                    conn = engine.connect()
+                    conn.execute("commit")
+                    conn.execute("CREATE DATABASE " + data['database_name'])
+                    conn.invalidate()
+                    engine.dispose()
+                    db_created = " New database " + data['database_name'] +\
+                        " created."
+                except OperationalError:
+                    return {
+                        "result": "Could not create database,"
+                        " connection not valid."}, 400
+            else:
+                return {
+                    "result": "The database credentials are not valid."
+                    }, 400
 
         with open('dbs.py', 'r') as f:
             lines = f.readlines()
@@ -445,7 +480,8 @@ class DatabaseInit(Resource):
         add_new_db(data['connection_name'])
 
         return {
-            "result": "Successfully created database connection string."
+            "result": "Successfully created database connection string." +
+            db_created
         }
 
     def put(self):
@@ -508,7 +544,7 @@ class DatabaseInit(Resource):
 
         remove_alembic_versions()
         move_migration_files()
-        migrate()
+        # migrate()
         return {
             "result": "Successfully edited database connection string."
         }

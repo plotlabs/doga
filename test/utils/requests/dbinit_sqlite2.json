@@ -1,0 +1,8 @@
+{
+    "type": "sqlite",
+    "connection_name": "tmp2",
+    "username": "plotlabs",
+    "password": "",
+    "host": "localhost",
+    "database_name": "test_db"
+}

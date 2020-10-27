@@ -32,4 +32,10 @@ def after_request(response):
     return response
 
 
+@app.teardown_request
+def teardown(request):
+    time.sleep(0.5)
+    run_migration()
+
+
 CORS(app, supports_credentials=True)

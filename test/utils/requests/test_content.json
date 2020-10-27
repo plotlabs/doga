@@ -1,0 +1,46 @@
+{
+    "table_name": "test_table",
+    "connection_name": "default",
+    "columns": [
+        {
+            "name": "name",
+            "type": "String(32)",
+            "nullable": "False",
+            "unique": "True",
+            "default": "",
+            "foreign_key": ""
+        },
+        {
+            "name": "desc",
+            "type": "String(32)",
+            "nullable": "False",
+            "unique": "False",
+            "default": "",
+            "foreign_key": ""
+        },
+        {
+            "name": "credits",
+            "type": "BigInteger",
+            "nullable": "False",
+            "unique": "False",
+            "default": "",
+            "foreign_key": ""
+        },
+        {
+            "name": "active",
+            "type": "Boolean",
+            "nullable": "False",
+            "unique": "False",
+            "default": "false",
+            "foreign_key": ""
+        },
+        {
+            "name": "DOB",
+            "type": "DateTime",
+            "nullable": "False",
+            "unique": "False",
+            "default": "",
+            "foreign_key": ""
+        }
+    ]
+}
