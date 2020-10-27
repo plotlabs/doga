@@ -76,7 +76,7 @@ class Login(Resource):
 
 class ContentType(Resource):
 
-    def get(self, content_type=None):
+    def get(self, db_name=None, content_type=None):
         """Get a list of all the content types"""
         table_list = []
         for table in metadata.sorted_tables:
