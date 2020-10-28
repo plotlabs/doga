@@ -28,3 +28,20 @@ def test_post_content(client):
     response = client.post('admin/content/types', json=data)
     assert b'Boolean datatype for columns is not supported by default '
     b'database connection.' in response.data
+
+
+def test_post_valid_content(client):
+    data = load_json('test_content_valid.json')
+    response = client.post('admin/content/types', json=data)
+    assert b'Success' in response.data
+
+
+def test_retreive_content(client):
+    response = client.get('admin/content/types/test/test_table')
+    assert b'[]' in response.data
+
+
+def test_add_content(client):
+    data = load_json('table_content.json')
+    response = client.post('test/test_table', json=data)
+    assert b"asdadsasd" in response.data
