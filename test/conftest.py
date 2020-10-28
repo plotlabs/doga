@@ -5,7 +5,16 @@ import subprocess
 from pytest_postgresql import factories
 
 from app import app as flaskapp
+from app.utils import migrate as run_migration
+
 from config import HOST, PORT
+
+
+def pytest_configure(config):
+    subprocess.run(['flask', 'db', 'init', '--multidb'])
+    subprocess.run(['flask', 'db', 'migrate'])
+    subprocess.run(['flask', 'db', 'upgrade'])
+    run_migration()
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -19,10 +28,6 @@ def app():
 @pytest.fixture
 def client(app):
     """A test client for the app."""
-
-    subprocess.run(['flask', 'db', 'init', '--multidb'])
-    subprocess.run(['flask', 'db', 'migrate'])
-    subprocess.run(['flask', 'db', 'migrate'])
     app.testing = True
     yield app.test_client()
 
@@ -30,7 +35,6 @@ def client(app):
 @pytest.fixture(scope="session", autouse=True)
 def delete_migrations():
     """To delete migration files and folders"""
-    print('run')
     subprocess.run(['rm', '-rf', 'migrations'])
     subprocess.run(['rm', '-rf', 'old_migrations'])
     subprocess.run(['find', ' .', '-path "/migrations/.py" -not'
