@@ -1,4 +1,4 @@
-{
+dbinit_sqlite = {
     "type": "sqlite",
     "connection_name": "tmp",
     "username": "plotlabs",

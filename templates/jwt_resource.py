@@ -96,8 +96,8 @@ class Apis(Resource):
                         if isinstance(data[col.name], str):
                             return {
                                 "result": "The value entered for column {} "
-                                          "is string and not of type"
-                                          " {}".format(col.name, col.type)}, 400
+                                          "is string and not of type "
+                                          "{}".format(col.name, col.type)}, 400
 
                     if len(col.foreign_keys) > 0:
                         for f in col.foreign_keys:
@@ -236,7 +236,7 @@ class Register(Resource):
                     for f in col.foreign_keys:
                         model_endp = str(f).split("'")[1].split('.')[0]
                         foreign_obj = requests.get(
-                            'http://{}:{}/'.format(HOST,PORT) + model_endp +
+                            'http://{}:{}/'.format(HOST, PORT) + model_endp +
                             '/' + str(data[col.name]))
                         result = json.loads(foreign_obj.content)["result"]
 

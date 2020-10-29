@@ -40,6 +40,6 @@ def delete_migrations():
     subprocess.run(['find', ' .', '-path "/migrations/.py" -not'
                     ' -name "init.py" -delete'])
     subprocess.run(['find', ' . -path', "/migrations/.pyc", ' -delete'])
-    subprocess.run(['git', 'checkout', '-f'])
+    # subprocess.run(['git', 'checkout', '-f'])
     subprocess.call('cd ..', shell=True)
     subprocess.run(['rm', ' -rf', '/tmp'])
