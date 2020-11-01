@@ -7,7 +7,12 @@ from flask_restful import Api, Resource
 from passlib.handlers.sha2_crypt import sha512_crypt
 
 from admin.module_generator import *
+
 from admin.models import Admin
+from admin.models.admin_model import Admin as AdminObject
+from admin.models.table_model import Table as TableModel
+from admin.models.column_model import Column as ColumnObject
+
 from admin.utils import *
 from admin.validators import column_types, column_validation, nullable_check
 
@@ -25,9 +30,36 @@ api_admin.init_app(mod_admin)
 
 
 class AdminApi(Resource):
-    """APIs to create a admin and return admin info if a admin exists"""
+    """
+    Defines the responses for the API's to create, verify and retrieve a admin
+    information
 
-    def get(self, email):
+    ...
+    Methods
+    -------
+        get(self,email):
+            Defines responses for the `/admin/admin_adminprofile/<email-id>`
+            endpoint
+
+        post(self):
+            Defines responses for the `/admin/admin_adminprofile endpoint
+
+    """
+
+    def get(self, email=None) -> dict:
+        """
+        Defines responses for the `/admin/admin_adminprofile/<email-id>`
+        endpoint
+
+        Returns:
+        -------
+            json serializeable dict
+            integer response code
+        """
+        if email is None:
+            return {"result": "Please add admin`email` parameter to path"}, 404
+
+        # access the Admin db defined for the app instance
         admin = Admin.query.filter_by(email=email).first()
         if admin is not None:
             user_obj = json.dumps(admin, cls=AlchemyEncoder)
@@ -36,28 +68,47 @@ class AdminApi(Resource):
         return {"result": "Admin does not exist."}, 404
 
     def post(self):
+        """
+        Defines responses for the `/admin/admin_adminprofile/<email-id>`
+        endpoint
+        It creates a Admin object from the request body it receives,
+        checking if all values satisfy the model constraints and then writing
+        data to the `amin` database.
+
+        Returns:
+        -------
+            json serializeable dict
+            integer response code
+        """
+
         data = request.get_json()
-        admin_exists = Admin.query.filter_by(email=data["email"].lower(
+
+        try:
+            admin = AdminObject.from_dict(request.get_json())
+        except ValueError as err:
+            return {"result": "Error: ".join(err.args)}
+
+        admin_exists = Admin.query.filter_by(email=admin._email.lower(
         )).first()
         if admin_exists is None:
-            try:
-                password_hash = ALGORITHM.hash(data["password"])
-                admin = Admin(email=data["email"].lower(),
-                              password=password_hash, name=data["name"],
-                              create_dt=datetime.datetime.utcnow())
-                db.session.add(admin)
-                db.session.commit()
-                return {"result": "Admin created successfully.",
-                        "id": admin.id, "email": admin.email}
-            except KeyError as e:
-                return {"result": "Key error", "error": str(e)}, 500
+            password_hash = ALGORITHM.hash(admin._password)
+            admin = Admin(email=admin._email.lower(),
+                          password=password_hash, name=admin._name,
+                          create_dt=datetime.datetime.utcnow())
+            db.session.add(admin)
+            db.session.commit()
+            return {"result": "Admin created successfully.",
+                    "id": admin.id, "email": admin.email}
+
         else:
             return {"result": "Admin already exists."}, 403
 
 
 class Login(Resource):
     """API to login admin."""
-
+    """
+    TODO: generate jwt & return
+    """
     def post(self):
         data = request.get_json()
         try:
@@ -76,63 +127,109 @@ class Login(Resource):
 
 
 class ContentType(Resource):
+    """
+    Defines the responses for the API's to create, verify and retrieve a admin
+    information
+
+    ...
+    Methods
+    -------
+        get(self,email):
+            Defines responses for the `/admin/content/types` &
+            `/admin/content/types/db_name/content endpoint used to list all
+            content or content that matches the parameters given in path
+
+        post(self):
+            Defines responses for the `/admin/content/types` endpoint used to
+            add content to the app
+
+        put(self):
+            Defines responses for the `/admin/cintent
+
+        delete
+
+    """
 
     def get(self, db_name=None, content_type=None):
-        """Get a list of all the content types"""
+        """
+        Defines responses for the `/admin/content/types` &
+        `/admin/content/types/db_name/content endpoint used to list all
+        content or content that matches the parameters given in path
+
+        Returns:
+            json serializeable dict
+            integer response code
+        """
         table_list = []
+        # Iterate though the tables stored using FlaskSqlAlchemy
         for table in metadata.sorted_tables:
+            # if content is not specified then return a list of all tables in
+            # if content_type has not been specified in the URL path
+            current_db = extract_database_name(table.info['bind_key'])
+
             if content_type is None:
-                if table.name in ["alembic_version", "admin"]:
+                if table.name in ["alembic_version"]:
                     continue
 
-                objs = []
-                for c in table.columns:
-                    if c.name in ['id', 'create_dt']:
+                if table.name in ["jwt", "admin"] and \
+                        table.info['bind_key'] == "default":
+                    continue
+
+                column_list = []
+
+                if db_name is not None and db_name != current_db:
+                    continue
+
+                for column in table.columns:
+                    if column.name in ['id', 'create_dt']:
                         continue
-                    default = str(c.default)
-                    if c.default is not None:
+                    default = str(column.default)
+                    if column.default is not None:
                         default = default[
                             default.find("(") + 1:default.find(")")
                         ].replace("'", "")
-                    c_type = str(c.type)
-                    foreign_key = str(c.foreign_keys)
-                    if c.foreign_keys != "":
+                    c_type = str(column.type)
+                    foreign_key = str(column.foreign_keys)
+                    if column.foreign_keys != "":
                         foreign_key = foreign_key[
                             foreign_key.find("(") + 1:foreign_key.find(")")
                         ].replace("'", "")
                         if foreign_key != "":
                             foreign_key = foreign_key.split(".")[0].title()
                     if foreign_key != "":
-                        c_type = str(c.foreign_keys).split("}")[0][1:]
-                    obj = {
-                        "name": c.name,
-                        "type": c_type,
-                        "nullable": str(bool(c.nullable)).lower(),
-                        "unique": str(bool(c.unique)).lower(),
+                        column_type = str(column.foreign_keys).split("}")[0][1:]
+                    # TODO: use Column Model here
+                    col = {
+                        "name": column.name,
+                        "type": column_type,
+                        "nullable": str(bool(column.nullable)).lower(),
+                        "unique": str(bool(column.unique)).lower(),
                         "default": default,
                         "foreign_key": foreign_key
                     }
-                    objs.append(obj)
+                    column_list.append(col)
                 table_list.append({'table_name': table.name,
                                    'connection_name': table.info[
-                                       'bind_key'], 'columns': objs})
+                                       'bind_key'], 'columns': column_list})
             else:
-                if table.name in ["alembic_version", "admin"]:
+                if table.name in ["alembic_version"]:
                     continue
 
-                if table.name == content_type:
-                    objs = []
-                    for c in table.columns:
-                        if c.name in ['id', 'create_dt']:
+                current_db = extract_database_name(table.info['bind_key'])
+
+                if table.name == content_type and db_name == current_db:
+                    column_list = []
+                    for column in table.columns:
+                        if column.name in ['id', 'create_dt']:
                             continue
-                        default = str(c.default)
-                        if c.default is not None:
+                        default = str(column.default)
+                        if column.default is not None:
                             default = default[
                                 default.find("(") + 1:default.find(")")
                             ].replace("'", "")
-                        c_type = str(c.type)
-                        foreign_key = str(c.foreign_keys)
-                        if c.foreign_keys != "":
+                        column_type = str(column.type)
+                        foreign_key = str(column.foreign_keys)
+                        if column.foreign_keys != "":
                             foreign_key = foreign_key[
                                 foreign_key.find(
                                     "(") + 1:foreign_key.find(")")
@@ -140,25 +237,40 @@ class ContentType(Resource):
                             if foreign_key != "":
                                 foreign_key = foreign_key.split(".")[0].title()
                         if foreign_key != "":
-                            c_type = str(c.foreign_keys).split("}")[0][1:]
+                            column_type = str(column.foreign_keys).split("}")[0][1:]  # noqa 501
                         obj = {
-                            "name": c.name,
-                            "type": c_type,
-                            "nullable": str(bool(c.nullable)).lower(),
-                            "unique": str(bool(c.unique)).lower(),
+                            "name": column.name,
+                            "type": column_type,
+                            "nullable": str(bool(column.nullable)).lower(),
+                            "unique": str(bool(column.unique)).lower(),
                             "default": default,
                             "foreign_key": foreign_key
                         }
-                        objs.append(obj)
+                        column_list.append(obj)
                     table_list.append({'table_name': table.name,
                                        'connection_name': table.info[
-                                           'bind_key'], 'columns': objs})
+                                           'bind_key'], 'columns': column_lists
+                                       })
+
+        if table_list == []:
+            return {"result": "No matching content found."}, 404
 
         return jsonify(table_list)
         # return {"result": table_list}
 
     def post(self):
-        """Create a content type"""
+        """
+        Defines responses for the POST `/admin/content/types` that adds content
+        to the app.
+
+        Returns:
+            json serializeable dict
+            integer response code
+
+        """
+        """TODO:
+        if id given then ID should be unique or some other should be filter key
+        """
         data = request.get_json()
         # sample data
         # data = {
@@ -191,16 +303,15 @@ class ContentType(Resource):
         #         },
         #     ]
         # }
-        if "connection_name" in data:
-            if data['connection_name'] not in DB_DICT:
-                return {
-                    "result": "The database connection given does not exist."
-                }, 400
+        try:
+            Table = TableModel.from_dict(request.get_json())
+        except ValueError as err:
+            return {"result": "Error: " + "".join(err.args)}, 400
 
-        data["table_name"] = data["table_name"].lower()
+        database_name = extract_database_name(data["connection_name"])
 
-        if len(data["columns"]) == 0:
-            return {"result": "At least one column is required."}, 400
+        jwt_required = data.get("jwt_required", False)
+        jwt_restricted = data.get("jwt_restricted", False)
 
         if check_table(data["table_name"]):
             return {"result": "Module with this name is already present."}, 400
@@ -215,9 +326,12 @@ class ContentType(Resource):
         if valid is False:
             return {"result": msg}, 400
 
-        data["database_name"] = extract_database_name(data["connection_name"])
+        if data["jwt_restricted"] and data["jwt_required"]:
+            return {
+                "response": "Both jwt_required and jwt_restricted cannot be "
+                "true for the same content please specify only one."
+            }, 400
 
-        data["jwt_required"] = data.get("jwt_required", False)
         if data["jwt_required"] is True:
 
             if check_jwt_present(
@@ -248,7 +362,6 @@ class ContentType(Resource):
                          data["database_name"], data["table_name"])
             set_jwt_secret_key()
 
-        data["jwt_restricted"] = data.get("jwt_restricted", False)
         if (data["jwt_restricted"] is True and
                 (check_jwt_present(data["connection_name"],
                                    data["database_name"]) is None)):
@@ -276,7 +389,9 @@ class ContentType(Resource):
         return {"result": "Successfully created module."}
 
     def put(self):
-        """TODO: CHECK RELAVANCE NOW THAT WE HAVE BOTH DB_NAME & MODULE NAME"""
+        """TODO: * CHECK RELAVANCE NOW THAT WE HAVE BOTH DB_NAME & MODULE NAME
+                 * JWT check atleast
+        """
         """Edit a content type"""
         data = request.get_json()
         # sample data

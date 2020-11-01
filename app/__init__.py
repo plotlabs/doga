@@ -17,7 +17,7 @@ app.config.from_pyfile("../config.py")
 db = SQLAlchemy(app)
 
 # Import all the blueprints
-from .blueprints import *
+from .blueprints import *  # noqa 402
 
 migrate = Migrate(app, db)
 
@@ -34,10 +34,12 @@ def after_request(response):
                          'GET,PUT,POST,DELETE,OPTIONS')
     return response
 
+
 @app.teardown_request
 def teardown(request):
     time.sleep(0.5)
     run_migration()
+
 
 @app.teardown_request
 def teardown(request):
