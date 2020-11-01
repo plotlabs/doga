@@ -28,10 +28,6 @@ def column_validation(schema_list, connection_name, table_columns=None):
     msg = ""
     column_name_list = []
     for column in schema_list:
-        if column["name"] == "":
-            valid = False
-            msg = "Column name cannot be empty."
-            break
         if column["name"] in column_name_list:
             valid = False
             msg = "Columns cannot have same name."

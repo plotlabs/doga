@@ -197,7 +197,7 @@ class ContentType(Resource):
                         if foreign_key != "":
                             foreign_key = foreign_key.split(".")[0].title()
                     if foreign_key != "":
-                        column_type = str(column.foreign_keys).split("}")[0][1:]
+                        column_type = str(column.foreign_keys).split("}")[0][1:]  # noqa 501
                     # TODO: use Column Model here
                     col = {
                         "name": column.name,
@@ -313,32 +313,30 @@ class ContentType(Resource):
         jwt_required = data.get("jwt_required", False)
         jwt_restricted = data.get("jwt_restricted", False)
 
-        if check_table(data["table_name"]):
+        if check_table(Table.table_name):
             return {"result": "Module with this name is already present."}, 400
 
-        if data["table_name"] == "admin" and data["connection_name"] == \
-                "default":
+        if Table.table_name == "admin" and Table.connection_name == "default":
             return {"result": "Table with name Admin is not allowed since it "
                               "is used to manage admin login internally."}, 400
 
-        valid, msg = column_validation(data["columns"],
-                                       data['connection_name'])
+        valid, msg = column_validation(data["columns"], Table.connection_name)
         if valid is False:
             return {"result": msg}, 400
 
-        if data["jwt_restricted"] and data["jwt_required"]:
+        if jwt_restricted and jwt_required:
             return {
                 "response": "Both jwt_required and jwt_restricted cannot be "
                 "true for the same content please specify only one."
             }, 400
 
-        if data["jwt_required"] is True:
+        if jwt_required is True:
 
-            if check_jwt_present(
-                    data["connection_name"], data["database_name"]):
+            if check_jwt_present(Table.connection_name, database_name):
                 return {"result": "Only one table is allowed to set jwt per"
                                   "database connection."}, 400
 
+            # TODO: check if the filter keys are valid in TableModel & set
             if (data.get("filter_keys") is None or
                     len(data.get("filter_keys", [])) == 0):
                 data["filter_keys"] = ["id"]
@@ -358,16 +356,13 @@ class ContentType(Resource):
             if valid is False:
                 return {"result": msg}, 400
 
-            set_jwt_flag(data["connection_name"],
-                         data["database_name"], data["table_name"])
+            set_jwt_flag(Table.connection_name, database_name, Table.table_name)  # noqa 501
             set_jwt_secret_key()
 
-        if (data["jwt_restricted"] is True and
-                (check_jwt_present(data["connection_name"],
-                                   data["database_name"]) is None)):
+        if jwt_restricted and check_jwt_present(Table.connection_name, database_name) is None:  # noqa 501, 701
             return {"result": "JWT is not configured."}, 400
 
-        dir_path = create_dir(data["database_name"]+"/"+data["table_name"])
+        dir_path = create_dir(database_name+"/"+Table.table_name)
 
         isExisting = os.path.isfile(dir_path)
 
@@ -376,13 +371,13 @@ class ContentType(Resource):
                     " same name."}
 
         create_model(dir_path, data)
-        create_resources(data["database_name"]+"."+data["table_name"],
+        create_resources(database_name+"."+Table.table_name,
                          dir_path,
-                         data["jwt_required"],
+                         jwt_required,
                          data.get("expiry", {}),
-                         data["jwt_restricted"],
+                         jwt_restricted,
                          data.get("filter_keys", []))
-        append_blueprint(data["database_name"]+"."+data["table_name"])
+        append_blueprint(database_name+"."+Table.table_name)
         remove_alembic_versions()
         move_migration_files()
         # migrate()

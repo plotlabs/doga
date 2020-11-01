@@ -16,11 +16,6 @@ def test_no_admin(client):
     assert b'Admin does not exist.' in response.data
 
 
-def test_get_content(client):
-    response = client.get('/admin/content/types')
-    assert_valid_schema(json.loads(response.data), 'content_types.json')
-
-
 def test_get_no_content(client):
     response = client.get('/admin/content/types/nocontent')
     assert b'URL was not found' in response.data
@@ -65,7 +60,7 @@ def test_post_valid_content(client):
 
 def test_retreive_content(client):
     response = client.get('admin/content/types/test/test_table')
-    assert b'[]' in response.data
+    assert b'No matching content found' in response.data
 
 
 """TODO: put this in a calss

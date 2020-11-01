@@ -92,7 +92,6 @@ class Column(Model):
         :param default: The default of this Column.
         :type default: str
         """
-
         self._default = default
 
     @property
@@ -135,7 +134,14 @@ class Column(Model):
         :type name: str
         """
         if name is None:
-            raise ValueError("Invalid value for `name`, must not be `None`")
+            raise ValueError("Invalid value for column name, `name` must not"
+                             " be `None`")
+        if name is not None and len(name) > 32:
+            raise ValueError("Invalid value for column `name`, length must be"
+                             " less than or equal to `32`.")
+        if name is not None and len(name) < 1:
+            raise ValueError("Invalid value for column `name`, length must be "
+                             "greater than or equal to `6`.")
 
         self._name = name.lower()
 
