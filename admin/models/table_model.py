@@ -128,7 +128,6 @@ class Table(Model):
         :param columns: The columns of this Table.
         :type columns: List[Column]
         """
-        print(columns)
         if columns is None:
             raise ValueError("Invalid value for `columns`, must not be `None`")
         if len(columns) < 1:

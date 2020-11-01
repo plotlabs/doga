@@ -1,4 +1,5 @@
 import time
+import subprocess
 
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
@@ -22,6 +23,13 @@ from .blueprints import *  # noqa 402
 migrate = Migrate(app, db)
 
 jwt = JWTManager(app)
+
+
+@app.before_first_request
+def run_db_function():
+    subprocess.run(['flask', 'db', 'init', '--multidb'])
+    subprocess.run(['flask', 'db', 'migrate'])
+    subprocess.run(['flask', 'db', 'upgrade'])
 
 
 @app.after_request

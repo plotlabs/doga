@@ -188,7 +188,7 @@ class ContentType(Resource):
                         default = default[
                             default.find("(") + 1:default.find(")")
                         ].replace("'", "")
-                    c_type = str(column.type)
+                    column_type = str(column.type)
                     foreign_key = str(column.foreign_keys)
                     if column.foreign_keys != "":
                         foreign_key = foreign_key[
@@ -198,7 +198,7 @@ class ContentType(Resource):
                             foreign_key = foreign_key.split(".")[0].title()
                     if foreign_key != "":
                         column_type = str(column.foreign_keys).split("}")[0][1:]  # noqa 501
-                    # TODO: use Column Model here
+                    # TODO: use Column Model here & write to TableModel
                     col = {
                         "name": column.name,
                         "type": column_type,
@@ -267,9 +267,6 @@ class ContentType(Resource):
             json serializeable dict
             integer response code
 
-        """
-        """TODO:
-        if id given then ID should be unique or some other should be filter key
         """
         data = request.get_json()
         # sample data
