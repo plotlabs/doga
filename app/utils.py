@@ -58,3 +58,11 @@ def migrate():
         os.system(migrate_command + " && " + upgrade_command + " && "
                   + run_command + " " + str(pid))
 """
+
+
+def verify_jwt(jwt_identity, filter_key, model_name):
+
+    obj = model_name.query.filter_by(id=jwt_identity[filter_key[0]]).first()
+    if obj is not None:
+        return False
+    return True

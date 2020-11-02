@@ -23,3 +23,5 @@ DEFAULT_PORTS = {
     "postgresql": "5432",
     "sqlite": "",
 }
+
+JWTSET = False

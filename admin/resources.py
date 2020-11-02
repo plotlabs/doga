@@ -12,6 +12,8 @@ from admin.models import Admin
 from admin.models.admin_model import Admin as AdminObject
 from admin.models.table_model import Table as TableModel
 from admin.models.column_model import Column as ColumnObject
+from admin.models.database_model import Database as DatabaseObject
+
 
 from admin.utils import *
 from admin.validators import column_types, column_validation, nullable_check
@@ -383,6 +385,8 @@ class ContentType(Resource):
     def put(self):
         """TODO: * CHECK RELAVANCE NOW THAT WE HAVE BOTH DB_NAME & MODULE NAME
                  * JWT check atleast
+                 * do not allow change if there exists something in the
+                 directory
         """
         """Edit a content type"""
         data = request.get_json()
@@ -521,7 +525,6 @@ class DatabaseInit(Resource):
 
     def post(self):
         """Create a database connection string"""
-        data = request.get_json()
         # sample data
         # data = {
         #     "type": "mysql/mongo/postgresql",
@@ -532,30 +535,12 @@ class DatabaseInit(Resource):
         #     "port": "port_number"
         #     "database_name": "database_name",
         # }
-        if data['connection_name'] in DB_DICT:
-            return {
-                "result": "Connection with name: {} is already present. Use "
-                          "a different name.".format(data['connection_name'])
-            }, 400
+        try:
+            database = DatabaseObject.from_dict(request.get_json())
+        except ValueError as err:
+            return {"result": "Error: " + "".join(err.args)}, 400
 
-        if 'host_port' not in data.keys():
-            data['host_port'] = DEFAULT_PORTS[data['type']]
-
-        string = ''
-        if data['type'] == 'mysql':
-            string = 'mysql://{}:{}@{}:{}/{}?charset=utf8mb4'.format(
-                data['username'], data['password'], data['host'],
-                data['host_port'], data['database_name'])
-
-        if data['type'] == 'postgresql':
-            string = 'postgresql+psycopg2://{}:{}@{}:{}/{}'.format(
-                data['username'], data['password'], data['host'],
-                data['host_port'], data['database_name'])
-
-        if data['type'] == 'sqlite':
-            string = 'sqlite:////tmp/{}.db'.format(
-                data['database_name'])
-            # data['host'],data['database_name'])
+        string = database.db_string()
 
         try:
             engine = create_engine(string)
@@ -564,17 +549,17 @@ class DatabaseInit(Resource):
             engine.dispose()
             db_created = ""
         except OperationalError as err:
-            if "unknown database" or data['database_name'] + "does not exist" \
+            if "unknown database" or database.database_name + "does not exist"\
                    in str(err).lower():
                 try:
-                    string = re.split(data['database_name'], string)[0]
+                    string = re.split(database.database_name, string)[0]
                     engine = create_engine(string)
                     conn = engine.connect()
                     conn.execute("commit")
-                    conn.execute("CREATE DATABASE " + data['database_name'])
+                    conn.execute("CREATE DATABASE " + database.database_name)
                     conn.invalidate()
                     engine.dispose()
-                    db_created = " New database " + data['database_name'] +\
+                    db_created = " New database " + database.database_name +\
                         " created."
                 except OperationalError:
                     return {
@@ -587,15 +572,17 @@ class DatabaseInit(Resource):
 
         with open('dbs.py', 'r') as f:
             lines = f.readlines()
+            f.close()
 
-        with open('dbs.py', 'w') as f:
+        with open('dbs.py', 'w+') as f:
             for i, line in enumerate(lines):
                 if line.startswith('}'):
-                    line = '    "' + data['connection_name'] + '": "' + string\
-                        + '",\n' + line
+                    line = '    "' + database.connection_name + '": "' + \
+                        string + '",\n' + line
                 f.write(line)
+            f.close()
 
-        add_new_db(data['connection_name'])
+        add_new_db(database.connection_name)
 
         return {
             "result": "Successfully created database connection string." +

@@ -5,13 +5,13 @@ import requests
 from flask import Blueprint, request
 from flask_restful import Resource, Api
 from flask_jwt_extended import (jwt_required, create_access_token,
-                                create_refresh_token)
+                                create_refresh_token, verify_jwt_in_request)
 
 from sqlalchemy.exc import OperationalError, IntegrityError, StatementError
 
 from app import db
 from app.modulename.models import modelname
-from app.utils import AlchemyEncoder
+from app.utils import AlchemyEncoder, verify_jwt
 
 from config import HOST, PORT
 
@@ -29,6 +29,9 @@ class Apis(Resource):
 
     @jwt_required
     def get(self, id=None):
+        if not verify_jwt(get_jwt_identity(), jwt_filter_keys, model_name):
+            return {"result": "JWT authorization invalid, user does not"
+                    " exist."}
         if id is None:
             model_obj = model_name.query.all()
             if model_obj is not None:
@@ -44,6 +47,9 @@ class Apis(Resource):
 
     @jwt_required
     def put(self, id):
+        if not verify_jwt(get_jwt_identity(), jwt_filter_keys, model_name):
+            return {"result": "JWT authorization invalid, user does not"
+                    " exist."}
         data = request.get_json()
         model_obj = model_name.query.filter_by(id=id).first()
         if model_obj is not None:
@@ -136,6 +142,9 @@ class Apis(Resource):
 
     @jwt_required
     def delete(self, id):
+        if not verify_jwt(get_jwt_identity(), jwt_filter_keys, model_name):
+            return {"result": "JWT authorization invalid, user does not"
+                    " exist."}
         try:
             model_name.query.filter_by(id=id).delete()
             db.session.commit()
@@ -176,7 +185,7 @@ class Login(Resource):
 
 
 class Register(Resource):
-    """API to regiter model_obj."""
+    """API to register model_obj."""
 
     def post(self):
         data = request.get_json()

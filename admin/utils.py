@@ -7,6 +7,8 @@ import typing
 
 from dbs import DB_DICT
 
+from config import JWTSET
+
 
 def generate_secret_key():
     """ generating secret key for jwt """
@@ -20,10 +22,22 @@ def generate_secret_key():
 
 def set_jwt_secret_key():
     """ setting jwt in app config """
+    if JWTSET:
+        return
     jwt_secret_key = generate_secret_key()
     o = open("./config.py", "a")
     o.write("JWT_SECRET_KEY = ' " + jwt_secret_key + "'\n")
     o.close()
+
+    with open('./config.py', 'r') as file:
+        filedata = file.read()
+
+    # Replace the target string
+    filedata = filedata.replace('JWTSET = False', 'JWTSET = True')
+
+    # Write the file out again
+    with open('./config.py', 'w') as file:
+        file.write(filedata)
 
 
 def extract_database_name(connection_name):
