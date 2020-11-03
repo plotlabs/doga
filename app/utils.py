@@ -62,7 +62,12 @@ def migrate():
 
 def verify_jwt(jwt_identity, filter_key, model_name):
 
-    obj = model_name.query.filter_by(id=jwt_identity[filter_key[0]]).first()
-    if obj is not None:
+    query = model_name.query
+    for key in filter_key:
+        query = r.filter(model_name.key == key)
+
+    final_result = query.all()
+
+    if final_result is not None:
         return False
     return True

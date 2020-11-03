@@ -1,3 +1,4 @@
+import os
 import json
 import re
 
@@ -383,11 +384,6 @@ class ContentType(Resource):
         return {"result": "Successfully created module."}
 
     def put(self):
-        """TODO: * CHECK RELAVANCE NOW THAT WE HAVE BOTH DB_NAME & MODULE NAME
-                 * JWT check atleast
-                 * do not allow change if there exists something in the
-                 directory
-        """
         """Edit a content type"""
         data = request.get_json()
         # sample data
@@ -413,24 +409,21 @@ class ContentType(Resource):
         #         }
         #     ]
         # }
-        if "connection_name" in data:
-            if data['connection_name'] not in DB_DICT:
-                return {
-                    "result": "The database connection given does not exist."
-                }, 400
 
-        if len(data["columns"]) == 0:
-            return {"result": "At least one column is required."}, 400
+        try:
+            Table = TableModel.from_dict(request.get_json())
+        except ValueError as err:
+            return {"result": "Error: " + "".join(err.args)}, 400
 
-        data["table_name"] = data["table_name"].lower()
+        db_name = extract_database_name(Table.connection_name)
 
-        if not check_table(data["table_name"]):
+        if not check_table(Table.table_name, Table._connection_name):
             return {
                 "result": "Module with this name is already present."
             }, 400
 
-        valid, msg = column_validation(data["columns"],
-                                       data['connection_name'])
+        valid, msg = column_validation(Table.columns,
+                                       Table.connection_name)
         if valid is False:
             return {"result": msg}, 400
 
@@ -439,7 +432,12 @@ class ContentType(Resource):
             return {"result": "Since data is already present in the table, "
                               "new datetime column should be nullable."}, 400
 
-        dir_path = 'app/' + data["database_name"]+"/"+data["table_name"]
+        # TODO:
+        # add a check for foreign keys
+        # add a check for filter keys for jwt
+        # delete old end points
+
+        dir_path = 'app/' + Table.database_name+"/"+Table.table_name
         create_model(dir_path, data)
         remove_alembic_versions()
         move_migration_files()
@@ -451,9 +449,10 @@ class ContentType(Resource):
         tables_list = []
         for table in metadata.sorted_tables:
             f = (table.__dict__['foreign_keys'])
+            db = extract_database_name(table.info['bind_key'])
             for s in f:
                 table_name = s.column.table
-                if str(table_name) == content_type.lower():
+                if str(table_name) == content_type.lower() and db_name == db:
                     tables_list.append(table.name)
 
         if len(tables_list) > 0:
@@ -617,6 +616,16 @@ class DatabaseInit(Resource):
                 "result": "The type of database string cannot be "
                           "changed. Create a new connection or choose the "
                           "correct type."}, 400
+
+        # check if content exists in old or new database:
+        old_db = extract_database_name(data['connection_name'])
+        new_db = data['database_name']
+
+        path = 'app/' + old_db
+        if len(os.listdir(path)) != 0:
+            # str(len(os.listdir(path))/2)
+            return {"result": "Found  content in the old database connection"
+                    " please remove them first."}
 
         string = ''
         if data['type'] == 'mysql':
