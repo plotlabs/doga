@@ -45,9 +45,6 @@ def migrate():
     upgrade_command = "flask db upgrade"
     sys_platform = platform.system()
 
-    global to_reload
-    to_reload = True
-
 
 """
     if sys_platform in ['Linux', 'Darwin']:

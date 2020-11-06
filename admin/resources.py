@@ -174,7 +174,7 @@ class ContentType(Resource):
                 if table.name in ["alembic_version"]:
                     continue
 
-                if table.name in ["jwt", "admin"] and \
+                if table.name in ["jwt", "admin", "restricted_by_jwt"] and \
                         table.info['bind_key'] == "default":
                     continue
 
@@ -310,27 +310,32 @@ class ContentType(Resource):
 
         database_name = extract_database_name(data["connection_name"])
 
-        jwt_required = data.get("jwt_required", False)
-        jwt_restricted = data.get("jwt_restricted", False)
+        base_jwt = data.get("base_jwt", False)
+        restrict_by_jwt = data.get("restrict_by_jwt", False)
 
         if check_table(Table.table_name):
             return {"result": "Module with this name is already present."}, 400
 
-        if Table.table_name == "admin" and Table.connection_name == "default":
-            return {"result": "Table with name Admin is not allowed since it "
-                              "is used to manage admin login internally."}, 400
+        if Table.table_name in ["admin", "jwt", "restricted_by_jwt"] and \
+                Table.connection_name == "default":
+            return {"result": "Table with name {} is not allowed since it "
+                              "is used to manage admin login internally."
+                              .format(Table.table_name)}, 400
+
+        # TODO: ask if this should be checked too, seems unlikely
+        # if Table.table_name == "alembic_version":
 
         valid, msg = column_validation(data["columns"], Table.connection_name)
         if valid is False:
             return {"result": msg}, 400
 
-        if jwt_restricted and jwt_required:
+        if base_jwt and restrict_by_jwt:
             return {
-                "response": "Both jwt_required and jwt_restricted cannot be "
-                "true for the same content please specify only one."
+                "response": "Table cannot be both jwt_base and restricted by "
+                "jwt."
             }, 400
 
-        if jwt_required is True:
+        if base_jwt is True:
 
             if check_jwt_present(Table.connection_name, database_name):
                 return {"result": "Only one table is allowed to set jwt per"
@@ -356,10 +361,11 @@ class ContentType(Resource):
             if valid is False:
                 return {"result": msg}, 400
 
-            set_jwt_flag(Table.connection_name, database_name, Table.table_name)  # noqa 501
+            set_jwt_flag(Table.connection_name, database_name, Table.table_name,  # noqa 501
+                         ",".join(data["filter_keys"]))
             set_jwt_secret_key()
 
-        if jwt_restricted and check_jwt_present(Table.connection_name, database_name) is None:  # noqa 501, 701
+        if restrict_by_jwt and check_jwt_present(Table.connection_name, database_name) is None:  # noqa 501, 701
             return {"result": "JWT is not configured."}, 400
 
         dir_path = create_dir(database_name+"/"+Table.table_name)
@@ -370,17 +376,20 @@ class ContentType(Resource):
             return {"result": "Content must be unique for databases with the"
                     " same name."}
 
+        if restrict_by_jwt:
+            add_jwt_list(Table.connection_name, database_name,
+                         Table.table_name)
+
         create_model(dir_path, data)
         create_resources(database_name+"."+Table.table_name,
                          dir_path,
-                         jwt_required,
+                         base_jwt,
                          data.get("expiry", {}),
-                         jwt_restricted,
+                         restrict_by_jwt,
                          data.get("filter_keys", []))
         append_blueprint(database_name+"."+Table.table_name)
         remove_alembic_versions()
         move_migration_files()
-        # migrate()
         return {"result": "Successfully created module."}
 
     def put(self):
@@ -415,30 +424,102 @@ class ContentType(Resource):
         except ValueError as err:
             return {"result": "Error: " + "".join(err.args)}, 400
 
-        db_name = extract_database_name(Table.connection_name)
+        database_name = extract_database_name(Table.connection_name)
+        base_jwt = data.get("base_jwt", False)
+        restrict_by_jwt = data.get("restrict_by_jwt", False)
+
+        if base_jwt and restrict_by_jwt:
+            return {"result:" "Module cannot be both base_jwt and"
+                    " restricted_by_jwt."}
 
         if not check_table(Table.table_name, Table._connection_name):
             return {
-                "result": "Module with this name is already present."
+                "result": "Module with this name not present. Please choose a"
+                " an existing one to edit."
             }, 400
 
-        valid, msg = column_validation(Table.columns,
+        valid, msg = column_validation(data["columns"],
                                        Table.connection_name)
         if valid is False:
             return {"result": msg}, 400
+
+        # check if the table that will be edited is the JWT restricted table
+        isJWT = JWT.query.filter_by(connection_name=Table.connection_name,
+                                    database_name=database_name,
+                                    table=Table.table_name).first()
+
+        if isJWT is None and base_jwt is True:
+            return {"result": "Only one table is allowed to set jwt per"
+                              "database connection."}, 400
+
+        if isJWT != None and base_jwt == False:  # noqa 711
+            associatedTables = Restricted_by_JWT.query.filter_by(
+                                connection_name=Table.connection_name).all()
+
+            # regenerate all the endpoints that previously required JWT
+            for table in associatedTables:
+                print(table)
+                create_resources(database_name+"."+table,
+                                 dir_path,
+                                 False,
+                                 data.get("expiry", {}),
+                                 False,
+                                 data.get("filter_keys", []))
+
+            # delete this entry from the jwt table
+            delete_jwt(Table.connection_name)
+
+        # TODO:
+        # add a check for filter keys for jwt & add a function to change the
+        # JWT key function
 
         check = nullable_check(data)
         if check:
             return {"result": "Since data is already present in the table, "
                               "new datetime column should be nullable."}, 400
 
-        # TODO:
-        # add a check for foreign keys
-        # add a check for filter keys for jwt
-        # delete old end points
+        if restrict_by_jwt:
+            add_jwt_list(Table.connection_name, database_name,
+                         Table.table_name)
 
-        dir_path = 'app/' + Table.database_name+"/"+Table.table_name
+        if base_jwt:
+
+            if (data.get("filter_keys") is None or
+                    len(data.get("filter_keys", [])) == 0):
+                data["filter_keys"] = ["id"]
+
+            if validate_filter_keys_names(
+                    data["filter_keys"], data["columns"]) is False:
+                return {"result": "Only column names are allowed"
+                                  " in filter keys."}, 400
+
+            if validate_filter_keys_jwt(
+                    data["filter_keys"], data["columns"]) is False:
+                return {"result": "Atleast one of the filter_keys"
+                                  " should be unique and not null."}, 400
+
+            msg, valid, data["expiry"] = set_expiry(data.get("expiry", {}))
+
+            if valid is False:
+                return {"result": msg}, 400
+
+            delete_jwt(Table.connection_name)
+            set_jwt_flag(Table.connection_name, database_name, Table.table_name,  # noqa 501
+                         ",".join(data["filter_keys"]))
+            set_jwt_secret_key()
+
+        if restrict_by_jwt and check_jwt_present(Table.connection_name, database_name) is None:  # noqa 501, 701
+            return {"result": "JWT is not configured."}, 400
+
+        dir_path = 'app/' + database_name+"/"+Table.table_name
         create_model(dir_path, data)
+        create_resources(database_name+"."+Table.table_name,
+                         dir_path,
+                         base_jwt,
+                         data.get("expiry", {}),
+                         restrict_by_jwt,
+                         data.get("filter_keys", []))
+
         remove_alembic_versions()
         move_migration_files()
         # migrate()

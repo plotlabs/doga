@@ -1,4 +1,3 @@
-import time
 import subprocess
 
 from flask import Flask
@@ -45,14 +44,8 @@ def after_request(response):
 
 @app.teardown_request
 def teardown(request):
-    time.sleep(0.5)
     run_migration()
-
-
-@app.teardown_request
-def teardown(request):
-    time.sleep(0.5)
-    run_migration()
-
+    global to_reload
+    to_reload = True
 
 CORS(app, supports_credentials=True)

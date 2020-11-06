@@ -134,3 +134,5 @@ class Table(Model):
             raise ValueError("At least one column is required.")
 
         self._columns = columns
+
+# TODO: Add base_jwt and restrict_by_jwt to model

@@ -85,7 +85,7 @@ In the Request body-
 		data = {
 			"table_name": "table_name",
 			"connection_name": "user defined connection name",
-			"jwt_required": true,
+			"base_jwt OR restrict_by_jwt": true,
 			"filter_keys": ["column_name_1","column_name_2],
 			"expiry": {
 				"unit" : "weeks/days/hours/minutes/seconds/microseconds/milliseconds",
@@ -143,7 +143,7 @@ In the request body-
 
 	 ```json
 		{
-				"type": "mysql/postgresql",
+				"database_type": "mysql/postgresql",
 				"connection_name": "custom_connection_name",
 				"username": "",
 				"password": "",

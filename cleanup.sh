@@ -6,10 +6,8 @@ find  . -path /migrations/.py -not -name init.py -delete
 find  . -path /migrations/.pyc  -delete
 git clean -d -i
 
+find . | grep -E "(pycache|\.pyc|\.pyo$)" | xargs rm -rf
+
 #TODO:
 # remove all db's from from db.py file
-
-cd ..
-cd /tmp
-rm -rf admin.db
-rm -rf jwt.db
+python cleanup.py

@@ -25,7 +25,24 @@ class JWT(Base):
 
     id = Column(Integer, primary_key=True)
     jwt_flag = Column(Boolean, nullable=False, unique=False)
-    connection_name = Column(String(255), nullable=False, unique=False)
-    database_name = Column(String(255), nullable=False, unique=True)
-    table = Column(String(255), nullable=False, unique=True)
+    connection_name = Column(String(255), nullable=False, unique=True)
+
+    # TODO: make database_name & table combination should be unique
+    database_name = Column(String(255), nullable=False, unique=False)
+    table = Column(String(255), nullable=False, unique=False)
+
+    # TODO: confirm length for the filter key fields ( and find a better way
+    # to store the filter keys keep in mind Arrays are not allowed in SQLite)
+    filter_keys = Column(String(255), nullable=False)
     create_dt = Column(DateTime(), server_default=text('CURRENT_TIMESTAMP'))
+
+
+class Restricted_by_JWT(Base):
+    __tablename__ = 'restricted_by_jwt'
+    __bind_key__ = 'default'
+
+    id = Column(Integer, primary_key=True)
+    connection_name = db.Column(String(255),
+                                db.ForeignKey('jwt.connection_name'))
+    db_name = Column(String(255), nullable=False)
+    restricted_tables = db.Column(String(1000))

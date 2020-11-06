@@ -9,7 +9,7 @@ from sqlalchemy.exc import OperationalError, ProgrammingError
 from app import db
 from admin.version_models import *
 from dbs import ALEMBIC_LIST, DB_DICT
-from admin.models import JWT
+from admin.models import JWT, Restricted_by_JWT
 
 
 def create_dir(model_name):
@@ -73,13 +73,12 @@ def create_model(dir_path, data):
     o.close()
 
 
-def create_resources(model_name, dir_path, jwt_required,
-                     expiry, jwt_restricted, filter_keys):
+def create_resources(model_name, dir_path, base_jwt,
+                     expiry, restrict_by_jwt, filter_keys):
     """Function to create the CRUD Restful APIs for the module"""
     o = open(dir_path + "/resources.py", "w")
 
-    if jwt_required is True:
-
+    if base_jwt in [True, "True"]:
         for line in open("templates/jwt_resource.py"):
             line = line.replace("modulename", model_name.lower())
             line = line.replace("modelname", model_name.title().split('.')[1])
@@ -94,7 +93,7 @@ def create_resources(model_name, dir_path, jwt_required,
     else:
         for line in open("templates/resources.py"):
 
-            if jwt_restricted is True:
+            if restrict_by_jwt in [True, "True"]:
                 line = line.replace("def post", "@jwt_required\n    def post")
                 line = line.replace("def get", "@jwt_required\n    def get")
                 line = line.replace("def put", "@jwt_required\n    def put")
@@ -265,14 +264,46 @@ def set_expiry(expiry):
         return {"result": "Key error", "error": str(e)}, 500
 
 
-def set_jwt_flag(connection_name, database_name, table_name):
-
+def set_jwt_flag(connection_name, database_name, table_name, filter_keys):
+    """Function to add the base_jwt for a connection to JWT table in default db
+    """
     try:
         jwt_obj = JWT(jwt_flag=True,
                       connection_name=connection_name,
                       database_name=database_name,
-                      table=table_name)
+                      table=table_name,
+                      filter_keys=filter_keys)
         db.session.add(jwt_obj)
         db.session.commit()
     except Exception as e:
         return {"result": e}, 500
+
+
+def delete_jwt(connection_name):
+    try:
+        db.session.query(JWT).filter(JWT.connection_name == connection_name).delete()  # noqa 501
+        db.session.commit()
+    except Exception as e:
+        return {"result": e}, 500
+
+
+def delete_restricted_by_jwt(table_name):
+    try:
+        db.session.query(Restricted_by_JWT).filter(Restricted_by_JWT.connection_name == connection_name).delete()  # noqa 501
+        db.session.commit()
+    except Exception as e:
+        return {"result": e}, 500
+
+
+def add_jwt_list(connection_name, database_name, table_name):
+    """Function to add the restricted by JWT content(table) to the
+    restrict_by_JWT table in the dafault connection
+    """
+    base_jwt = JWT.query.filter_by(connection_name=connection_name)
+    print(base_jwt)
+    # jwt_restricted_tables =  value +","+table_name
+
+    # try:
+    #    restricted_obj = Restricted_by_JWT(
+    #
+    #    )

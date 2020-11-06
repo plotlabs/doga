@@ -151,7 +151,7 @@ class Database(Model):
         :type database_type: str
         """
         allowed_values = ["mysql", "sqlite", "postgres"]
-        if database_type not in allowed_values:
+        if (database_type not in allowed_values) or (database_type == "None"):
             raise ValueError(
                 "Invalid value for `database_type` ({0}), must be one of {1}"
                 .format(database_type, allowed_values)
@@ -272,5 +272,4 @@ class Database(Model):
             string = 'sqlite:////tmp/{}.db'.format(
                 self.database_name)
             # data['host'],data['database_name'])
-
         return string

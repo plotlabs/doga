@@ -1,7 +1,7 @@
 invalid_jwt_table = {
     "table_name": "student",
     "connection_name": "default",
-    "jwt_required": True,
+    "base_jwt": True,
     "filter_keys": ["name"],
     "columns": [
                 {
