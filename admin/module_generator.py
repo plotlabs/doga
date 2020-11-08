@@ -287,7 +287,9 @@ def delete_jwt(connection_name):
         return {"result": e}, 500
 
 
-def delete_restricted_by_jwt(table_name):
+def delete_restricted_by_jwt(connection_name):
+    """Delete the from the jwt database if the datavase jwt is removed
+    """
     try:
         db.session.query(Restricted_by_JWT).filter(Restricted_by_JWT.connection_name == connection_name).delete()  # noqa 501
         db.session.commit()
@@ -299,11 +301,25 @@ def add_jwt_list(connection_name, database_name, table_name):
     """Function to add the restricted by JWT content(table) to the
     restrict_by_JWT table in the dafault connection
     """
-    base_jwt = JWT.query.filter_by(connection_name=connection_name)
-    print(base_jwt)
-    # jwt_restricted_tables =  value +","+table_name
+    restricted_tables = Restricted_by_JWT.query.filter_by(
+                                    connection_name=connection_name).first()
+    if restricted_tables is None:
+        try:
+            restricted_jwt = Restricted_by_JWT(connection_name=connection_name,
+                                               db_name=database_name,
+                                               restricted_tables=table_name)
+            db.session.add(restricted_jwt)
+            db.session.commit()
+        except Exception as error:
+            return {"result": error}, 500
 
-    # try:
-    #    restricted_obj = Restricted_by_JWT(
-    #
-    #    )
+    # if the table was alredy in the database
+    if table_name in restricted_tables.restricted_tables:
+        return
+
+    restricted_tables.restricted_tables = restricted_tables.restricted_tables \
+        + "," + table_name
+    try:
+        db.session.commit()
+    except Exception as error:
+        return {"result": error}

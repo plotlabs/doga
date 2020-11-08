@@ -452,13 +452,15 @@ class ContentType(Resource):
             return {"result": "Only one table is allowed to set jwt per"
                               "database connection."}, 400
 
+        associatedTables = Restricted_by_JWT.query.filter_by(
+                                connection_name=Table.connection_name)
+
         if isJWT != None and base_jwt == False:  # noqa 711
             associatedTables = Restricted_by_JWT.query.filter_by(
-                                connection_name=Table.connection_name).all()
-
+                                connection_name=Table.connection_name).first()
             # regenerate all the endpoints that previously required JWT
-            for table in associatedTables:
-                print(table)
+            for table in associatedTables.restricted_tables.split(","):
+                dir_path = "app/"+database_name+"/"+Table.table_name
                 create_resources(database_name+"."+table,
                                  dir_path,
                                  False,
@@ -467,7 +469,8 @@ class ContentType(Resource):
                                  data.get("filter_keys", []))
 
             # delete this entry from the jwt table
-            delete_jwt(Table.connection_name)
+                delete_jwt(Table.connection_name)
+                delete_restricted_by_jwt(Table.connection_name)
 
         # TODO:
         # add a check for filter keys for jwt & add a function to change the
