@@ -134,6 +134,9 @@ class Admin(Model):
         :param name: The name of this Admin.
         :type name: str
         """
+        if name is None:
+            raise ValueError("Invalid value for `name`, must not be `None`"
+                             ".")
         if name is not None and len(name) > 32:
             raise ValueError("Invalid value for `name`, length must be less. "
                              "than or equal to `32`")

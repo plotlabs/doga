@@ -36,11 +36,40 @@ By default the app will run on 0.0.0.0:8080.
 This can be edited in the **runserver.py** file.
 
 ## Databases
-The default database is SQLite. A default sqlite file named **test.db** is created in the **/tmp** folder in the system.
+The default database is SQLite. A default sqlite file named **test.db** is
+created in the **/tmp** folder in the system.
 
 ## Admin APIs
 
-The following APIs are available for creating and managing content types and databases:
+The following APIs are available to register and login as admin users:
+
+ 1. Register Admin Users
+	**Endpoint**
+	`/admin/admin_profile`-
+	**Method-** POST(Create)
+	**Request JSON**:
+		```json
+		data = {
+    	"email":"email@webpage.com",
+    	"password": "password",
+    	"name": "admin_name"
+		}
+
+ 2. Login Admin User
+	**Endpoint**
+	`/admin/login`
+	**Method-** POST (Login)
+	```json
+	data = {
+		{
+    "email":"email@webpage.com",
+    "password": "password"
+	}
+	```
+
+The following APIs are available for creating and managing content types and
+databases, these are restricted by a **jwt**, the token for the same is
+generated when the admin user created, logs-in:
 
  1. Get all content types
 	**Endpoints:**
@@ -52,7 +81,7 @@ The following APIs are available for creating and managing content types and dat
 	**Endpoint:**
 	-   /admin/content/types
 	**Method-** POST(Create), PUT(Edit)
-**Request JSON**:
+	**Request JSON**:
 
  	```json
 		data = {
@@ -81,12 +110,12 @@ In the Request body-
 
 **Request JSON**:
 
-```json
-		data = {
+	```json
+			data = {
 			"table_name": "table_name",
 			"connection_name": "user defined connection name",
 			"base_jwt OR restrict_by_jwt": true,
-			"filter_keys": ["column_name_1","column_name_2],
+			"filter_keys": ["column_name_1","column_name_2"],
 			"expiry": {
 				"unit" : "weeks/days/hours/minutes/seconds/microseconds/milliseconds",
 				"value" : "integer value"
@@ -103,7 +132,8 @@ In the Request body-
 				{}.....
 			]
 		}
-```
+	}
+	```
 
 **If you want to authenticate content APIs using JWT**
 
@@ -112,7 +142,7 @@ In the request body-
 
 **Request JSON**:
 
-```json
+	```json
 	data = {
 		"table_name": "table_name",
 		"connection_name": "user defined connection name",
@@ -129,7 +159,7 @@ In the request body-
 			{}.....
 		]
 	}
-```
+	```
 
  3. Delete content type
 	**Endpoint-** /admin/content/types/content_type_name

@@ -4,6 +4,8 @@ import re
 
 from flask import Blueprint, request, jsonify
 from flask_restful import Api, Resource
+from flask_jwt_extended import (jwt_required, create_access_token,
+                                create_refresh_token, get_jwt_identity)
 
 from passlib.handlers.sha2_crypt import sha512_crypt
 
@@ -19,7 +21,7 @@ from admin.models.database_model import Database as DatabaseObject
 from admin.utils import *
 from admin.validators import column_types, column_validation, nullable_check
 
-from app.utils import AlchemyEncoder
+from app.utils import AlchemyEncoder, verify_jwt
 from templates.models import metadata
 
 from config import DEFAULT_PORTS
@@ -30,6 +32,8 @@ ALGORITHM = sha512_crypt
 mod_admin = Blueprint("admin", __name__)
 api_admin = Api()
 api_admin.init_app(mod_admin)
+
+jwt_filter_keys = ["email"]
 
 
 class AdminApi(Resource):
@@ -49,6 +53,7 @@ class AdminApi(Resource):
 
     """
 
+    @jwt_required
     def get(self, email=None) -> dict:
         """
         Defines responses for the `/admin/admin_adminprofile/<email-id>`
@@ -59,6 +64,10 @@ class AdminApi(Resource):
             json serializeable dict
             integer response code
         """
+        if not verify_jwt(get_jwt_identity(), jwt_filter_keys, Admin):
+            return {"result": "JWT authorization invalid, user does not"
+                    " exist."}
+
         if email is None:
             return {"result": "Please add admin`email` parameter to path"}, 404
 
@@ -83,15 +92,12 @@ class AdminApi(Resource):
             json serializeable dict
             integer response code
         """
-
-        data = request.get_json()
-
         try:
             admin = AdminObject.from_dict(request.get_json())
         except ValueError as err:
             return {"result": "Error: ".join(err.args)}
 
-        admin_exists = Admin.query.filter_by(email=admin._email.lower(
+        admin_exists = Admin.query.filter_by(email=admin.email.lower(
         )).first()
         if admin_exists is None:
             password_hash = ALGORITHM.hash(admin._password)
@@ -100,6 +106,7 @@ class AdminApi(Resource):
                           create_dt=datetime.datetime.utcnow())
             db.session.add(admin)
             db.session.commit()
+            set_jwt_secret_key()
             return {"result": "Admin created successfully.",
                     "id": admin.id, "email": admin.email}
 
@@ -109,9 +116,6 @@ class AdminApi(Resource):
 
 class Login(Resource):
     """API to login admin."""
-    """
-    TODO: generate jwt & return
-    """
     def post(self):
         data = request.get_json()
         try:
@@ -120,11 +124,24 @@ class Login(Resource):
                 return {"result": "Admin does not exist."}, 404
             else:
                 match = ALGORITHM.verify(data["password"], admin.password)
+                # TODO: add an expiry value
+                # expiry_time = datetime.timedelta(expiry_unit=expiry_value)
                 if not match:
                     return {"result": "Invalid password."}, 401
                 else:
+                    filter_keys = {key: data[key] for key in jwt_filter_keys}
+                    # , expires_delta=expiry_time)
+                    access_token = create_access_token(
+                           identity=filter_keys)
+                    refresh_token = create_refresh_token(
+                           identity=filter_keys)
+
                     return {"result": "Successfully logged in", "email":
-                            admin.email, "name": admin.name}
+                            admin.email,
+                            "name": admin.name,
+                            "id": admin.id,
+                            'access_token': access_token,
+                            'refresh_token': refresh_token}
         except KeyError as e:
             return {"result": "Key error", "error": str(e)}, 500
 
@@ -152,7 +169,7 @@ class ContentType(Resource):
         delete
 
     """
-
+    @jwt_required
     def get(self, db_name=None, content_type=None):
         """
         Defines responses for the `/admin/content/types` &
@@ -163,6 +180,9 @@ class ContentType(Resource):
             json serializeable dict
             integer response code
         """
+        if not verify_jwt(get_jwt_identity(), jwt_filter_keys, Admin):
+            return {"result": "JWT authorization invalid, user does not"
+                    " exist."}
         table_list = []
         # Iterate though the tables stored using FlaskSqlAlchemy
         for table in metadata.sorted_tables:
@@ -261,6 +281,7 @@ class ContentType(Resource):
         return jsonify(table_list)
         # return {"result": table_list}
 
+    @jwt_required
     def post(self):
         """
         Defines responses for the POST `/admin/content/types` that adds content
@@ -271,6 +292,10 @@ class ContentType(Resource):
             integer response code
 
         """
+        if not verify_jwt(get_jwt_identity(), jwt_filter_keys, Admin):
+            return {"result": "JWT authorization invalid, user does not"
+                    " exist."}
+
         data = request.get_json()
         # sample data
         # data = {
@@ -392,6 +417,7 @@ class ContentType(Resource):
         move_migration_files()
         return {"result": "Successfully created module."}
 
+    @jwt_required
     def put(self):
         """Edit a content type"""
         data = request.get_json()
@@ -418,7 +444,9 @@ class ContentType(Resource):
         #         }
         #     ]
         # }
-
+        if not verify_jwt(get_jwt_identity(), jwt_filter_keys, Admin):
+            return {"result": "JWT authorization invalid, user does not"
+                    " exist."}
         try:
             Table = TableModel.from_dict(request.get_json())
         except ValueError as err:
@@ -528,8 +556,12 @@ class ContentType(Resource):
         # migrate()
         return {"result": "Successfully edited model."}
 
+    @jwt_required
     def delete(self, db_name, content_type):
         """Delete a content type"""
+        if not verify_jwt(get_jwt_identity(), jwt_filter_keys, Admin):
+            return {"result": "JWT authorization invalid, user does not"
+                    " exist."}
         tables_list = []
         for table in metadata.sorted_tables:
             f = (table.__dict__['foreign_keys'])
@@ -568,8 +600,12 @@ class ContentType(Resource):
 
 class DatabaseInit(Resource):
 
+    @jwt_required
     def get(self):
         """Get properties of all connections"""
+        if not verify_jwt(get_jwt_identity(), jwt_filter_keys, Admin):
+            return {"result": "JWT authorization invalid, user does not"
+                    " exist."}
         connection_list = []
         for key, value in DB_DICT.items():
             if value.startswith("sqlite"):
@@ -606,6 +642,7 @@ class DatabaseInit(Resource):
 
         return connection_list
 
+    @jwt_required
     def post(self):
         """Create a database connection string"""
         # sample data
@@ -618,6 +655,9 @@ class DatabaseInit(Resource):
         #     "port": "port_number"
         #     "database_name": "database_name",
         # }
+        if not verify_jwt(get_jwt_identity(), jwt_filter_keys, Admin):
+            return {"result": "JWT authorization invalid, user does not"
+                    " exist."}
         try:
             database = DatabaseObject.from_dict(request.get_json())
         except ValueError as err:
@@ -672,6 +712,7 @@ class DatabaseInit(Resource):
             db_created
         }
 
+    @jwt_required
     def put(self):
         """Edit a database connection string"""
         data = request.get_json()

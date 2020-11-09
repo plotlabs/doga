@@ -5,7 +5,7 @@ import requests
 from flask import Blueprint, request
 from flask_restful import Resource, Api
 from flask_jwt_extended import (jwt_required, create_access_token,
-                                create_refresh_token, verify_jwt_in_request)
+                                create_refresh_token, get_jwt_identity)
 
 from sqlalchemy.exc import OperationalError, IntegrityError, StatementError
 
