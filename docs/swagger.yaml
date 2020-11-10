@@ -1,0 +1,508 @@
+swagger: "2.0"
+info:
+  description: ""
+  version: "0.0.1"
+  title: "DOGA"
+  termsOfService: "http://doga.io/"
+  contact:
+    email: "plotlabs@plotlabs.io"
+  license:
+    name: "Apache 2.0"
+    url: "http://www.apache.org/licenses/LICENSE-2.0.html"
+host: "doga.plotlabs.io"
+externalDocs:
+    description: "Find out more about our DOGA"
+    url: "http://plotlabs.io"
+basePath: "/"
+tags:
+- name: "admin"
+  description: "APIs accessbale to the admin of the content management system"
+- name: "content"
+  description: "APIs that provide access to content"
+- name: "base jwt"
+  description: "These are the endpoints defined for the table in the database (ONLY one per database) to register users using a jwt token"
+schemes:
+- "https"
+- "http"
+securityDefinitions:
+  Bearer:
+    type: apiKey
+    name: Authorization
+    in: header
+paths:
+  /admin/admin_profile:
+    post:
+      tags:
+      - "admin"
+      summary: "Add a new admin to the system"
+      description: ""
+      operationId: "Add Admin"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "body"
+        name: "body"
+        description: "Admin details that needs to be added to the stystem"
+        required: true
+        schema:
+          $ref: "#/definitions/Admin"
+      responses:
+        "200":
+          schema: 
+            $ref: '#/definitions/AdminResponse'
+          description: "Admin created successfully"
+        "403":
+          description: "Admin already exists"
+        "500":
+          description: "Invalid Input"
+  /admin/admin_profile/{email}:
+    get:
+      tags:
+      - "admin"
+      security:
+        - Bearer: []
+      summary: "Get info on an existing admin"
+      description: ""
+      operationId: "Get Admin"
+      parameters:
+        - name: "email"
+          in: "path"
+          type: "string"
+          format: "email"
+          required: true
+      produces:
+      - "application/json"
+      responses:
+        "404":
+          description: "Admin does not exist"
+        "200":
+          description: "Admin found"
+          schema:
+            $ref: '#/definitions/AdminResponse'
+  /admin/login:
+    post:
+      tags:
+       - "admin"
+      summary: "API endpoint to allow admin to login"
+      operationId: "Admin Login"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "body"
+        name: "body"
+        required: true
+        schema:
+          $ref: '#/definitions/AdminLogin'
+      responses:
+        '200':
+          description:  'successful login'
+          schema:
+            type: object
+            properties:
+              result:
+               type: "string"
+               example: "Successfully logged in example@test.com" 
+        '403':
+          description: 'Admin already exists'
+        '404':
+          description: 'Admin does not exist'
+        '500':
+          description: 'Bad Request'
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+  /admin/content/types:
+    get:
+      summary: "Lists all the available content tables as well as the admin and jwt lists"
+      tags:
+        - admin
+        - content info
+        - content
+      operationId: "List Content"
+      security:
+        - Bearer: []
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: "A list of all the available content on the platform"
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Table'
+    post:
+      summary: "Adds the given content to the database connection specified & creates API respurces for the same"
+      tags:
+        - admin
+        - content
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      operationId: "Post Content"
+      security:
+        - Bearer: []
+      parameters:
+      - in: "body"
+        name: "data"
+        required: true
+        schema:
+            $ref: '#/definitions/Content' 
+      responses:
+        "200":
+          description: "Success"
+          schema:
+            properties:
+              response:
+                type: "string"
+                example: "Successfully created module."
+        "400":
+          description: "Invalid Request"
+          schema:
+            properties:
+              result:
+                type: "string"
+                example: "Table with name Admin is not allowed since it is used to manage admin login internally."
+  /admin/columntypes:
+    get:
+      tags:
+        - admin
+        - content info
+      operationId: "List Possible Column Types"
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: "Success"
+          schema:
+            properties:
+              response:
+                type: "array"
+                items: 
+                  type: "string"
+                  example:
+                    - INT
+                    - BOOL
+                    - BIGINT
+                    - Binary
+  /admin/dbinit:
+    post:
+      summary: "Add a new database connection to the system"
+      tags:
+        - admin
+        - database
+      produces:
+      - application/json
+      consumes:
+      - application/json
+      operationId: "Add database connection"
+      security:
+        - Bearer: []
+      parameters:
+      - in: "body"
+        name: "data"
+        schema:
+          $ref: '#/definitions/Database'
+      responses:
+        "200":
+          description: "Successfully created database connection string"
+        "400":
+          description: "Could not create database, connection not valid."
+    get:
+      summary: "Lists all the database connection strings"
+      tags:
+        - admin
+        - database
+      produces:
+      - application/json
+      operationId: "List database connections"
+      security:
+        - Bearer: []
+      responses:
+        "200":
+          description: "List of connections"
+          schema:
+            properties:
+              response:
+                type: "array"
+                items:
+                  $ref: '#/definitions/Database'
+  /admin/content/types/{db_name}/{table_name}:
+    delete:
+      tags:
+        - "admin"
+      summary: "Delets the content & it's related endoints specified in the path"
+      produces:
+        - application/json
+      operationId: "Delete Content"
+      security:
+        - Bearer: []
+      parameters:
+        - name: "db_name"
+          required: true
+          in: "path"
+          type: "string"
+        - name: "table_name"
+          in: "path"
+          type: "string"
+          required: true
+      responses:
+        "400":
+          description: "Invalid Request"
+          schema:
+            properties:
+              result:
+                type: "string"
+                example: "The table table_name is linked to another table(s).Delete table(s) linked_table first"
+        "200":
+          description: "Success"
+          schema:
+            properties:
+              result: 
+                type: "string"
+                example: "Successfully deleted module."
+  /{db_name}/{table_name}:
+    parameters:
+    - name: "db_name"
+      in: "path"
+      required: true
+      type: string
+    - name: "table_name"
+      in: "path"
+      required: true
+      type: string
+    post:
+      summary: "Add data posted to the table"
+      tags:
+      - content
+      consumes:
+      - applocation/json
+      produces:
+      - application/json
+      operationId: "Add content"
+      parameters:
+      - in: "body"
+        name: "content"
+        schema:
+          $ref: '#/definitions/Content' 
+      responses:
+        '200':
+          description: 'Successful update of rows'
+        '400':
+          description: 'Unsuccessful request'
+          schema:
+            type: "string"
+            example: "Foreign Key constraint failed for column "
+    get:
+      summary: "Retreive content from the table"
+      tags:
+      - content
+      operationId: "Get content"
+      responses:
+        '200':
+          description: 'successful retrival of data'
+          schema:
+            type: "array"
+            items:
+              $ref: '#/definitions/Content'
+        '404':
+          description: 'Content does not exist'
+        '500':
+          description: 'Bad Request'
+  /{db_name}/{table_name}/{id}:
+    parameters:
+      - name: "db_name"
+        in: "path"
+        required: true
+        type: string
+      - name: "table_name"
+        in: "path"
+        required: true
+        type: string
+      - name: "id"
+        in: "path"
+        type: integer
+        required: true
+    put: 
+      summary: "Updates the existing content with the given input"
+      tags:
+        - content
+      consumes:
+        - applocation/json
+      produces:
+        - application/json
+      operationId: "Add content `jwt base`"
+      parameters:
+      - in: "body"
+        name: "content"
+        schema:
+          $ref: '#/definitions/Content' 
+      responses:
+        '200':
+          description: 'Successfully updated row'
+        '400':
+          description: 'Does not exist'
+    delete:
+      tags:
+        - content
+      operationId: "Delete user from `jwt base`"
+      summary: "Delete values from the table"
+      responses:
+        '200':
+          description: 'Successfully deleted.'
+  /{db_name}/{table_name}/login:
+    parameters:
+      - name: "db_name"
+        in: "path"
+        required: true
+        type: string
+      - name: "table_name"
+        in: "path"
+        required: true
+        type: string
+    post:
+      tags:
+        - base jwt
+      summary: "Endpoint to login to `base jwt` content, there will be a maximum of one of these per db_name ( database name )"
+      operationId: "Login JWT base content"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      responses:
+        "200":
+          description:  'successful login'
+          schema:
+            type: object
+            properties:
+              result:
+                type: "string"
+                example: "Successfully logged in example@test.com" 
+        "400":
+          description: 'missing field error'
+          schema:
+            type: object
+            properties:
+              result:
+                type: "string"
+                example: "Missing field `field name`"
+        "500":
+          description: 'Bad Request'
+          schema :
+            $ref: '#/definitions/ErrorResponse'
+definitions:
+  Admin:
+    type: "object"
+    properties:
+      email:
+        type: "string"
+        format: "email"
+        description: "The email-id the admin will use to login"
+      password:
+        type: "string"
+        maxLength: 255
+        minLength: 2
+        description: "Password that the admin will use to login"
+      name:
+        type: "string"
+        maxLength: 32
+        minLength: 1
+        description: "This is the name of the admin"
+    required:
+    - email
+    - password
+  AdminResponse:
+    type: "object"
+    properties:
+      id: 
+        type: "integer"
+      email: 
+        type: "string"
+        format: "email"
+  AdminLogin:
+    type: "object"
+    properties:
+      email:
+        type: "string"
+        format: "email"
+      password:
+        type: "string"
+  Table:
+    type: "object"
+    properties:
+      table_name:
+        type: "string"
+      connection_name:
+        type: "string"
+      columns:
+        type: "array"
+        items:  
+          $ref: '#/definitions/Column'
+    required:
+    - table_name
+    - connection_name
+    - columns
+  Column:
+    type: "object"
+    properties:
+      default:
+        type: "string"
+      foreign_key:
+        type: "string"
+      name:
+        type: "string"
+      nullable:
+        type: "boolean"
+      type:
+        type: "string"
+        format: type
+      unique:
+        type: "boolean"
+    required:
+      - name
+      - nullable
+      - type
+      - unique
+  Content:
+    type: object
+    additionalProperties: true
+    example:
+      name: "name"
+      id: "id"
+      prop3: "property3"
+  Database:
+    type: "object"
+    properties:
+      connection_name:
+        type: "string"
+      database_type:
+        type: "string"
+        enum: ['mysql','sqlite','postgres']
+      host:
+        type: "string"
+      port:
+        type: "string"
+      username:
+        type: "string"
+      password:
+        type: "string"
+    required:
+      - connection_name
+      - database_type
+      - host
+      - port
+      - username
+      - password
+  ErrorResponse:
+    description: 'Error Response'
+    type: object
+    properties:
+      result:
+        type: "string"
+        example: "Error message"
+
