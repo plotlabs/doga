@@ -16,7 +16,7 @@ externalDocs:
 basePath: "/"
 tags:
 - name: "admin"
-  description: "APIs accessbale to the admin of the content management system"
+  description: "APIs accessible to the admin of the content management system"
 - name: "content"
   description: "APIs that provide access to content"
 - name: "base jwt"
@@ -44,13 +44,13 @@ paths:
       parameters:
       - in: "body"
         name: "body"
-        description: "Admin details that needs to be added to the stystem"
+        description: "Admin details that needs to be added to the system"
         required: true
         schema:
           $ref: "#/definitions/Admin"
       responses:
         "200":
-          schema: 
+          schema:
             $ref: '#/definitions/AdminResponse'
           description: "Admin created successfully"
         "403":
@@ -105,7 +105,7 @@ paths:
             properties:
               result:
                type: "string"
-               example: "Successfully logged in example@test.com" 
+               example: "Successfully logged in example@test.com"
         '403':
           description: 'Admin already exists'
         '404':
@@ -136,7 +136,7 @@ paths:
             items:
               $ref: '#/definitions/Table'
     post:
-      summary: "Adds the given content to the database connection specified & creates API respurces for the same"
+      summary: "Adds the given content to the database connection specified & creates API resources for the same"
       tags:
         - admin
         - content
@@ -152,7 +152,7 @@ paths:
         name: "data"
         required: true
         schema:
-            $ref: '#/definitions/Content' 
+            $ref: '#/definitions/Content'
       responses:
         "200":
           description: "Success"
@@ -183,7 +183,7 @@ paths:
             properties:
               response:
                 type: "array"
-                items: 
+                items:
                   type: "string"
                   example:
                     - INT
@@ -236,7 +236,7 @@ paths:
     delete:
       tags:
         - "admin"
-      summary: "Delets the content & it's related endoints specified in the path"
+      summary: "Delete the content & its related endpoints specified in the path"
       produces:
         - application/json
       operationId: "Delete Content"
@@ -263,7 +263,7 @@ paths:
           description: "Success"
           schema:
             properties:
-              result: 
+              result:
                 type: "string"
                 example: "Successfully deleted module."
   /{db_name}/{table_name}:
@@ -281,7 +281,7 @@ paths:
       tags:
       - content
       consumes:
-      - applocation/json
+      - application/json
       produces:
       - application/json
       operationId: "Add content"
@@ -289,7 +289,7 @@ paths:
       - in: "body"
         name: "content"
         schema:
-          $ref: '#/definitions/Content' 
+          $ref: '#/definitions/Content'
       responses:
         '200':
           description: 'Successful update of rows'
@@ -299,13 +299,13 @@ paths:
             type: "string"
             example: "Foreign Key constraint failed for column "
     get:
-      summary: "Retreive content from the table"
+      summary: "Retrieve content from the table"
       tags:
       - content
       operationId: "Get content"
       responses:
         '200':
-          description: 'successful retrival of data'
+          description: 'successful retrieval of data'
           schema:
             type: "array"
             items:
@@ -328,12 +328,12 @@ paths:
         in: "path"
         type: integer
         required: true
-    put: 
+    put:
       summary: "Updates the existing content with the given input"
       tags:
         - content
       consumes:
-        - applocation/json
+        - application/json
       produces:
         - application/json
       operationId: "Add content `jwt base`"
@@ -341,7 +341,7 @@ paths:
       - in: "body"
         name: "content"
         schema:
-          $ref: '#/definitions/Content' 
+          $ref: '#/definitions/Content'
       responses:
         '200':
           description: 'Successfully updated row'
@@ -382,7 +382,7 @@ paths:
             properties:
               result:
                 type: "string"
-                example: "Successfully logged in example@test.com" 
+                example: "Successfully logged in example@test.com"
         "400":
           description: 'missing field error'
           schema:
@@ -419,9 +419,9 @@ definitions:
   AdminResponse:
     type: "object"
     properties:
-      id: 
+      id:
         type: "integer"
-      email: 
+      email:
         type: "string"
         format: "email"
   AdminLogin:
@@ -505,4 +505,3 @@ definitions:
       result:
         type: "string"
         example: "Error message"
-
