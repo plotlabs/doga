@@ -101,11 +101,7 @@ paths:
         '200':
           description:  'successful login'
           schema:
-            type: object
-            properties:
-              result:
-               type: "string"
-               example: "Successfully logged in example@test.com"
+            $ref: '#/definitions/JwtLoginRespose'
         '403':
           description: 'Admin already exists'
         '404':
@@ -378,11 +374,7 @@ paths:
         "200":
           description:  'successful login'
           schema:
-            type: object
-            properties:
-              result:
-                type: "string"
-                example: "Successfully logged in example@test.com"
+            $ref: '#/definitions/JwtLoginRespose'
         "400":
           description: 'missing field error'
           schema:
@@ -505,3 +497,20 @@ definitions:
       result:
         type: "string"
         example: "Error message"
+  JwtLoginRespose:
+    type: "object"
+    properties:
+      result:
+        type: string
+        example: "Successfully logged in."
+      email:
+        type: string
+        format: email
+      id:
+        type: integer
+      access_token:
+        type: string
+        format: jwt
+      refresh_toke:
+        type: string
+        format: jwt
