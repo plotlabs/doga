@@ -3,12 +3,13 @@ import platform
 import shutil
 import subprocess
 import datetime
+
 from sqlalchemy.exc import OperationalError, ProgrammingError
 
 from app import db
 from admin.version_models import *
 from dbs import ALEMBIC_LIST, DB_DICT
-from admin.models import JWT
+from admin.models import JWT, Restricted_by_JWT
 
 
 def create_dir(model_name):
@@ -72,16 +73,15 @@ def create_model(dir_path, data):
     o.close()
 
 
-def create_resources(model_name, dir_path, jwt_required,
-                     expiry, jwt_restricted, filter_keys):
+def create_resources(model_name, dir_path, base_jwt,
+                     expiry, restrict_by_jwt, filter_keys):
     """Function to create the CRUD Restful APIs for the module"""
     o = open(dir_path + "/resources.py", "w")
 
-    if jwt_required is True:
-
+    if base_jwt in [True, "True"]:
         for line in open("templates/jwt_resource.py"):
             line = line.replace("modulename", model_name.lower())
-            line = line.replace("modelname", model_name.title())
+            line = line.replace("modelname", model_name.title().split('.')[1])
             line = line.replace("bname", '"' + model_name.lower() + '"')
             line = line.replace("jwt_key", str(filter_keys))
             line = line.replace("expiry_unit", expiry['unit'])
@@ -93,7 +93,7 @@ def create_resources(model_name, dir_path, jwt_required,
     else:
         for line in open("templates/resources.py"):
 
-            if jwt_restricted is True:
+            if restrict_by_jwt in [True, "True"]:
                 line = line.replace("def post", "@jwt_required\n    def post")
                 line = line.replace("def get", "@jwt_required\n    def get")
                 line = line.replace("def put", "@jwt_required\n    def put")
@@ -101,7 +101,7 @@ def create_resources(model_name, dir_path, jwt_required,
                     "def delete", "@jwt_required\n    def delete")
 
             line = line.replace("modulename", model_name.lower())
-            line = line.replace("modelname", model_name.title())
+            line = line.replace("modelname", model_name.title().split('.')[1])
             line = line.replace("bname", '"' + model_name.lower() + '"')
             line = line.replace("endpoint", '"/"')
             line = line.replace("param", '"/<int:id>"')
@@ -115,8 +115,8 @@ def append_blueprint(model_name):
     o = open("app/blueprints.py", "a")
     o.write("from app." + model_name + ".resources import mod_model\n")
     o.write(
-        "app.register_blueprint(mod_model, url_prefix='/" + model_name +
-        "')\n\n")
+        "app.register_blueprint(mod_model, url_prefix='/" +
+        model_name.replace('.', '/') + "')\n\n")
     o.close()
 
 
@@ -132,26 +132,6 @@ def check_table(table_name, connection_name=''):
                 exist = True
 
     return exist
-
-
-def migrate():
-    """Function to stop the app to migrate and then restart it."""
-
-    migrate_folder = os.path.exists('migrations')
-    if not migrate_folder:
-        subprocess.check_output('flask db init --multidb', shell=True)
-    pid = os.getpid()
-    revision_id = datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
-    migrate_command = "flask db migrate --rev-id " + revision_id
-    upgrade_command = "flask db upgrade"
-    sys_platform = platform.system()
-    if sys_platform in ['Linux', 'Darwin']:
-        run_command = "sh restart.sh"
-    else:
-        run_command = "start "" /b restart.bat"
-    if pid != '':
-        os.system(migrate_command + " && " + upgrade_command + " && "
-                  + run_command + " " + str(pid))
 
 
 def remove_alembic_versions():
@@ -223,7 +203,7 @@ def add_new_db(conn_name):
     move_migration_files()
     if os.path.exists("migrations"):
         shutil.rmtree('migrations')
-    migrate()
+    # migrate()
 
 
 def check_jwt_present(connection_name, database_name):
@@ -284,14 +264,62 @@ def set_expiry(expiry):
         return {"result": "Key error", "error": str(e)}, 500
 
 
-def set_jwt_flag(connection_name, database_name, table_name):
-
+def set_jwt_flag(connection_name, database_name, table_name, filter_keys):
+    """Function to add the base_jwt for a connection to JWT table in default db
+    """
     try:
         jwt_obj = JWT(jwt_flag=True,
                       connection_name=connection_name,
                       database_name=database_name,
-                      table=table_name)
+                      table=table_name,
+                      filter_keys=filter_keys)
         db.session.add(jwt_obj)
         db.session.commit()
     except Exception as e:
         return {"result": e}, 500
+
+
+def delete_jwt(connection_name):
+    try:
+        db.session.query(JWT).filter(JWT.connection_name == connection_name).delete()  # noqa 501
+        db.session.commit()
+    except Exception as e:
+        return {"result": e}, 500
+
+
+def delete_restricted_by_jwt(connection_name):
+    """Delete the from the jwt database if the datavase jwt is removed
+    """
+    try:
+        db.session.query(Restricted_by_JWT).filter(Restricted_by_JWT.connection_name == connection_name).delete()  # noqa 501
+        db.session.commit()
+    except Exception as e:
+        return {"result": e}, 500
+
+
+def add_jwt_list(connection_name, database_name, table_name):
+    """Function to add the restricted by JWT content(table) to the
+    restrict_by_JWT table in the dafault connection
+    """
+    restricted_tables = Restricted_by_JWT.query.filter_by(
+                                    connection_name=connection_name).first()
+    if restricted_tables is None:
+        try:
+            restricted_jwt = Restricted_by_JWT(connection_name=connection_name,
+                                               db_name=database_name,
+                                               restricted_tables=table_name)
+            db.session.add(restricted_jwt)
+            db.session.commit()
+        except Exception as error:
+            return {"result": error}, 500
+
+    # if the table was alredy in the database
+    if table_name in restricted_tables.restricted_tables:
+        return
+
+    restricted_tables.restricted_tables = restricted_tables.restricted_tables \
+        + "," + table_name
+    try:
+        db.session.commit()
+    except Exception as error:
+        return {"result": error}

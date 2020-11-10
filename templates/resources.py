@@ -11,6 +11,8 @@ from app import db
 from app.modulename.models import modelname
 from app.utils import AlchemyEncoder
 
+from config import HOST, PORT
+
 
 mod_model = Blueprint(bname, __name__)
 api_model = Api()
@@ -95,7 +97,7 @@ class Apis(Resource):
                     for f in col.foreign_keys:
                         model_endp = str(f).split("'")[1].split('.')[0]
                         foreign_obj = requests.get(
-                            'http://localhost:8080/' + model_endp +
+                            'http://{}:{}/'.format(HOST, PORT) + model_endp +
                             '/' + str(data[col.name]))
                         result = json.loads(foreign_obj.content)["result"]
 
@@ -136,14 +138,14 @@ class Apis(Resource):
                                 data[col.name], "%Y-%m-%d")
                         except ValueError:
                             return {
-                                "result": "The format entered for column {} is "
-                                          "not correct. Correct format should"
+                                "result": "The format entered for column {} is"
+                                          " not correct. Correct format should"
                                           " be of type: YYYY-MM-DD.".format(
                                               col.name)}, 400
                         except TypeError:
                             return {
-                                "result": "The format entered for column {} is "
-                                          "not correct. Correct format should"
+                                "result": "The format entered for column {} is"
+                                          " not correct. Correct format should"
                                           " be of type: YYYY-MM-DD.".format(
                                               col.name)}, 400
                         except KeyError:
@@ -155,16 +157,16 @@ class Apis(Resource):
                                 data[col.name], "%Y-%m-%d %H:%M:%S")
                         except ValueError:
                             return {
-                                "result": "The format entered for column {} is "
-                                          "not correct. Correct format should"
-                                          " be of type: YYYY-MM-DD H:M:S.".format(
-                                              col.name)}, 400
+                                "result": "The format entered for column {} is"
+                                          " not correct. Correct format should"
+                                          " be of type: YYYY-MM-DD H:M:S."
+                                          .format(col.name)}, 400
                         except TypeError:
                             return {
-                                "result": "The format entered for column {} is "
-                                          "not correct. Correct format should"
-                                          " be of type: YYYY-MM-DD H:M:S.".format(
-                                              col.name)}, 400
+                                "result": "The format entered for column {} is"
+                                          " not correct. Correct format should"
+                                          " be of type: YYYY-MM-DD H:M:S."
+                                          .format(col.name)}, 400
                         except KeyError:
                             pass
 
@@ -175,16 +177,16 @@ class Apis(Resource):
                                                  'REAL']:
                         if isinstance(data[col.name], str):
                             return {
-                                "result": "The value entered for column {} "
-                                          "is string and not of type"
-                                          " {}".format(col.name, col.type)}, 400
+                                "result": "The value entered for column {}"
+                                          " is string and not of type "
+                                          "{}".format(col.name, col.type)}, 400
 
                     if len(col.foreign_keys) > 0:
                         for f in col.foreign_keys:
                             model_endp = str(f).split("'")[1].split('.')[0]
                             foreign_obj = requests.get(
-                                'http://localhost:8080/' + model_endp +
-                                '/' + str(data[col.name]))
+                                'http://{}:{}/'.format(HOST, PORT) + model_endp
+                                + '/' + str(data[col.name]))
                             result = json.loads(foreign_obj.content)[
                                 "result"]
 
@@ -193,9 +195,12 @@ class Apis(Resource):
                                                   "failed for column "
                                                   "{}".format(col.name)}, 400
 
-            for key, value in data.items():
-                setattr(model_obj, key, value)
-            db.session.add(model_obj)
+            try:
+                for key, value in data.items():
+                    setattr(model_obj, key, value)
+                db.session.add(model_obj)
+            except AttributeError:
+                return {"result": "Request body not found."}, 400
 
             try:
                 db.session.commit()

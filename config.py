@@ -17,3 +17,11 @@ PROPAGATE_EXCEPTIONS = True
 
 CSRF_ENABLED = True
 CSRF_SESSION_KEY = ""
+
+DEFAULT_PORTS = {
+    "mysql": "3306",
+    "postgresql": "5432",
+    "sqlite": "",
+}
+
+JWTSET = False

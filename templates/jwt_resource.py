@@ -5,14 +5,15 @@ import requests
 from flask import Blueprint, request
 from flask_restful import Resource, Api
 from flask_jwt_extended import (jwt_required, create_access_token,
-                                create_refresh_token)
+                                create_refresh_token, get_jwt_identity)
 
 from sqlalchemy.exc import OperationalError, IntegrityError, StatementError
 
 from app import db
 from app.modulename.models import modelname
-from app.utils import AlchemyEncoder
+from app.utils import AlchemyEncoder, verify_jwt
 
+from config import HOST, PORT
 
 jwt_filter_keys = jwt_key
 
@@ -28,6 +29,9 @@ class Apis(Resource):
 
     @jwt_required
     def get(self, id=None):
+        if not verify_jwt(get_jwt_identity(), jwt_filter_keys, model_name):
+            return {"result": "JWT authorization invalid, user does not"
+                    " exist."}
         if id is None:
             model_obj = model_name.query.all()
             if model_obj is not None:
@@ -43,6 +47,9 @@ class Apis(Resource):
 
     @jwt_required
     def put(self, id):
+        if not verify_jwt(get_jwt_identity(), jwt_filter_keys, model_name):
+            return {"result": "JWT authorization invalid, user does not"
+                    " exist."}
         data = request.get_json()
         model_obj = model_name.query.filter_by(id=id).first()
         if model_obj is not None:
@@ -55,14 +62,14 @@ class Apis(Resource):
                                 data[col.name], "%Y-%m-%d")
                         except ValueError:
                             return {
-                                "result": "The format entered for column {} is "
-                                          "not correct. Correct format should"
+                                "result": "The format entered for column {} is"
+                                          " not correct. Correct format should"
                                           " be of type: YYYY-MM-DD.".format(
                                               col.name)}, 400
                         except TypeError:
                             return {
-                                "result": "The format entered for column {} is "
-                                          "not correct. Correct format should"
+                                "result": "The format entered for column {} is"
+                                          " not correct. Correct format should"
                                           " be of type: YYYY-MM-DD.".format(
                                               col.name)}, 400
                         except KeyError:
@@ -74,16 +81,16 @@ class Apis(Resource):
                                 data[col.name], "%Y-%m-%d %H:%M:%S")
                         except ValueError:
                             return {
-                                "result": "The format entered for column {} is "
-                                          "not correct. Correct format should"
-                                          " be of type: YYYY-MM-DD H:M:S.".format(
-                                              col.name)}, 400
+                                "result": "The format entered for column {} is"
+                                          " not correct. Correct format should"
+                                          " be of type: YYYY-MM-DD H:M:S."
+                                          .format(col.name)}, 400
                         except TypeError:
                             return {
-                                "result": "The format entered for column {} is "
-                                          "not correct. Correct format should"
-                                          " be of type: YYYY-MM-DD H:M:S.".format(
-                                              col.name)}, 400
+                                "result": "The format entered for column {} is"
+                                          " not correct. Correct format should"
+                                          " be of type: YYYY-MM-DD H:M:S."
+                                          .format(col.name)}, 400
                         except KeyError:
                             pass
 
@@ -95,15 +102,15 @@ class Apis(Resource):
                         if isinstance(data[col.name], str):
                             return {
                                 "result": "The value entered for column {} "
-                                          "is string and not of type"
-                                          " {}".format(col.name, col.type)}, 400
+                                          "is string and not of type "
+                                          "{}".format(col.name, col.type)}, 400
 
                     if len(col.foreign_keys) > 0:
                         for f in col.foreign_keys:
                             model_endp = str(f).split("'")[1].split('.')[0]
                             foreign_obj = requests.get(
-                                'http://localhost:8080/' + model_endp +
-                                '/' + str(data[col.name]))
+                                'http://{}:{}/'.format(HOST, PORT) + model_endp
+                                + '/' + str(data[col.name]))
                             result = json.loads(foreign_obj.content)[
                                 "result"]
 
@@ -135,6 +142,9 @@ class Apis(Resource):
 
     @jwt_required
     def delete(self, id):
+        if not verify_jwt(get_jwt_identity(), jwt_filter_keys, model_name):
+            return {"result": "JWT authorization invalid, user does not"
+                    " exist."}
         try:
             model_name.query.filter_by(id=id).delete()
             db.session.commit()
@@ -159,7 +169,7 @@ class Login(Resource):
                 **filter_keys).first()
             if model_obj is None:
                 return {"result": model_name.__tablename__ +
-                                  " does not exist."}, 401
+                        " does not exist."}, 401
             else:
                 expiry_time = datetime.timedelta(expiry_unit=expiry_value)
                 access_token = create_access_token(
@@ -171,11 +181,11 @@ class Login(Resource):
                         'access_token': access_token,
                         'refresh_token': refresh_token}
         except KeyError as e:
-            return {"result": "missing field: " + str(e)}, 400
+            return {"result": "Missing field: " + str(e)}, 400
 
 
 class Register(Resource):
-    """API to regiter model_obj."""
+    """API to register model_obj."""
 
     def post(self):
         data = request.get_json()
@@ -235,7 +245,7 @@ class Register(Resource):
                     for f in col.foreign_keys:
                         model_endp = str(f).split("'")[1].split('.')[0]
                         foreign_obj = requests.get(
-                            'http://localhost:8080/' + model_endp +
+                            'http://{}:{}/'.format(HOST, PORT) + model_endp +
                             '/' + str(data[col.name]))
                         result = json.loads(foreign_obj.content)["result"]
 
