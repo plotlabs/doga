@@ -13,9 +13,8 @@ from . import headers, endpoints
 @pytest.mark.usefixtures('client')
 class Test_DBinit:
 
-    def setup_class(self, client):
-        client.post('/admin/admin_profile',
-                    json=admin)
+    def test_setup(self, client):
+        client.post('/admin/admin_profile', json=admin)
 
         if 'name' in admin:
             del admin['name']
@@ -29,18 +28,22 @@ class Test_DBinit:
         subprocess.run(["git", "clean", "-df"])
 
     def test_dbinit(client, self):
-        response = client.post(endpoints['db_init'], json=dbinit_sqlite)
+        response = client.post(endpoints['db_init'], json=dbinit_sqlite,
+                               headers=headers)
         assert b'Successfully created database connection string.'\
             in response.data
 
     def test_dbinit_repeated(client, self):
 
-        response = client.post(endpoints['db_init'], json=dbinit_sqlite)
+        response = client.post(endpoints['db_init'], json=dbinit_sqlite,
+                               headers=headers)
         assert b'Connection with name: tmp is already present. '
         b'Use a different name.' in response.data
 
     def test_dbinit_repeatedDB(client, self):
 
-        response = client.post(endpoints['db_init'], json=dbinit_sqlite_success)  # noqa 401
+        response = client.post(endpoints['db_init'],
+                               json=dbinit_sqlite_success,
+                               headers=headers)  # noqa 401
         assert b'Successfully created database connection string.'\
             in response.data

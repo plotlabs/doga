@@ -11,7 +11,7 @@ from . import headers, endpoints
 
 
 def test_login_admin(client):
-    """ Test post a valid admin object and login, store the jwt created
+    """Test post a valid admin object and login, store the jwt created
     """
 
     client.post('/admin/admin_profile', json=admin)
