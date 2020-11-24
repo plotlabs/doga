@@ -203,7 +203,6 @@ def add_new_db(conn_name):
     move_migration_files()
     if os.path.exists("migrations"):
         shutil.rmtree('migrations')
-    # migrate()
 
 
 def check_jwt_present(connection_name, database_name):

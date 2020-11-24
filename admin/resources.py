@@ -24,7 +24,7 @@ from admin.validators import column_types, column_validation, nullable_check
 from app.utils import AlchemyEncoder, verify_jwt
 from templates.models import metadata
 
-from config import DEFAULT_PORTS
+from admin.default_values import DEFAULT_PORTS
 from dbs import DB_DICT
 
 ALGORITHM = sha512_crypt
@@ -553,7 +553,6 @@ class ContentType(Resource):
 
         remove_alembic_versions()
         move_migration_files()
-        # migrate()
         return {"result": "Successfully edited model."}
 
     @jwt_required
@@ -594,7 +593,6 @@ class ContentType(Resource):
                     f.write(line)
         remove_alembic_versions()
         move_migration_files()
-        # migrate()
         return {"result": "Successfully deleted module."}
 
 
@@ -783,7 +781,6 @@ class DatabaseInit(Resource):
 
         remove_alembic_versions()
         move_migration_files()
-        # migrate()
         return {
             "result": "Successfully edited database connection string."
         }
