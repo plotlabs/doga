@@ -45,3 +45,15 @@ def verify_jwt(jwt_identity, filter_key, model_name):
     if final_result is None:
         return False
     return True
+
+
+def migrate():
+    """Function to stop the app to migrate and then restart it."""
+    migrate_folder = os.path.exists('migrations')
+    if not migrate_folder:
+        subprocess.check_output('flask db init --multidb', shell=True)
+    pid = os.getpid()
+    revision_id = datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
+    migrate_command = "flask db migrate --rev-id " + revision_id
+    upgrade_command = "flask db upgrade"
+    sys_platform = platform.system()

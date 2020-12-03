@@ -70,3 +70,6 @@ venv.bak/
 # all migrations
 /migrations
 /old_migrations
+
+#all db files
+*.db

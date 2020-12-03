@@ -4,9 +4,6 @@ signature_version = 'v4'
 max_attempts = 10
 mode = 'standard'
 
-# TODO: TO REMOVE
-aws_username = ''
-aws_arn = ''
-aws_access_key = ''
-aws_secret_key = ''
-aws_console_login = ''
+# TODO: after response
+# ->after response needed for the ec2 instance
+# health status of the app

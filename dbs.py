@@ -1,5 +1,5 @@
 DB_DICT = {
-    "default": "sqlite:////tmp/test.db",
+    "default": "sqlite:///app/test.db",
 }
 
 

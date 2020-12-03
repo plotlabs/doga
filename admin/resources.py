@@ -21,6 +21,9 @@ from admin.models.database_model import Database as DatabaseObject
 from admin.utils import *
 from admin.validators import column_types, column_validation, nullable_check
 
+from admin.export.utils import *
+from admin.export.exportapp import create_app_dir
+
 from app.utils import AlchemyEncoder, verify_jwt
 from templates.models import metadata
 
@@ -795,13 +798,118 @@ class ColumnType(Resource):
         }
 
 
+class ExportApp(Resource):
+
+    def post(self):
+
+        json_request = request.get_json()
+        if json_request is None:
+            return {
+                    "result": "Request body cannot be empty"
+                    }
+
+        missing_keys = {}
+
+        try:
+            app_name = json_request['app_name']
+        except KeyError as error:
+            missing_keys['app_name'] = list(error.args)[0]
+
+        try:
+            user_credentials = create_user_credentials(
+                                            **json_request['user_credentials'])
+        except KeyError as error:
+            missing_keys['user_credentials'] = list(error.args)[0]
+
+        if len(missing_keys) != 0:
+            return {
+                    "result": "Please Provide the following details: ",
+                    "required fields": missing_keys,
+                    "request": json_request
+                    }, 500
+
+        try:
+            config = create_aws_config(**json_request['config'])
+        except ValueError as error:
+            return {
+                    "result": "Error creating config",
+                    "error": str(error),
+                    "request": request.get_json()
+                    }
+        except KeyError as error:
+            missing_keys['config'] = str(error)
+
+        try:
+            rds = create_RDS(user_credentials,
+                             config,
+                             app_name,
+                             **json_request['rds_config']
+                             )
+        except KeyError as error:
+            missing_keys['rds_config'] = list(error.args)[0]
+        except RDSCreationError as error:
+            return {
+                "result": "Error creating RDS",
+                "error": str(error),
+                "request": json_request
+            }, 500
+
+        try:
+            key_pair, ec2 = create_EC2(user_credentials,
+                                       config,
+                                       **json_request['ec2_config']
+                                       )
+        except KeyError as error:
+            missing_keys['ec2_config'] = list(error.args)[0]
+        except EC2CreationError as error:
+            return {
+                "result": "Error creating EC2",
+                "error": str(error),
+                "request": json_request
+            }, 500
+
+        if len(missing_keys) != 0:
+            return {
+                    "result": "Please Provide the following details: ",
+                    "required fields": missing_keys,
+                    "request": json_request
+                    }, 500
+
+        try:
+            create_app_dir(app_name, rds, user_credentials, config)
+        except DogaDirectoryCreationError as error:
+            return {"result": "Could not create files for the exported app.",
+                    "error": str(error),
+                    "request": json_request
+                    }, 500
+
+        deploy_to_aws(user_credentials, config, ec2, key_pair)
+
+        try:
+            connect_rds_to_ec2(rds, ec2, user_credentials, config)
+
+        except DogaEC2toRDSconnectionError as error:
+            return {"result": "Could not create a connection between EC2" +
+                    ec2.id + " and " +
+                    rds['DBInstance']['DBInstanceIdentifier'],
+                    "error": str(error),
+                    "request": json_request
+                    }, 500
+
+        return {"result": "RDS and EC2 created and deployed"}, 200
+
+
 api_admin.add_resource(AdminApi, '/admin_profile',
                        '/admin_profile/<string:email>')
 api_admin.add_resource(Login, '/login')
 
-api_admin.add_resource(ContentType, '/content/types',
-                       '/content/types/<string:db_name>/<string:content_type>')
 api_admin.add_resource(DatabaseInit, '/dbinit',
                        '/dbinit/types/<string:content_type>')
 
+
+api_admin.add_resource(ContentType, '/content/types',
+                       '/content/types/<string:db_name>/<string:content_type>')
+
 api_admin.add_resource(ColumnType, '/columntypes')
+
+api_admin.add_resource(ExportApp, '/export')

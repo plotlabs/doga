@@ -1,4 +1,8 @@
-from admin.utils import migrate as run_migration
+from app import app
+
+from app.utils import migrate as run_migration
+
+import subprocess
 
 
 @app.before_first_request

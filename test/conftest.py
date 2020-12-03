@@ -5,7 +5,7 @@ import subprocess
 from pytest_postgresql import factories
 
 from app import app as flaskapp
-from admin.utils import migrate as run_migration
+from app.utils import migrate as run_migration
 
 from config import HOST, PORT
 
