@@ -34,12 +34,12 @@ class AlchemyEncoder(json.JSONEncoder):
         return json.JSONEncoder.default(self, obj)
 
 
-def verify_jwt(jwt_identity, filter_key, model_name):
+def verify_jwt(jwt_identity, model):
 
-    query = model_name.query
+    query = model.query
 
     for key, value in jwt_identity.items():
-        query = query.filter(getattr(model_name, key).like("%%%s%%" % value))
+        query = query.filter(getattr(model, key).like("%%%s%%" % value))
 
     final_result = query.all()
     if final_result is None:

@@ -211,6 +211,45 @@ In the request body-
 	for null values of port default connection values are used, these
 	can be found in the config file.
 
+
+**To deploy the APPs created through DOGA**
+
+	- **Endpoint-** /admin/export/<platform>
+	- **Method-** POST
+	- **Request JSON**
+
+	```json
+	{
+    "app_name":"string",
+    "user_credentials":{
+        "aws_username": "string",
+        "aws_secret_key":"string",
+        "aws_access_key":"string"
+    	},
+    "config":{
+			"region_name": "string" #optional,
+			"signature_version":"string"#optional
+			 "retries": {
+				 "max_attempts":"string",
+				 "mode": "string"
+				 } #optional
+            },
+    "rds_config":{
+        "Engine":"MySQL/SQLite/Postgres",
+        "AllocatedStorage": "integer",
+        "DBInstanceIdentifier":"string",
+        "DBInstanceClass":"ex.db.t2.micro or instance classes in string",
+        "MasterUsername":"string",
+        "MasterUserPassword":"string",
+        "MaxAllocatedStorage":"integer"
+    	},
+    "ec2_config":{
+        "BlockDeviceMappings":"",
+        "InstanceType":"",
+        "ImageId":""
+    	}
+	}
+	```
 ## User APIs
 
 The CRUD APIs for the content types added by the user are automatically created

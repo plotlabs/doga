@@ -2,7 +2,7 @@ import os
 import json
 import re
 
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, after_this_request
 from flask_restful import Api, Resource
 from flask_jwt_extended import (jwt_required, create_access_token,
                                 create_refresh_token, get_jwt_identity)
@@ -11,7 +11,7 @@ from passlib.handlers.sha2_crypt import sha512_crypt
 
 from admin.module_generator import *
 
-from admin.models import Admin
+from admin.models import Admin, Deployments
 from admin.models.admin_model import Admin as AdminObject
 from admin.models.table_model import Table as TableModel
 from admin.models.column_model import Column as ColumnObject
@@ -22,7 +22,7 @@ from admin.utils import *
 from admin.validators import column_types, column_validation, nullable_check
 
 from admin.export.utils import *
-from admin.export.exportapp import create_app_dir
+from admin.export.exportapp import create_app_dir, check_if_exist
 
 from app.utils import AlchemyEncoder, verify_jwt
 from templates.models import metadata
@@ -67,7 +67,7 @@ class AdminApi(Resource):
             json serializeable dict
             integer response code
         """
-        if not verify_jwt(get_jwt_identity(), jwt_filter_keys, Admin):
+        if not verify_jwt(get_jwt_identity(), Admin):
             return {"result": "JWT authorization invalid, user does not"
                     " exist."}
 
@@ -119,6 +119,7 @@ class AdminApi(Resource):
 
 class Login(Resource):
     """API to login admin."""
+
     def post(self):
         data = request.get_json()
         try:
@@ -135,9 +136,9 @@ class Login(Resource):
                     filter_keys = {key: data[key] for key in jwt_filter_keys}
                     # , expires_delta=expiry_time)
                     access_token = create_access_token(
-                           identity=filter_keys)
+                        identity=filter_keys)
                     refresh_token = create_refresh_token(
-                           identity=filter_keys)
+                        identity=filter_keys)
 
                     return {"result": "Successfully logged in", "email":
                             admin.email,
@@ -183,7 +184,7 @@ class ContentType(Resource):
             json serializeable dict
             integer response code
         """
-        if not verify_jwt(get_jwt_identity(), jwt_filter_keys, Admin):
+        if not verify_jwt(get_jwt_identity(), Admin):
             return {"result": "JWT authorization invalid, user does not"
                     " exist."}
         table_list = []
@@ -295,7 +296,7 @@ class ContentType(Resource):
             integer response code
 
         """
-        if not verify_jwt(get_jwt_identity(), jwt_filter_keys, Admin):
+        if not verify_jwt(get_jwt_identity(), Admin):
             return {"result": "JWT authorization invalid, user does not"
                     " exist."}
 
@@ -396,7 +397,7 @@ class ContentType(Resource):
         if restrict_by_jwt and check_jwt_present(Table.connection_name, database_name) is None:  # noqa 501, 701
             return {"result": "JWT is not configured."}, 400
 
-        dir_path = create_dir(database_name+"/"+Table.table_name)
+        dir_path = create_dir(database_name + "/" + Table.table_name)
 
         isExisting = os.path.isfile(dir_path)
 
@@ -409,13 +410,13 @@ class ContentType(Resource):
                          Table.table_name)
 
         create_model(dir_path, data)
-        create_resources(database_name+"."+Table.table_name,
+        create_resources(database_name + "." + Table.table_name,
                          dir_path,
                          base_jwt,
                          data.get("expiry", {}),
                          restrict_by_jwt,
                          data.get("filter_keys", []))
-        append_blueprint(database_name+"."+Table.table_name)
+        append_blueprint(database_name + "." + Table.table_name)
         remove_alembic_versions()
         move_migration_files()
         return {"result": "Successfully created module."}
@@ -447,7 +448,7 @@ class ContentType(Resource):
         #         }
         #     ]
         # }
-        if not verify_jwt(get_jwt_identity(), jwt_filter_keys, Admin):
+        if not verify_jwt(get_jwt_identity(), Admin):
             return {"result": "JWT authorization invalid, user does not"
                     " exist."}
         try:
@@ -484,15 +485,15 @@ class ContentType(Resource):
                               "database connection."}, 400
 
         associatedTables = Restricted_by_JWT.query.filter_by(
-                                connection_name=Table.connection_name)
+            connection_name=Table.connection_name)
 
         if isJWT != None and base_jwt == False:  # noqa 711
             associatedTables = Restricted_by_JWT.query.filter_by(
-                                connection_name=Table.connection_name).first()
+                connection_name=Table.connection_name).first()
             # regenerate all the endpoints that previously required JWT
             for table in associatedTables.restricted_tables.split(","):
-                dir_path = "app/"+database_name+"/"+Table.table_name
-                create_resources(database_name+"."+table,
+                dir_path = "app/" + database_name + "/" + Table.table_name
+                create_resources(database_name + "." + table,
                                  dir_path,
                                  False,
                                  data.get("expiry", {}),
@@ -545,9 +546,9 @@ class ContentType(Resource):
         if restrict_by_jwt and check_jwt_present(Table.connection_name, database_name) is None:  # noqa 501, 701
             return {"result": "JWT is not configured."}, 400
 
-        dir_path = 'app/' + database_name+"/"+Table.table_name
+        dir_path = 'app/' + database_name + "/" + Table.table_name
         create_model(dir_path, data)
-        create_resources(database_name+"."+Table.table_name,
+        create_resources(database_name + "." + Table.table_name,
                          dir_path,
                          base_jwt,
                          data.get("expiry", {}),
@@ -561,7 +562,7 @@ class ContentType(Resource):
     @jwt_required
     def delete(self, db_name, content_type):
         """Delete a content type"""
-        if not verify_jwt(get_jwt_identity(), jwt_filter_keys, Admin):
+        if not verify_jwt(get_jwt_identity(), Admin):
             return {"result": "JWT authorization invalid, user does not"
                     " exist."}
         tables_list = []
@@ -581,7 +582,11 @@ class ContentType(Resource):
             }, 400
 
         try:
-            shutil.rmtree('app/'+db_name.lower()+'/'+content_type.lower())
+            shutil.rmtree(
+                'app/' +
+                db_name.lower() +
+                '/' +
+                content_type.lower())
         except FileNotFoundError:
             return {"result": "Module does not exist."}, 400
 
@@ -589,10 +594,10 @@ class ContentType(Resource):
             lines = f.readlines()
         with open("app/blueprints.py", "w") as f:
             for line in lines:
-                if line.strip("\n") != "from app."+db_name+"." + content_type \
+                if line.strip("\n") != "from app." + db_name + "." + content_type \
                         + ".resources import mod_model" and line.strip("\n") \
                         != "app.register_blueprint(mod_model, url_prefix='/" \
-                        + db_name.lower()+"/" + content_type.lower() + "')":
+                        + db_name.lower() + "/" + content_type.lower() + "')":
                     f.write(line)
         remove_alembic_versions()
         move_migration_files()
@@ -604,7 +609,7 @@ class DatabaseInit(Resource):
     @jwt_required
     def get(self):
         """Get properties of all connections"""
-        if not verify_jwt(get_jwt_identity(), jwt_filter_keys, Admin):
+        if not verify_jwt(get_jwt_identity(), Admin):
             return {"result": "JWT authorization invalid, user does not"
                     " exist."}
         connection_list = []
@@ -656,7 +661,7 @@ class DatabaseInit(Resource):
         #     "port": "port_number"
         #     "database_name": "database_name",
         # }
-        if not verify_jwt(get_jwt_identity(), jwt_filter_keys, Admin):
+        if not verify_jwt(get_jwt_identity(), Admin):
             return {"result": "JWT authorization invalid, user does not"
                     " exist."}
         try:
@@ -674,7 +679,7 @@ class DatabaseInit(Resource):
             db_created = ""
         except OperationalError as err:
             if "unknown database" or database.database_name + "does not exist"\
-                   in str(err).lower():
+                    in str(err).lower():
                 try:
                     string = re.split(database.database_name, string)[0]
                     engine = create_engine(string)
@@ -692,7 +697,7 @@ class DatabaseInit(Resource):
             else:
                 return {
                     "result": "The database credentials are not valid."
-                    }, 400
+                }, 400
 
         with open('dbs.py', 'r') as f:
             lines = f.readlines()
@@ -799,104 +804,164 @@ class ColumnType(Resource):
 
 
 class ExportApp(Resource):
+    """
+    Endpoint that deals with deployment of the app to different platforms
+    """
 
-    def post(self):
+    def post(self, platform):
 
-        json_request = request.get_json()
-        if json_request is None:
-            return {
+        if platform == 'aws':
+
+            json_request = request.get_json()
+            if json_request is None:
+                return {
                     "result": "Request body cannot be empty"
-                    }
+                }
 
-        missing_keys = {}
+            missing_keys = {}
+            print("received request")
+            try:
+                app_name = json_request['app_name']
+            except KeyError as error:
+                missing_keys['app_name'] = list(error.args)[0]
+            print("got app name")
+            try:
+                user_credentials = create_user_credentials(
+                    **json_request['user_credentials'])
+            except KeyError as error:
+                missing_keys['user_credentials'] = list(error.args)[0]
 
-        try:
-            app_name = json_request['app_name']
-        except KeyError as error:
-            missing_keys['app_name'] = list(error.args)[0]
-
-        try:
-            user_credentials = create_user_credentials(
-                                            **json_request['user_credentials'])
-        except KeyError as error:
-            missing_keys['user_credentials'] = list(error.args)[0]
-
-        if len(missing_keys) != 0:
-            return {
+            if len(missing_keys) != 0:
+                return {
                     "result": "Please Provide the following details: ",
                     "required fields": missing_keys,
                     "request": json_request
-                    }, 500
-
-        try:
-            config = create_aws_config(**json_request['config'])
-        except ValueError as error:
-            return {
+                }, 500
+            try:
+                config = create_aws_config(**json_request['config'])
+            except ValueError as error:
+                return {
                     "result": "Error creating config",
                     "error": str(error),
                     "request": request.get_json()
-                    }
-        except KeyError as error:
-            missing_keys['config'] = str(error)
+                }
+            except KeyError as error:
+                missing_keys['config'] = str(error)
+            try:
+                check_if_exist(app_name)
+            except FileNotFoundError as error:
+                return {
+                    "result": "Given app " + app_name + " doesn't exit.",
+                    "request": request.get_json()
+                }, 500
 
-        try:
-            rds = create_RDS(user_credentials,
-                             config,
-                             app_name,
-                             **json_request['rds_config']
-                             )
-        except KeyError as error:
-            missing_keys['rds_config'] = list(error.args)[0]
-        except RDSCreationError as error:
-            return {
-                "result": "Error creating RDS",
-                "error": str(error),
-                "request": json_request
-            }, 500
+            try:
+                rds = create_RDS(user_credentials,
+                                 config,
+                                 app_name,
+                                 **json_request['rds_config']
+                                 )
+            except KeyError as error:
+                missing_keys['rds_config'] = list(error.args)[0]
+            except RDSCreationError as error:
+                return {
+                    "result": "Error creating RDS",
+                    "error": str(error),
+                    "request": json_request
+                }, 500
 
-        try:
-            key_pair, ec2 = create_EC2(user_credentials,
-                                       config,
-                                       **json_request['ec2_config']
-                                       )
-        except KeyError as error:
-            missing_keys['ec2_config'] = list(error.args)[0]
-        except EC2CreationError as error:
-            return {
-                "result": "Error creating EC2",
-                "error": str(error),
-                "request": json_request
-            }, 500
+            print("created RDS \n creating keypair \n creating EC2...")
+            try:
+                key_pair, ec2 = create_EC2(user_credentials,
+                                           config,
+                                           **json_request['ec2_config']
+                                           )
+            except KeyError as error:
+                missing_keys['ec2_config'] = list(error.args)[0]
+            except EC2CreationError as error:
+                return {
+                    "result": "Error creating EC2",
+                    "error": str(error),
+                    "request": json_request
+                }, 500
 
-        if len(missing_keys) != 0:
-            return {
+            if len(missing_keys) != 0:
+                return {
                     "result": "Please Provide the following details: ",
                     "required fields": missing_keys,
                     "request": json_request
-                    }, 500
+                }, 500
 
-        try:
-            create_app_dir(app_name, rds, user_credentials, config)
-        except DogaDirectoryCreationError as error:
-            return {"result": "Could not create files for the exported app.",
-                    "error": str(error),
-                    "request": json_request
-                    }, 500
+        # @after_this_request
+        #    def deployment(response,
+        #                   app_name=app_name,
+        #                   rds=rds,
+        #                   user_credentials=user_credentials,
+        #                   config=config,
+        #                   ec2=ec2,
+        #                   ):
+        #        print("after request....")
+            try:
+                create_app_dir(app_name, rds, user_credentials, config,
+                               platform)
+            except DogaDirectoryCreationError as error:
+                return {"result": "Could not create files for the exported"
+                        " app.",
+                        "error": str(error),
+                        "request": json_request,
+                        }, 500
+            print("created dir next to deploy")
+            deploy_to_aws(user_credentials, config, ec2, key_pair)
+            print("deployed now connecting .... ")
+            try:
+                connect_rds_to_ec2(rds, ec2, user_credentials, config)
 
-        deploy_to_aws(user_credentials, config, ec2, key_pair)
+            except DogaEC2toRDSconnectionError as error:
+                return {"result": "Could not create a connection between "
+                        "EC2" + ec2.id + " and " +
+                        rds['DBInstance']['DBInstanceIdentifier'],
+                        "error": str(error),
+                        "request": json_request
+                        }, 500
 
-        try:
-            connect_rds_to_ec2(rds, ec2, user_credentials, config)
+            app_deployed = Deployments(
+                          app_name=app_name,
+                          platfrom=platform,
+                          status='Not Fetched Yet',
+                          deployment_info="Not written"
+                          )
+            db.session.add(app_deployed)
+            db.session.commit()
 
-        except DogaEC2toRDSconnectionError as error:
-            return {"result": "Could not create a connection between EC2" +
-                    ec2.id + " and " +
-                    rds['DBInstance']['DBInstanceIdentifier'],
-                    "error": str(error),
-                    "request": json_request
-                    }, 500
+        elif platform == 'heroku':
 
-        return {"result": "RDS and EC2 created and deployed"}, 200
+            username = ""
+            password = ""
+            # TODO: is it a good idea to use subprocess to catch the standard
+            # output
+            os.run('curl https://cli-assets.heroku.com/install.sh | sh')
+
+            heroku_user_credentials = {}
+            app_json = {
+                        "name": "DOGA created deployment for " + app_name,
+                        "description": "App: " + app_name + " with in Python"
+                                       " using Flask",
+                        "repository": "",
+                        "keywords": ["python", "flask", "DOGA"]
+                        }
+
+            create_app_dir(app_name,
+                           rds=None,
+                           user_credentails=heroku_user_credentials,
+                           config=heroku_config,
+                           platform=platform,
+                           )
+
+            return {"response": "HEROKU"}
+
+        return {
+                "result": "RDS and EC2 created and deployment in progress."
+            }, 200
 
 
 api_admin.add_resource(AdminApi, '/admin_profile',
@@ -912,4 +977,4 @@ api_admin.add_resource(ContentType, '/content/types',
 
 api_admin.add_resource(ColumnType, '/columntypes')
 
-api_admin.add_resource(ExportApp, '/export')
+api_admin.add_resource(ExportApp, '/export/<string:platform>')
