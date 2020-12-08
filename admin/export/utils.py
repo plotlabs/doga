@@ -97,7 +97,16 @@ def export_blueprints(app_name, parent_dir, target_dir):
     return
 
 
-def create_dbs_file(app_name, destination, rds, user_credentials, aws_config):
+def create_heroku_postgres(app_name, target):
+    return
+
+
+def create_dbs_file(
+        app_name,
+        destination,
+        rds_instance,
+        user_credentials,
+        aws_config):
 
     to_write = open(destination, 'a+')
 
@@ -106,6 +115,7 @@ def create_dbs_file(app_name, destination, rds, user_credentials, aws_config):
             connection_string = string
             break
 
+    """
     try:
         rds_client = boto3.client('rds',
                                   aws_access_key_id=user_credentials['aws_access_key'],  # noqa 401
@@ -124,6 +134,7 @@ def create_dbs_file(app_name, destination, rds, user_credentials, aws_config):
 
     except ClientError as error:
         raise DogaDirectoryCreationError(str(error))
+    """
 
     engine = rds_instance['Engine']
     username = rds_instance['MasterUsername']
@@ -153,8 +164,9 @@ def create_jwt_dict(app_name, destination):
         return False
 
     jwt_dict = Restricted_by_JWT.query.filter_by(
-        connection_name=bind_key).__dict__
-
+        connection_name=bind_key).first()
+    if jwt_dict != None:
+        jwt_dict = jwt_dict[0]._asdict()
     file = open(destination, 'a+')
     file.write(str(jwt_dict))
 
@@ -230,11 +242,16 @@ def create_and_store_keypair(ec2_instance, key_name=KEY_NAME) -> str:
     return doga_key.name
 
 
-def create_security_group(ec2_client, ec2, group_id='sg_id'):
+def create_security_group(ec2_client, ec2, db_port, group_id='sg_id'):
     SG_IP_PROTOCOL = 'tcp'
     SG_FROM_PORT = 22
     SG_TO_PORT = 22
     SG_IP = get_current_ip() + '/32'
+
+    waiter = ec2_client.get_waiter('instance_running')
+    waiter.wait(InstanceIds=[ec2.id, ])
+
+    ec2.reload()
 
     ec2_client.authorize_security_group_ingress(
         GroupId=group_id,
@@ -250,7 +267,11 @@ def create_security_group(ec2_client, ec2, group_id='sg_id'):
             {'IpProtocol': 'tcp',
              'FromPort': 443,
              'ToPort': 443,
-             'IpRanges': [{'CidrIp': '0.0.0.0/0'}]}
+             'IpRanges': [{'CidrIp': '0.0.0.0/0'}]},
+            {'IpProtocol': 'tcp',
+             'FromPort': db_port,
+             'ToPort': db_port,
+             'IpRanges': [{'CidrIp': ec2.public_ip_address + '/32'}]}
         ],
         DryRun=False
     )
@@ -312,7 +333,7 @@ def create_RDS(user_credentials, aws_config, app_name, **kwargs):
                                   config=aws_config
                                   )
 
-        response = rds_client.create_db_instance(
+        rds = rds_client.create_db_instance(
             AllocatedStorage=AllocatedStorage,
             DBInstanceIdentifier=DBInstanceIdentifier,
             DBInstanceClass=DBInstanceClass,
@@ -324,7 +345,16 @@ def create_RDS(user_credentials, aws_config, app_name, **kwargs):
         )
     #                                **kwargs,
     # )
-        return response
+
+        waiter = rds_client.get_waiter('db_instance_available')
+        waiter.wait(
+            DBInstanceIdentifier=rds["DBInstance"]["DBInstanceIdentifier"])
+
+        rds_instance = rds_client.describe_db_instances(
+            DBInstanceIdentifier=rds["DBInstance"]["DBInstanceIdentifier"]
+        )['DBInstances'][0]
+
+        return rds_instance
 
     except ParamValidationError as e:
         raise RDSCreationError("Error creating RDS with given kwags",
@@ -335,7 +365,7 @@ def create_RDS(user_credentials, aws_config, app_name, **kwargs):
                                str(e))
 
 
-def create_EC2(user_credentials, aws_config, **kwargs):
+def create_EC2(user_credentials, aws_config, rds_port, **kwargs):
 
     required_keys = set(['BlockDeviceMappings', 'ImageId', 'InstanceType'])
 
@@ -360,12 +390,11 @@ def create_EC2(user_credentials, aws_config, **kwargs):
 
     random_string = create_random_string(5)
 
-    # TODO: generate this sg_name
     sg_name = SG_GROUP_NAME + random_string
     securitygroup = ec2.create_security_group(
         GroupName=sg_name,
         Description='created by doga to allow ssh from doga and http/https'
-                    'from everywhere else'
+                    'from everywhere else',
     )
 
     group_id = securitygroup.id
@@ -393,24 +422,12 @@ def create_EC2(user_credentials, aws_config, **kwargs):
 
     # TODO: fix this
     ec2_instance = ec2.create_instances(
-        BlockDeviceMappings=[
-            {
-                'DeviceName': '/dev/sda1',
-                'Ebs': {
-
-                    'DeleteOnTermination': True,
-                    'VolumeSize': 8,
-                    'VolumeType': 'gp2'
-                },
-            },
-        ],
-        ImageId='ami-0885b1f6bd170450c',
-        InstanceType='t2.micro',
-        MaxCount=1,
-        MinCount=1,
-        Monitoring={
-                'Enabled': False
-        },
+        BlockDeviceMappings=BlockDeviceMappings,
+        ImageId=ImageId,
+        InstanceType=InstanceType,
+        MaxCount=MaxCount,
+        MinCount=MinCount,
+        Monitoring=Monitoring,
         IamInstanceProfile={
             'Name': 'AmazonSSMRoleForInstancesQuickSetup'
         },
@@ -421,9 +438,10 @@ def create_EC2(user_credentials, aws_config, **kwargs):
     ec2 = create_security_group(
         ec2_client=ec2_client,
         ec2=ec2_instance[0],
+        db_port=rds_port,
         group_id=securitygroup.id)
 
-    return key_name, ec2
+    return key_name, sg_name, ec2
 
 
 def deploy_to_aws(user_credentials, aws_config, ec2, key_name=KEY_NAME):
@@ -440,11 +458,11 @@ def deploy_to_aws(user_credentials, aws_config, ec2, key_name=KEY_NAME):
                                 )
 
         ssm_client = boto3.client('ssm',
-                                  aws_access_key_id=user_credentials['aws_access_key'],  # noqa 401
-                                  aws_secret_access_key=user_credentials['aws_secret_key'],  # noqa 401
-                                  region_name=aws_config.region_name,
-                                  config=aws_config
-                                )
+                              aws_access_key_id=user_credentials['aws_access_key'],  # noqa 401
+                              aws_secret_access_key=user_credentials['aws_secret_key'],  # noqa 401
+                              region_name=aws_config.region_name,
+                              config=aws_config
+                             )
 
     except ClientError as e:
         raise EC2CreationError("Error connecting to EC2 with given kwags ",
@@ -452,38 +470,32 @@ def deploy_to_aws(user_credentials, aws_config, ec2, key_name=KEY_NAME):
 
     app_folder = os.sep.join(__file__.split(os.sep)[:-2]) + 'exported/app/*'
 
-    print("now copy")
+    # args = ['rsync', '-rv', '-e', '"ssh -i ' + key_name + '.pem " ',
+    # app_folder,
+    #        'ubuntu@' + ec2.public_dns_name + ':exported_app', '-yes']
+
+    sleep(30)
+
+    args = ['scp', '-i', key_name + '.pem', app_folder, 'ubuntu@' +
+            ec2.public_dns_name + ':exported_app']
+
     # copy content of files
-    os.popen('rsync -rv -e "ssh -i ' + key_name + '.pem " ' + app_folder
-             + ' ubuntu@' + ec2.public_dns_name + ':exported_app -y')
+    sp = subprocess.Popen(args, shell=True, stdout=subprocess.PIPE,
+                          stderr=subprocess.STDOUT)
+    output = sp.communicate()
 
     # run
     load_docker_commands = open('admin/export/install_docker.sh', 'r').read()
     commands = [load_docker_commands]
 
-    ec2_client.reboot_instances(
-        InstanceIds=[
-            ec2.id
-        ]
-    )
-
-    while ec2.state['Name'] != 'running':
-        ec2.load()
-
     ssm_client.send_command(DocumentName="AWS-RunShellScript",
                             Parameters={'commands': commands},
                             InstanceIds=[ec2.id])
 
-    # move into directory and compose dockerfile& run service
-    docker_app_commands = open('admin/export/create_and_startapp.sh', 'r').read()  # noqa E401
-    commands = [docker_app_commands]
-
-    ssm_client.send_command(DocumentName="AWS-RunShellScript",
-                            Parameters={'commands': commands},
-                            InstanceIds=[ec2.id])
+    return ec2
 
 
-def connect_rds_to_ec2(rds, ec2, user_credentials, config) -> bool:
+def connect_rds_to_ec2(rds, ec2, user_credentials, config, sg_name) -> bool:
 
     # update security group
     try:
@@ -495,16 +507,40 @@ def connect_rds_to_ec2(rds, ec2, user_credentials, config) -> bool:
                                 )
 
         response = rds_client.modify_db_instance(
-                DBInstanceIdentifier=rds['DBInstance']['DBInstanceIdentifier'],
-                VpcSecurityGroupIds=[
-                    ec2.vpc_id,
-                ],
-                ApplyImmediately=True,
-            )
+            DBInstanceIdentifier=rds['DBInstanceIdentifier'],
+            DBSecurityGroupIds=[
+                ec2.security_groups[0],
+            ],
+
+            ApplyImmediately=True,
+        )
 
         rds_client.reboot_instances(
-                DBInstanceIdentifier=rds['DBInstance']['DBInstanceIdentifier']
-            )
+            DBInstanceIdentifier=rds['DBInstanceIdentifier']
+        )
 
     except ClientError as e:
         raise DogaEC2toRDSconnectionError(str(e))
+
+    ssm_client = boto3.client('ssm',
+                              aws_access_key_id=user_credentials['aws_access_key'],  # noqa 401
+                              aws_secret_access_key=user_credentials['aws_secret_key'],  # noqa 401
+                              region_name=aws_config.region_name,
+                              config=aws_config
+                             )
+
+    response = ssm_client.send_command(DocumentName="AWS-RunShellScript",
+                                       Parameters={'commands': commands},
+                                       InstanceIds=[ec2.id])
+
+    command_id = response['Command']['CommandId']
+    output = ssm_client.get_command_invocation(
+      CommandId=command_id,
+      InstanceId=ec2.instance_id,
+    )
+
+    print(response)
+    if b'success' in output:
+        return True
+
+    return False

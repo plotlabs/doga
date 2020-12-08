@@ -16,3 +16,8 @@ class DogaEC2toRDSconnectionError(Exception):
 class DogaDirectoryCreationError(Exception):
     def __init__(self, *args):
         super(DogaDirectoryCreationError, self).__init__(*args)
+
+
+class DogaHerokuDeploymentError(Exception):
+    def __init__(self, *args):
+        super(DogaHerokuDeploymentError, self).__init__(*args)

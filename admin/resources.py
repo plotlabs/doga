@@ -411,6 +411,7 @@ class ContentType(Resource):
 
         create_model(dir_path, data)
         create_resources(database_name + "." + Table.table_name,
+                         Table.connection_name,
                          dir_path,
                          base_jwt,
                          data.get("expiry", {}),
@@ -594,7 +595,8 @@ class ContentType(Resource):
             lines = f.readlines()
         with open("app/blueprints.py", "w") as f:
             for line in lines:
-                if line.strip("\n") != "from app." + db_name + "." + content_type \
+                if line.strip("\n") != "from app." + db_name + "." + \
+                        content_type \
                         + ".resources import mod_model" and line.strip("\n") \
                         != "app.register_blueprint(mod_model, url_prefix='/" \
                         + db_name.lower() + "/" + content_type.lower() + "')":
@@ -810,21 +812,18 @@ class ExportApp(Resource):
 
     def post(self, platform):
 
+        json_request = request.get_json()
+        if json_request is None:
+            return {
+                "result": "Request body cannot be empty"
+            }
+        missing_keys = {}
+        try:
+            app_name = json_request['app_name']
+        except KeyError as error:
+            missing_keys['app_name'] = list(error.args)[0]
+
         if platform == 'aws':
-
-            json_request = request.get_json()
-            if json_request is None:
-                return {
-                    "result": "Request body cannot be empty"
-                }
-
-            missing_keys = {}
-            print("received request")
-            try:
-                app_name = json_request['app_name']
-            except KeyError as error:
-                missing_keys['app_name'] = list(error.args)[0]
-            print("got app name")
             try:
                 user_credentials = create_user_credentials(
                     **json_request['user_credentials'])
@@ -870,12 +869,13 @@ class ExportApp(Resource):
                     "request": json_request
                 }, 500
 
-            print("created RDS \n creating keypair \n creating EC2...")
             try:
-                key_pair, ec2 = create_EC2(user_credentials,
-                                           config,
-                                           **json_request['ec2_config']
-                                           )
+                key_pair, sg_name, ec2 = create_EC2(user_credentials,
+                                                    config,
+                                                    rds['Endpoint']['Port'],
+                                                    **json_request[
+                                                        'ec2_config'
+                                                    ])
             except KeyError as error:
                 missing_keys['ec2_config'] = list(error.args)[0]
             except EC2CreationError as error:
@@ -910,11 +910,10 @@ class ExportApp(Resource):
                         "error": str(error),
                         "request": json_request,
                         }, 500
-            print("created dir next to deploy")
-            deploy_to_aws(user_credentials, config, ec2, key_pair)
-            print("deployed now connecting .... ")
+            ec2 = deploy_to_aws(user_credentials, config, ec2, key_pair)
             try:
-                connect_rds_to_ec2(rds, ec2, user_credentials, config)
+                response = connect_rds_to_ec2(
+                    rds, ec2, user_credentials, config, sg_name)
 
             except DogaEC2toRDSconnectionError as error:
                 return {"result": "Could not create a connection between "
@@ -924,44 +923,73 @@ class ExportApp(Resource):
                         "request": json_request
                         }, 500
 
+            print(response)
+
             app_deployed = Deployments(
-                          app_name=app_name,
-                          platfrom=platform,
-                          status='Not Fetched Yet',
-                          deployment_info="Not written"
-                          )
+                app_name=app_name,
+                platfrom=platform,
+                status='Not Fetched Yet',
+                deployment_info="Not written"
+            )
             db.session.add(app_deployed)
             db.session.commit()
 
         elif platform == 'heroku':
 
-            username = ""
-            password = ""
-            # TODO: is it a good idea to use subprocess to catch the standard
-            # output
-            os.run('curl https://cli-assets.heroku.com/install.sh | sh')
+            try:
+                provision_db = json_request['provision_db']
+            except KeyError as error:
+                missing_keys['provision_db'] = list(error.args)[0]
 
-            heroku_user_credentials = {}
+            if len(missing_keys) != 0:
+                return {
+                    "result": "Please Provide the following details: ",
+                    "required fields": missing_keys,
+                    "request": json_request
+                }, 500
+
+            # TO create the app json file for heroku
             app_json = {
-                        "name": "DOGA created deployment for " + app_name,
+                "name": "DOGA created deployment for " + app_name,
                         "description": "App: " + app_name + " with in Python"
                                        " using Flask",
                         "repository": "",
                         "keywords": ["python", "flask", "DOGA"]
-                        }
+            }
 
-            create_app_dir(app_name,
-                           rds=None,
-                           user_credentails=heroku_user_credentials,
-                           config=heroku_config,
-                           platform=platform,
-                           )
+            try:
+                deploy = json_request['provision_db']
+            except KeyError as err:
+                deploy = True
 
-            return {"response": "HEROKU"}
+            try:
+                create_app_dir(app_name,
+                               rds=None,
+                               user_credentails=None,
+                               config=None,
+                               platform=platform,
+                               **{'deploy_db': deploy}
+                               )
+            except DogaHerokuDeploymentError as error:
+                return {
+                    "response": "Could not create app for Heroku.",
+                    "error": str(error),
+                    "request": json_request
+                }
+
+            file_location = os.sep.join(__file__.split(os.sep)[:-1])
+            app_deployed = app_name + create_random_string(4)
+            subprocess.call(['sh', file_location +
+                             '/export/heroku_deploy.sh', app_deployed])
+
+            return {"response": "heroku app deployed."}
+
+        elif platform == 'local':
+            create_app_dir(app_name, location)
 
         return {
-                "result": "RDS and EC2 created and deployment in progress."
-            }, 200
+            "result": "App exported & deployed to " + platform + "."
+        }, 200
 
 
 api_admin.add_resource(AdminApi, '/admin_profile',
