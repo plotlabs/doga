@@ -94,42 +94,44 @@ def create_resources(model_name, connection_name, dir_path, base_jwt,
 
     else:
         for line in open("templates/resources.py"):
-            base_jwt = JWT.query.filter_by(
-                'connection_name' == connection_name).first()[0]._asdict()
-            print(base_jwt['table'])
-
-            base_table = base_jwt['table']
-
-            verify_jwt = 'if not verify_jwt(get_jwt_identity(), ' + \
-                base_table + '):\n'
-            condn = '    return {"result": "JWT authorization invalid, entry does not exist."}'  # noqa E401
 
             if restrict_by_jwt in [True, "True"]:
+
+                base_jwt = JWT.query.filter_by(
+                    connection_name=connection_name).first()
+                base_table = base_jwt.table
+                db_name = base_jwt.database_name
+
+                verify_jwt = '        if not verify_jwt(get_jwt_identity(), ' \
+                             + base_table + '):\n'
+                condn = '            return {"result": "JWT authorization invalid, entry does not exist."}  # noqa E401'
+
                 line = line.replace(
                     "def post(self):",
                     "@jwt_required\n    def post(self):\n" +
                     verify_jwt +
                     condn)
                 line = line.replace(
-                    "get(self, id=None):",
-                    "@jwt_required\n    get(self, id=None):\n" +
-                    verify_jwt +
-                    condn)
+                    "def get(self, id=None):",
+                    "@jwt_required\n    def get(self, id=None):\n" + verify_jwt
+                    + condn)
                 line = line.replace(
                     "def put(self, id):",
-                    "@jwt_required\n    def put(self, id):\n verify_jwt()\n" +
-                    verify_jwt +
-                    condn)
+                    "@jwt_required\n    def put(self, id):\n        "
+                    "verify_jwt()\n" + verify_jwt + condn)
                 line = line.replace(
                     "def delete(self, id):",
-                    "@jwt_required\n    def delete(self, id):\n verify_jwt()\n" +   # noqa E401
-                    verify_jwt +
-                    condn)
+                    "@jwt_required\n    def delete(self, id):\n        "
+                    "verify_jwt()\n" + verify_jwt + condn)
                 line = line.replace("param", '"/<int:id>"')
                 line = line.replace(
                     "REPLACE_IF_JWT",
-                    'app.modulename.models import' +
-                    base_table)
+                    'from app.' +
+                    db_name.lower() +
+                    '.' +
+                    base_table +
+                    '.models import ' +
+                    base_table.title())
 
             else:
                 line = line.replace("REPLACE_IF_JWT", '')

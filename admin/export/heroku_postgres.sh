@@ -1,0 +1,1 @@
+heroku addons:create heroku-postgresql:<PLAN_NAME>
