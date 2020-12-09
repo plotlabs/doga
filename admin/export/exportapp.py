@@ -82,7 +82,7 @@ def create_app_dir(
                 create_dockerfile(
                     PORT,
                     parent_dir + '/templates/export/Dockerfile',
-                    parent_dir + '/exported_app/app/Dockerfile'
+                    parent_dir + '/exported_app/Dockerfile'
                 )
             elif file == 'blueprints.py':
                 export_blueprints(
@@ -122,7 +122,10 @@ def create_app_dir(
 
     elif platform == 'heroku':
 
-        db_engine = extract_engine_or_fail(app_name)
+        try:
+            db_engine = extract_engine_or_fail(app_name)
+        except DogaAppNotFound as error:
+            return
 
         deploy = kwargs.get('deploy_db', True)
         if db_engine != 'postgres' and deploy is True:
@@ -155,7 +158,7 @@ def create_app_dir(
                 create_dockerfile(
                     PORT,
                     parent_dir + '/templates/export/Dockerfile',
-                    parent_dir + '/exported_app/app/Dockerfile'
+                    parent_dir + '/exported_app/Dockerfile'
                 )
             elif file == 'blueprints.py':
                 export_blueprints(
@@ -170,17 +173,23 @@ def create_app_dir(
                 shutil.copy2(s, d)
 
             elif file == 'dbs.py':
-                create_heroku_postgres(
-                    app_name,
-                    parent_dir + '/exported_app/' + file,
-                )
+                if deploy:
+                    create_heroku_postgres(
+                        app_name,
+                        parent_dir + '/exported_app/' + file,
+                    )
+                else:
+                    s = file
+                    d = parent_dir + '/exported_app/' + file
+                    os.makedirs(os.path.dirname(d), exist_ok=True)
+                    shutil.copy2(s, d)
             elif file == 'jwt_dict.py':
                 has_jwt = create_jwt_dict(
                     app_name,
                     parent_dir + '/exported_app/' + file,
                 )
-            else:
-                s = file
-                d = parent_dir + '/exported_app/' + file
-                os.makedirs(os.path.dirname(d), exist_ok=True)
-                shutil.copy2(s, d)
+            # else:
+            #    s = file
+            #    d = parent_dir + '/exported_app/' + file
+            #    os.makedirs(os.path.dirname(d), exist_ok=True)
+            #    shutil.copy2(s, d)

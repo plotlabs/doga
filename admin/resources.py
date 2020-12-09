@@ -848,7 +848,7 @@ class ExportApp(Resource):
                 missing_keys['config'] = str(error)
             try:
                 check_if_exist(app_name)
-            except FileNotFoundError as error:
+            except DogaAppNotFound as error:
                 return {
                     "result": "Given app " + app_name + " doesn't exit.",
                     "request": request.get_json()
@@ -878,6 +878,7 @@ class ExportApp(Resource):
                                                     ])
             except KeyError as error:
                 missing_keys['ec2_config'] = list(error.args)[0]
+
             except EC2CreationError as error:
                 return {
                     "result": "Error creating EC2",
@@ -918,12 +919,10 @@ class ExportApp(Resource):
             except DogaEC2toRDSconnectionError as error:
                 return {"result": "Could not create a connection between "
                         "EC2" + ec2.id + " and " +
-                        rds['DBInstance']['DBInstanceIdentifier'],
+                        rds['DBInstanceIdentifier'],
                         "error": str(error),
                         "request": json_request
                         }, 500
-
-            print(response)
 
             app_deployed = Deployments(
                 app_name=app_name,
@@ -940,6 +939,14 @@ class ExportApp(Resource):
                 provision_db = json_request['provision_db']
             except KeyError as error:
                 missing_keys['provision_db'] = list(error.args)[0]
+
+            deploy = json_request.get('provision_db', True)
+
+            if deploy is True:
+                try:
+                    tier = json_request['tier']
+                except KeyError as error:
+                    missing_keys['tier'] = list(error.args)[0]
 
             if len(missing_keys) != 0:
                 return {
@@ -958,11 +965,6 @@ class ExportApp(Resource):
             }
 
             try:
-                deploy = json_request['provision_db']
-            except KeyError as err:
-                deploy = True
-
-            try:
                 create_app_dir(app_name,
                                rds=None,
                                user_credentails=None,
@@ -978,14 +980,51 @@ class ExportApp(Resource):
                 }
 
             file_location = os.sep.join(__file__.split(os.sep)[:-1])
-            app_deployed = app_name + create_random_string(4)
-            subprocess.call(['sh', file_location +
-                             '/export/heroku_deploy.sh', app_deployed])
+
+            random_string = create_random_string(4)
+            app_deployed = app_name + random_string
+
+            if deploy:
+                db_name = 'pgsql' + app_name + random_string
+                subprocess.call(['sh',
+                                 file_location + '/export/heroku_postgres.sh',
+                                 app_deployed.lower(),
+                                 db_name.lower(),
+                                 tier])
+
+            else:
+                subprocess.call(['sh', file_location +
+                                 '/export/heroku_deploy.sh',
+                                 app_deployed.lower()])
 
             return {"response": "heroku app deployed."}
 
         elif platform == 'local':
-            create_app_dir(app_name, location)
+            if len(missing_keys) != 0:
+                return {
+                    "result": "Please Provide the following details: ",
+                    "required fields": missing_keys,
+                    "request": json_request
+                }, 500
+
+            try:
+                check_if_exist(app_name)
+            except DogaAppNotFound as error:
+                return {
+                    "result": "Given app " + app_name + " doesn't exit.",
+                    "request": request.get_json()
+                }, 500
+
+            create_app_dir(app_name,
+                           rds=None,
+                           user_credentails=None,
+                           config=None,
+                           platform='heroku',
+                           **{'deploy_db': False}
+                           )
+
+        else:
+            return {"result": "Platform " + platform + " unsupported."}
 
         return {
             "result": "App exported & deployed to " + platform + "."

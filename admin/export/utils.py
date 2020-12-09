@@ -80,24 +80,23 @@ def export_blueprints(app_name, parent_dir, target_dir):
     contents = open(parent_dir, 'r').readlines()
     to_write = open(target_dir, 'a+')
 
-    i = 1
-    for line in contents:
-        if i in [1, 2]:
-            to_write.write(line)
-            continue
-        if i in [3, 4]:
-            continue
+    for i in range(0, len(contents)):
+        if i in [2, 3, 4]:
+            pass
         else:
-            for app_name in line:
-                to_write.write(line)
-                continue
-        i += 1
+            if app_name in contents[i]:
+                to_write.write(contents[i])
 
     to_write.close()
     return
 
 
-def create_heroku_postgres(app_name, target):
+def create_heroku_postgres(app_name, destination):
+
+    to_write = open(destination, 'a+')
+    import_statement = "import os\n"
+    conn_dict = '{ "' + app_name + '":' + 'os.environ["DATABASE_URL"]}\n'
+    to_write.write(import_statement + conn_dict)
     return
 
 
@@ -165,7 +164,7 @@ def create_jwt_dict(app_name, destination):
 
     jwt_dict = Restricted_by_JWT.query.filter_by(
         connection_name=bind_key).first()
-    if jwt_dict != None:
+    if jwt_dict is not None:
         jwt_dict = jwt_dict[0]._asdict()
     file = open(destination, 'a+')
     file.write(str(jwt_dict))
@@ -195,7 +194,7 @@ def extract_engine_or_fail(app_name: str):
             continue
 
     if db_engine == '':
-        raise RDSCreationError('Given app ' + app_name + ' does not exist.')
+        raise DogaAppNotFound('Given app ' + app_name + ' does not exist.')
 
     return db_engine
 
@@ -425,9 +424,9 @@ def create_EC2(user_credentials, aws_config, rds_port, **kwargs):
         BlockDeviceMappings=BlockDeviceMappings,
         ImageId=ImageId,
         InstanceType=InstanceType,
-        MaxCount=MaxCount,
-        MinCount=MinCount,
-        Monitoring=Monitoring,
+        MaxCount=kwargs['MaxCount'],
+        MinCount=kwargs['MinCount'],
+        Monitoring=kwargs['Monitoring'],
         IamInstanceProfile={
             'Name': 'AmazonSSMRoleForInstancesQuickSetup'
         },
@@ -509,6 +508,7 @@ def connect_rds_to_ec2(rds, ec2, user_credentials, config, sg_name) -> bool:
         response = rds_client.modify_db_instance(
             DBInstanceIdentifier=rds['DBInstanceIdentifier'],
             DBSecurityGroupIds=[
+                # TODO FIX THIS
                 ec2.security_groups[0],
             ],
 

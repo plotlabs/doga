@@ -1,7 +1,6 @@
 FROM python:3.7
-COPY requirements.txt /tmp/
+COPY . /tmp/
 RUN pip install -U pip
 RUN pip install -r  /tmp/requirements.txt
-COPY . .
 EXPOSE PORT
-CMD ["python", "-u",  "/app/runserver.py"]
+CMD ["python", "-u",  "/tmp/runserver.py"]

@@ -21,3 +21,8 @@ class DogaDirectoryCreationError(Exception):
 class DogaHerokuDeploymentError(Exception):
     def __init__(self, *args):
         super(DogaHerokuDeploymentError, self).__init__(*args)
+
+
+class DogaAppNotFound(Exception):
+    def __init__(self, *args):
+        super(DogaAppNotFound, self).__init__(*args)
