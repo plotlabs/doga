@@ -818,10 +818,19 @@ class ExportApp(Resource):
                 "result": "Request body cannot be empty"
             }
         missing_keys = {}
+
         try:
             app_name = json_request['app_name']
         except KeyError as error:
             missing_keys['app_name'] = list(error.args)[0]
+
+        try:
+            check_if_exist(app_name)
+        except DogaAppNotFound as error:
+            return {
+                "result": "Given app " + app_name + " doesn't exit.",
+                "request": request.get_json()
+                }, 500
 
         if platform == 'aws':
             try:
@@ -846,13 +855,6 @@ class ExportApp(Resource):
                 }
             except KeyError as error:
                 missing_keys['config'] = str(error)
-            try:
-                check_if_exist(app_name)
-            except DogaAppNotFound as error:
-                return {
-                    "result": "Given app " + app_name + " doesn't exit.",
-                    "request": request.get_json()
-                }, 500
 
             try:
                 rds = create_RDS(user_credentials,

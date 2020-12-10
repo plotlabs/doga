@@ -5,7 +5,7 @@ import boto3
 from admin.aws_config import *
 from admin.utils import extract_database_name
 from admin.export.utils import *
-from admin.export.errors import DogaHerokuDeploymentError
+from admin.export.errors import DogaHerokuDeploymentError, DogaAppNotFound
 
 from config import HOST, PORT
 
@@ -21,7 +21,10 @@ def uppath(_path, n): return os.sep.join(_path.split(os.sep)[:-n])  # noqa 731
 def check_if_exist(app_name):
     parent_dir = uppath(__file__, 3)
     extract_engine_or_fail(app_name)
-    os.listdir(parent_dir + '/app/' + app_name)
+    try:
+        os.listdir(parent_dir + '/app/' + app_name)
+    except FileNotFoundError as error:
+        raise DogaAppNotFound(error)
 
 
 def create_app_dir(

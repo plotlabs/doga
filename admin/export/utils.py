@@ -507,9 +507,8 @@ def connect_rds_to_ec2(rds, ec2, user_credentials, config, sg_name) -> bool:
 
         response = rds_client.modify_db_instance(
             DBInstanceIdentifier=rds['DBInstanceIdentifier'],
-            DBSecurityGroupIds=[
-                # TODO FIX THIS
-                ec2.security_groups[0],
+            VpcSecurityGroupIds=[
+                ec2.security_groups[0]['GroupId'],
             ],
 
             ApplyImmediately=True,
