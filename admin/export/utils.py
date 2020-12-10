@@ -508,15 +508,19 @@ def connect_rds_to_ec2(rds, ec2, user_credentials, config, sg_name) -> bool:
         response = rds_client.modify_db_instance(
             DBInstanceIdentifier=rds['DBInstanceIdentifier'],
             VpcSecurityGroupIds=[
-                ec2.security_groups[0]['GroupId'],
+                ec2.vpc_id
+                # security_groups[0]['GroupId'],
             ],
-
             ApplyImmediately=True,
         )
 
         rds_client.reboot_instances(
             DBInstanceIdentifier=rds['DBInstanceIdentifier']
         )
+
+        waiter = client.get_waiter('db_instance_available')
+        waiter.wait(
+            DBInstanceIdentifier=rds['DBInstanceIdentifier'])
 
     except ClientError as e:
         raise DogaEC2toRDSconnectionError(str(e))

@@ -20,4 +20,4 @@ heroku create $1
 heroku container:push web -a $1
 heroku addons:create heroku-postgresql:$3 --name $2 -a $1
 heroku container:release web -a $1
-heroku open
+heroku open -a $1
