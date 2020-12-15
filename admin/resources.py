@@ -16,6 +16,8 @@ from admin.models.admin_model import Admin as AdminObject
 from admin.models.table_model import Table as TableModel
 from admin.models.column_model import Column as ColumnObject
 from admin.models.database_model import Database as DatabaseObject
+from admin.models.email_notifications import Email_Notify
+from admin.models.sms_notificataions import Sms_Notify
 
 
 from admin.utils import *
@@ -830,7 +832,7 @@ class ExportApp(Resource):
             return {
                 "result": "Given app " + app_name + " doesn't exit.",
                 "request": request.get_json()
-                }, 500
+            }, 500
 
         if platform == 'aws':
             try:
@@ -1033,6 +1035,41 @@ class ExportApp(Resource):
         }, 200
 
 
+class CreateNotifications(Resource):
+    """
+    Endpoint that Creates a script to send notifications
+    """
+
+    def post(self, platform):
+
+        json_request = request.get_json()
+        if json_request is None:
+            return {
+                "result": "Request body cannot be empty"
+            }
+
+        if platform.lower() == 'email':
+            Email_Obj = Email_Notify.from_dict(json_request)
+
+            result, code = Email_Obj.return_result()
+
+            return dict(result, **{"request": json_request}), code
+
+        elif platform.lower() == 'sms':
+            Sms_Obj = Sms_Notify.from_dict(json_request)
+
+            result, code = Sms_Obj.return_result()
+
+            return dict(result, **{"request": json_request}), code
+
+        else:
+            return {
+                "response": 'Currently we only create scripts for SMS '
+                            'notifications though Twilio and E-mail though'
+                            ' SendGrid.'
+            }, 404
+
+
 api_admin.add_resource(AdminApi, '/admin_profile',
                        '/admin_profile/<string:email>')
 api_admin.add_resource(Login, '/login')
@@ -1047,3 +1084,5 @@ api_admin.add_resource(ContentType, '/content/types',
 api_admin.add_resource(ColumnType, '/columntypes')
 
 api_admin.add_resource(ExportApp, '/export/<string:platform>')
+
+api_admin.add_resource(CreateNotifications, '/notify/<string:platform>')
