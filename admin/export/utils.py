@@ -278,7 +278,9 @@ def create_security_group(ec2_client, ec2, db_port, group_id='sg_id'):
         DryRun=False
     )
 
-    ec2.reload()
+    vpc = ec2.Vpc(ec2.vpc_id)
+    vpc.create_tags(Tags=[{"Key": "Name", "Value": "doga_" + group_id[-5:]}])
+    vpc.wait_until_available()
 
     return ec2
 
@@ -483,9 +485,11 @@ def deploy_to_aws(user_credentials, aws_config, ec2, key_name=KEY_NAME):
     associated_instances = []
 
     while ec2.instance_id not in associated_instances:
-        for i in ssm_client.describe_instance_information()['InstanceInformationList']:
+        for i in ssm_client.describe_instance_information()[
+                'InstanceInformationList']:
             associated_instances.append(i["InstanceId"])
 
+    this_folder = os.sep.join(__file__.split(os.sep)[:-2])
     app_folder = os.sep.join(__file__.split(os.sep)[:-2]) + 'exported_app/*'
 
     # TODO:
@@ -506,18 +510,19 @@ def deploy_to_aws(user_credentials, aws_config, ec2, key_name=KEY_NAME):
         user = 'ubuntu'
     """
 
-    print(ec2.id)
-
     key = paramiko.RSAKey.from_private_key_file(key_name + '.pem')
     client = paramiko.SSHClient()
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
     # Connect/ssh to an instance
     try:
-        client.connect(hostname=ec2.public_dns_name, username="ubuntu", pkey=key)
+        client.connect(
+            hostname=ec2.public_dns_name,
+            username="ubuntu",
+            pkey=key)
 
-        stdin, stdout, stderr = client.exec_command('mkdir -p $HOME/exported_app')
-        print(stdout.read())
+        stdin, stdout, stderr = client.exec_command(
+            'mkdir -p $HOME/exported_app')
 
         # close the client connection once the job is done
         client.close()
@@ -525,8 +530,8 @@ def deploy_to_aws(user_credentials, aws_config, ec2, key_name=KEY_NAME):
     except Exception as e:
         print(e)
 
-    args = ['scp', '-r', '-i', key_name + '.pem', app_folder, 'ubuntu@' +
-            ec2.public_dns_name + ':exported_app/']
+    args = ['scp', '-r', '-i', this_folder + key_name + '.pem', app_folder,
+            'ubuntu@' + ec2.public_dns_name + ':exported_app/']
 
     sp = subprocess.Popen(args, shell=True, stdout=subprocess.PIPE,
                           stderr=subprocess.STDOUT)
@@ -565,10 +570,10 @@ def connect_rds_to_ec2(rds, ec2, user_credentials, config, sg_name) -> bool:
 
         response = rds_client.modify_db_instance(
             DBInstanceIdentifier=rds['DBInstanceIdentifier'],
-            VpcSecurityGroups={'VpcSecurityGroupIds': [
+            VpcSecurityGroupIds=[
                 ec2.vpc_id
                 # security_groups[0]['GroupId'],
-            ]},
+            ],
             # DBSecurityGroups=[
             #    ec2.security_groups[0]['GroupId'],
             # ],
@@ -599,8 +604,8 @@ def connect_rds_to_ec2(rds, ec2, user_credentials, config, sg_name) -> bool:
 
     command_id = response['Command']['CommandId']
     output = ssm_client.get_command_invocation(
-      CommandId=command_id,
-      InstanceId=ec2.instance_id,
+        CommandId=command_id,
+        InstanceId=ec2.instance_id,
     )
 
     print(response)
