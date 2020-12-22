@@ -191,8 +191,8 @@ def create_app_dir(
                     app_name,
                     parent_dir + '/exported_app/' + file,
                 )
-            # else:
-            #    s = file
-            #    d = parent_dir + '/exported_app/' + file
-            #    os.makedirs(os.path.dirname(d), exist_ok=True)
-            #    shutil.copy2(s, d)
+            else:
+                s = file
+                d = parent_dir + '/exported_app/' + file
+                os.makedirs(os.path.dirname(d), exist_ok=True)
+                shutil.copy2(s, d)

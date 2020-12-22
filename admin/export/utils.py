@@ -5,6 +5,8 @@ from botocore.config import Config
 from botocore.exceptions import (BotoCoreError, ClientError,
                                  ParamValidationError)
 
+import paramiko
+
 from requests import get
 
 import random
@@ -83,6 +85,8 @@ def export_blueprints(app_name, parent_dir, target_dir):
     for i in range(0, len(contents)):
         if i in [2, 3, 4]:
             pass
+        elif i in [0, 1]:
+            to_write.write(contents[i])
         else:
             if app_name in contents[i]:
                 to_write.write(contents[i])
@@ -247,10 +251,9 @@ def create_security_group(ec2_client, ec2, db_port, group_id='sg_id'):
     SG_TO_PORT = 22
     SG_IP = get_current_ip() + '/32'
 
-    waiter = ec2_client.get_waiter('instance_running')
-    waiter.wait(InstanceIds=[ec2.id, ])
-
     ec2.reload()
+    waiter = ec2_client.get_waiter('instance_running')
+    waiter.wait(InstanceIds=[ec2.instance_id])
 
     ec2_client.authorize_security_group_ingress(
         GroupId=group_id,
@@ -276,6 +279,7 @@ def create_security_group(ec2_client, ec2, db_port, group_id='sg_id'):
     )
 
     ec2.reload()
+
     return ec2
 
 
@@ -467,21 +471,75 @@ def deploy_to_aws(user_credentials, aws_config, ec2, key_name=KEY_NAME):
         raise EC2CreationError("Error connecting to EC2 with given kwags ",
                                str(e))
 
-    app_folder = os.sep.join(__file__.split(os.sep)[:-2]) + 'exported/app/*'
+    ec2_client.reboot_instances(
+        InstanceIds=[
+            ec2.instance_id,
+        ]
+    )
 
-    # args = ['rsync', '-rv', '-e', '"ssh -i ' + key_name + '.pem " ',
-    # app_folder,
-    #        'ubuntu@' + ec2.public_dns_name + ':exported_app', '-yes']
+    waiter = ec2_client.get_waiter('instance_running')
+    waiter.wait(InstanceIds=[ec2.instance_id])
 
-    sleep(30)
+    associated_instances = []
 
-    args = ['scp', '-i', key_name + '.pem', app_folder, 'ubuntu@' +
-            ec2.public_dns_name + ':exported_app']
+    while ec2.instance_id not in associated_instances:
+        for i in ssm_client.describe_instance_information()['InstanceInformationList']:
+            associated_instances.append(i["InstanceId"])
+
+    app_folder = os.sep.join(__file__.split(os.sep)[:-2]) + 'exported_app/*'
+
+    # TODO:
+    # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/managing-users.html
+
+    """
+    user = 'root'
+
+    if platform in ['Amazon Linux 2', Amazon Linux 2]:
+        user = 'ec2-user'
+    elif platform == 'CentOS AMI':
+        user = 'centos'
+    elif platform == 'Debian AMI':
+        user = 'admin'
+    elif platform == 'Fedora AMI':
+        user = 'fedora'
+    elseif platform == 'Ubuntu AMI':
+        user = 'ubuntu'
+    """
+
+    print(ec2.id)
+
+    key = paramiko.RSAKey.from_private_key_file(key_name + '.pem')
+    client = paramiko.SSHClient()
+    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+
+    # Connect/ssh to an instance
+    try:
+        client.connect(hostname=ec2.public_dns_name, username="ubuntu", pkey=key)
+
+        stdin, stdout, stderr = client.exec_command('mkdir -p $HOME/exported_app')
+        print(stdout.read())
+
+        # close the client connection once the job is done
+        client.close()
+
+    except Exception as e:
+        print(e)
+
+    args = ['scp', '-r', '-i', key_name + '.pem', app_folder, 'ubuntu@' +
+            ec2.public_dns_name + ':exported_app/']
+
+    sp = subprocess.Popen(args, shell=True, stdout=subprocess.PIPE,
+                          stderr=subprocess.STDOUT)
+    stdout_data, stderr_data = sp.communicate()
+
+    # args = ['rsync', '-rv', '-e', '"ssh -i ' + key_name + '.pem" ',
+    #        app_folder, 'ubuntu@' + ec2.public_dns_name + ':/',
+    #        '-yes']
 
     # copy content of files
     sp = subprocess.Popen(args, shell=True, stdout=subprocess.PIPE,
                           stderr=subprocess.STDOUT)
-    output = sp.communicate()
+    stdout_data, stderr_data = sp.communicate()
 
     # run
     load_docker_commands = open('admin/export/install_docker.sh', 'r').read()
@@ -507,10 +565,13 @@ def connect_rds_to_ec2(rds, ec2, user_credentials, config, sg_name) -> bool:
 
         response = rds_client.modify_db_instance(
             DBInstanceIdentifier=rds['DBInstanceIdentifier'],
-            VpcSecurityGroupIds=[
+            VpcSecurityGroups={'VpcSecurityGroupIds': [
                 ec2.vpc_id
                 # security_groups[0]['GroupId'],
-            ],
+            ]},
+            # DBSecurityGroups=[
+            #    ec2.security_groups[0]['GroupId'],
+            # ],
             ApplyImmediately=True,
         )
 
@@ -534,7 +595,7 @@ def connect_rds_to_ec2(rds, ec2, user_credentials, config, sg_name) -> bool:
 
     response = ssm_client.send_command(DocumentName="AWS-RunShellScript",
                                        Parameters={'commands': commands},
-                                       InstanceIds=[ec2.id])
+                                       InstanceIds=[ec2.instance_id])
 
     command_id = response['Command']['CommandId']
     output = ssm_client.get_command_invocation(
