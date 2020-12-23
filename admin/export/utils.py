@@ -14,9 +14,9 @@ import random
 import shutil
 import string
 
-import subprocess
-
 from time import sleep
+
+import pandas as pd
 
 from admin.aws_config import *
 from admin.export.errors import *
@@ -232,6 +232,43 @@ def create_aws_config(**kwargs):
         }
 
 
+def validate_ec2_instance_id(user_credentials, aws_config, ImageId):
+
+    try:
+        ec2_client = boto3.client('ec2',
+                              aws_access_key_id=user_credentials['aws_access_key'],  # noqa 401
+                              aws_secret_access_key=user_credentials['aws_secret_key'],  # noqa 401
+                              region_name=region_name,
+                              config=aws_config
+                             )
+    except ClientError as e:
+        raise EC2CreationError("Error connecting to EC2 with given kwags ",
+                               str(e))
+
+    images = ec2_client.describe_images()
+    image_dict = images['Images']
+    image_frame = pd.DataFrame.from_dict(image_dict).dropna(axis=1)
+
+    if ImageId not in image_frame['ImageId']:
+        raise EC2CreationError("Image ID provided is not valid.")
+
+    image_info = image_frame.loc[
+            image_frame['ImageId'] == ImageId
+            ].to_dict()
+
+    info = str(image_info)
+
+    platform = 'other'
+    platfroms = ['amazon linux', 'centos', 'debian', 'fedora', 'ubuntu']
+
+    for i in platfroms:
+        if i in info:
+            return i
+
+    print(platform)
+    return platform
+
+
 def create_and_store_keypair(ec2_instance, key_name=KEY_NAME) -> str:
 
     doga_key = ec2_instance.create_key_pair(KeyName=key_name)
@@ -245,7 +282,8 @@ def create_and_store_keypair(ec2_instance, key_name=KEY_NAME) -> str:
     return doga_key.name
 
 
-def create_security_group(ec2_client, ec2, db_port, group_id='sg_id'):
+def create_security_group(ec2_client, ec2, db_port, group_id='sg_id',
+                          **kwargs):
     SG_IP_PROTOCOL = 'tcp'
     SG_FROM_PORT = 22
     SG_TO_PORT = 22
@@ -278,11 +316,18 @@ def create_security_group(ec2_client, ec2, db_port, group_id='sg_id'):
         DryRun=False
     )
 
-    vpc = ec2.Vpc(ec2.vpc_id)
+    ec2_resource = boto3.resource('ec2', **kwargs)
+    vpc = ec2_resource.Vpc(ec2.vpc_id)
     vpc.create_tags(Tags=[{"Key": "Name", "Value": "doga_" + group_id[-5:]}])
     vpc.wait_until_available()
 
-    return ec2
+    vpc_sg = vpc.create_security_group(
+        Description='created by doga to allow RDS and EC2 connect'
+                    'from everywhere else',
+        GroupName="doga_" + group_id[-5:],
+    )
+
+    return ec2, vpc_sg
 
 
 def create_RDS(user_credentials, aws_config, app_name, **kwargs):
@@ -379,6 +424,10 @@ def create_EC2(user_credentials, aws_config, rds_port, **kwargs):
     if len(missed_keys) != 0:
         raise KeyError(list(missed_keys))
 
+    platform = validate_ec2_instance_id(user_credentials,
+                                        aws_config,
+                                        kwargs['ImageId'])
+
     ec2 = boto3.resource(
         'ec2',
         aws_access_key_id=user_credentials['aws_access_key'],
@@ -440,16 +489,24 @@ def create_EC2(user_credentials, aws_config, rds_port, **kwargs):
         SecurityGroupIds=[group_id, ],
     )
 
-    ec2 = create_security_group(
+    ec2, vpc_sg = create_security_group(
         ec2_client=ec2_client,
         ec2=ec2_instance[0],
         db_port=rds_port,
-        group_id=securitygroup.id)
+        group_id=securitygroup.id,
+        **{
+            "aws_access_key_id": user_credentials['aws_access_key'],
+            "aws_secret_access_key": user_credentials['aws_secret_key'],
+            "region_name": aws_config.region_name,
+            "config": aws_config
+        }
+        )
 
-    return key_name, sg_name, ec2
+    return key_name, sg_name, ec2, vpc_sg, platform
 
 
-def deploy_to_aws(user_credentials, aws_config, ec2, key_name=KEY_NAME):
+def deploy_to_aws(user_credentials, aws_config, ec2, key_name=KEY_NAME,
+                  platform='ubuntu'):
 
     while ec2.state['Name'] != 'running':
         ec2.load()
@@ -495,20 +552,16 @@ def deploy_to_aws(user_credentials, aws_config, ec2, key_name=KEY_NAME):
     # TODO:
     # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/managing-users.html
 
-    """
-    user = 'root'
+    platforms = {
+                 'amazon linux': 'ec2-user',
+                 'centos': 'centos',
+                 'debian': 'admin',
+                 'fedora': 'fedora',
+                 'ubuntu': 'ubuntu',
+                 'other': 'root'
+                 }
 
-    if platform in ['Amazon Linux 2', Amazon Linux 2]:
-        user = 'ec2-user'
-    elif platform == 'CentOS AMI':
-        user = 'centos'
-    elif platform == 'Debian AMI':
-        user = 'admin'
-    elif platform == 'Fedora AMI':
-        user = 'fedora'
-    elseif platform == 'Ubuntu AMI':
-        user = 'ubuntu'
-    """
+    user = platforms[platform]
 
     key = paramiko.RSAKey.from_private_key_file(key_name + '.pem')
     client = paramiko.SSHClient()
@@ -530,21 +583,27 @@ def deploy_to_aws(user_credentials, aws_config, ec2, key_name=KEY_NAME):
     except Exception as e:
         print(e)
 
+    """
     args = ['scp', '-r', '-i', this_folder + key_name + '.pem', app_folder,
             'ubuntu@' + ec2.public_dns_name + ':exported_app/']
-
     sp = subprocess.Popen(args, shell=True, stdout=subprocess.PIPE,
                           stderr=subprocess.STDOUT)
     stdout_data, stderr_data = sp.communicate()
-
+    """
     # args = ['rsync', '-rv', '-e', '"ssh -i ' + key_name + '.pem" ',
     #        app_folder, 'ubuntu@' + ec2.public_dns_name + ':/',
     #        '-yes']
 
     # copy content of files
+    """
     sp = subprocess.Popen(args, shell=True, stdout=subprocess.PIPE,
                           stderr=subprocess.STDOUT)
     stdout_data, stderr_data = sp.communicate()
+    """
+
+    os.system('yes | scp -r -i ' + this_folder + key_name + '.pem '
+              + app_folder + ' ' + user + '@' + ec2.public_dns_name +
+              ':exported_app/')
 
     # run
     load_docker_commands = open('admin/export/install_docker.sh', 'r').read()
@@ -557,7 +616,8 @@ def deploy_to_aws(user_credentials, aws_config, ec2, key_name=KEY_NAME):
     return ec2
 
 
-def connect_rds_to_ec2(rds, ec2, user_credentials, config, sg_name) -> bool:
+def connect_rds_to_ec2(rds, ec2, user_credentials, config, sg_name,
+                       vpc_sg) -> bool:
 
     # update security group
     try:
@@ -571,7 +631,7 @@ def connect_rds_to_ec2(rds, ec2, user_credentials, config, sg_name) -> bool:
         response = rds_client.modify_db_instance(
             DBInstanceIdentifier=rds['DBInstanceIdentifier'],
             VpcSecurityGroupIds=[
-                ec2.vpc_id
+                vpc_sg.id
                 # security_groups[0]['GroupId'],
             ],
             # DBSecurityGroups=[
@@ -580,11 +640,11 @@ def connect_rds_to_ec2(rds, ec2, user_credentials, config, sg_name) -> bool:
             ApplyImmediately=True,
         )
 
-        rds_client.reboot_instances(
+        rds_client.reboot_db_instance(
             DBInstanceIdentifier=rds['DBInstanceIdentifier']
         )
 
-        waiter = client.get_waiter('db_instance_available')
+        waiter = rds_client.get_waiter('db_instance_available')
         waiter.wait(
             DBInstanceIdentifier=rds['DBInstanceIdentifier'])
 
@@ -594,10 +654,13 @@ def connect_rds_to_ec2(rds, ec2, user_credentials, config, sg_name) -> bool:
     ssm_client = boto3.client('ssm',
                               aws_access_key_id=user_credentials['aws_access_key'],  # noqa 401
                               aws_secret_access_key=user_credentials['aws_secret_key'],  # noqa 401
-                              region_name=aws_config.region_name,
-                              config=aws_config
+                              region_name=config.region_name,
+                              config=config
                              )
 
+    load_app_commands = open('admin/export/create_and_startapp.sh', 'r'
+                             ).read()
+    commands = [load_app_commands]
     response = ssm_client.send_command(DocumentName="AWS-RunShellScript",
                                        Parameters={'commands': commands},
                                        InstanceIds=[ec2.instance_id])

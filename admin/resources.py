@@ -874,12 +874,13 @@ class ExportApp(Resource):
                 }, 500
 
             try:
-                key_pair, sg_name, ec2 = create_EC2(user_credentials,
-                                                    config,
-                                                    rds['Endpoint']['Port'],
-                                                    **json_request[
-                                                        'ec2_config'
-                                                    ])
+                key_pair, sg_name, ec2, vpc_sg, platform = create_EC2(
+                                                            user_credentials,
+                                                            config,
+                                                            rds['Endpoint']['Port'],  # noqa 401
+                                                            **json_request[
+                                                             'ec2_config'
+                                                            ])
             except KeyError as error:
                 missing_keys['ec2_config'] = list(error.args)[0]
 
@@ -915,10 +916,11 @@ class ExportApp(Resource):
                         "error": str(error),
                         "request": json_request,
                         }, 500
-            ec2 = deploy_to_aws(user_credentials, config, ec2, key_pair)
+            ec2 = deploy_to_aws(user_credentials, config, ec2, key_pair,
+                                platform)
             try:
                 response = connect_rds_to_ec2(
-                    rds, ec2, user_credentials, config, sg_name)
+                    rds, ec2, user_credentials, config, sg_name, vpc_sg)
 
             except DogaEC2toRDSconnectionError as error:
                 return {"result": "Could not create a connection between "
