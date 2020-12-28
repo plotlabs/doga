@@ -217,4 +217,5 @@ class Email_Notify(Model):
         json.dump(self.content, file_json)
         file_json.close()
 
-        return {"result": "Success create modules"}, 200
+        return {"result": "Successfully created E-mail notification script."
+                }, 200
