@@ -1,516 +1,806 @@
-swagger: "2.0"
+openapi: 3.0.1
 info:
+  title: DOGA
   description: ""
-  version: "0.0.1"
-  title: "DOGA"
-  termsOfService: "http://doga.io/"
+  termsOfService: http://doga.io/
   contact:
-    email: "plotlabs@plotlabs.io"
+    email: plotlabs@plotlabs.io
   license:
-    name: "Apache 2.0"
-    url: "http://www.apache.org/licenses/LICENSE-2.0.html"
-host: "doga.plotlabs.io"
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  version: 0.1.0
 externalDocs:
-    description: "Find out more about our DOGA"
-    url: "http://plotlabs.io"
-basePath: "/"
+  description: Find out more about our DOGA
+  url: http://plotlabs.io
+servers:
+- url: https://doga.plotlabs.io/
+- url: http://doga.plotlabs.io/
 tags:
-- name: "admin"
-  description: "APIs accessible to the admin of the content management system"
-- name: "content"
-  description: "APIs that provide access to content"
-- name: "base jwt"
-  description: "These are the endpoints defined for the table in the database (ONLY one per database) to register users using a jwt token"
-schemes:
-- "https"
-- "http"
-securityDefinitions:
-  Bearer:
-    type: apiKey
-    name: Authorization
-    in: header
+- name: admin
+  description: APIs accessible to the admin of the content management system. These
+    can be used to create, modify, administer access to and deploy applications.
+- name: content
+  description: APIs that provide access to content
+- name: base jwt
+  description: These are the endpoints defined for the table in the database (ONLY
+    one per database) to register users using a jwt token
+- name: export
+  description: These endpoints are used to export created apps to aws, heroku or to
+    your local machine where you can decide how to deploy them
+- name: notification scripts
+  description: These endpoints are defined to create & export a script to notofy provided
+    emails/numbers notofications.
 paths:
   /admin/admin_profile:
     post:
       tags:
-      - "admin"
-      summary: "Add a new admin to the system"
-      description: ""
-      operationId: "Add Admin"
-      consumes:
-      - "application/json"
-      produces:
-      - "application/json"
-      parameters:
-      - in: "body"
-        name: "body"
-        description: "Admin details that needs to be added to the system"
+      - admin
+      summary: Add a new admin to the system
+      description: Adds a new admin user to the system, which allows access to other
+        /admin/content, /admin/export and /admin/dbinit endpoints.
+      operationId: Add Admin
+      requestBody:
+        description: Admin details that needs to be added to the system
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Admin'
         required: true
-        schema:
-          $ref: "#/definitions/Admin"
       responses:
-        "200":
-          schema:
-            $ref: '#/definitions/AdminResponse'
-          description: "Admin created successfully"
-        "403":
-          description: "Admin already exists"
-        "500":
-          description: "Invalid Input"
+        200:
+          description: Admin created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminResponse'
+        403:
+          description: Admin already exists
+          content: {}
+        500:
+          description: Invalid Input
+          content: {}
+      x-codegen-request-body-name: body
   /admin/admin_profile/{email}:
     get:
       tags:
-      - "admin"
-      security:
-        - Bearer: []
-      summary: "Get info on an existing admin"
-      description: ""
-      operationId: "Get Admin"
+      - admin
+      summary: Get info on an existing admin
+      operationId: Get Admin
       parameters:
-        - name: "email"
-          in: "path"
-          type: "string"
-          format: "email"
-          required: true
-      produces:
-      - "application/json"
+      - name: email
+        in: path
+        required: true
+        schema:
+          type: string
+          format: email
       responses:
-        "404":
-          description: "Admin does not exist"
-        "200":
-          description: "Admin found"
-          schema:
-            $ref: '#/definitions/AdminResponse'
+        200:
+          description: Admin found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminResponse'
+        404:
+          description: Admin does not exist
+          content: {}
+      security:
+      - Bearer: []
   /admin/login:
     post:
       tags:
-       - "admin"
-      summary: "API endpoint to allow admin to login"
-      operationId: "Admin Login"
-      consumes:
-      - "application/json"
-      produces:
-      - "application/json"
-      parameters:
-      - in: "body"
-        name: "body"
+      - admin
+      summary: API endpoint to allow admin to login
+      operationId: Admin Login
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminLogin'
         required: true
-        schema:
-          $ref: '#/definitions/AdminLogin'
       responses:
-        '200':
-          description:  'successful login'
-          schema:
-            $ref: '#/definitions/JwtLoginRespose'
-        '403':
-          description: 'Admin already exists'
-        '404':
-          description: 'Admin does not exist'
-        '500':
-          description: 'Bad Request'
-          schema:
-            $ref: '#/definitions/ErrorResponse'
+        200:
+          description: successful login
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JwtLoginRespose'
+        403:
+          description: Admin already exists
+          content: {}
+        404:
+          description: Admin does not exist
+          content: {}
+        500:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-codegen-request-body-name: body
   /admin/content/types:
     get:
-      summary: "Lists all the available content tables as well as the admin and jwt lists"
       tags:
-        - admin
-        - content info
-        - content
-      operationId: "List Content"
-      security:
-        - Bearer: []
-      consumes:
-      - application/json
-      produces:
-      - application/json
+      - admin
+      - content info
+      - content
+      summary: Lists all the available content tables as well as the admin and jwt
+        lists
+      operationId: List Content
       responses:
-        "200":
-          description: "A list of all the available content on the platform"
-          schema:
-            type: array
-            items:
-              $ref: '#/definitions/Table'
+        200:
+          description: A list of all the available content on the platform
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Table'
+      security:
+      - Bearer: []
     post:
-      summary: "Adds the given content to the database connection specified & creates API resources for the same"
       tags:
-        - admin
-        - content
-      consumes:
-      - application/json
-      produces:
-      - application/json
-      operationId: "Post Content"
-      security:
-        - Bearer: []
-      parameters:
-      - in: "body"
-        name: "data"
+      - admin
+      - content
+      summary: Adds the given content to the database connection specified & creates
+        API resources for the same
+      operationId: Post Content
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Content'
         required: true
-        schema:
-            $ref: '#/definitions/Content'
       responses:
-        "200":
-          description: "Success"
-          schema:
-            properties:
-              response:
-                type: "string"
-                example: "Successfully created module."
-        "400":
-          description: "Invalid Request"
-          schema:
-            properties:
-              result:
-                type: "string"
-                example: "Table with name Admin is not allowed since it is used to manage admin login internally."
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Invalid Request
+          content:
+            application/json:
+              schema:
+                type: object
+      security:
+      - Bearer: []
+      x-codegen-request-body-name: data
   /admin/columntypes:
     get:
       tags:
-        - admin
-        - content info
-      operationId: "List Possible Column Types"
-      produces:
-      - application/json
+      - admin
+      - content info
+      operationId: List Possible Column Types
       responses:
-        "200":
-          description: "Success"
-          schema:
-            properties:
-              response:
-                type: "array"
-                items:
-                  type: "string"
-                  example:
-                    - INT
-                    - BOOL
-                    - BIGINT
-                    - Binary
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
   /admin/dbinit:
-    post:
-      summary: "Add a new database connection to the system"
-      tags:
-        - admin
-        - database
-      produces:
-      - application/json
-      consumes:
-      - application/json
-      operationId: "Add database connection"
-      security:
-        - Bearer: []
-      parameters:
-      - in: "body"
-        name: "data"
-        schema:
-          $ref: '#/definitions/Database'
-      responses:
-        "200":
-          description: "Successfully created database connection string"
-        "400":
-          description: "Could not create database, connection not valid."
     get:
-      summary: "Lists all the database connection strings"
       tags:
-        - admin
-        - database
-      produces:
-      - application/json
-      operationId: "List database connections"
-      security:
-        - Bearer: []
+      - admin
+      - database
+      summary: Lists all the database connection strings
+      operationId: List database connections
       responses:
-        "200":
-          description: "List of connections"
-          schema:
-            properties:
-              response:
-                type: "array"
-                items:
-                  $ref: '#/definitions/Database'
+        200:
+          description: List of connections
+          content:
+            application/json:
+              schema:
+                type: object
+      security:
+      - Bearer: []
+    post:
+      tags:
+      - admin
+      - database
+      summary: Add a new database connection to the system
+      operationId: Add database connection
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Database'
+        required: false
+      responses:
+        200:
+          description: Successfully created database connection string
+          content: {}
+        400:
+          description: Could not create database, connection not valid.
+          content: {}
+      security:
+      - Bearer: []
+      x-codegen-request-body-name: data
   /admin/content/types/{db_name}/{table_name}:
     delete:
       tags:
-        - "admin"
-      summary: "Delete the content & its related endpoints specified in the path"
-      produces:
-        - application/json
-      operationId: "Delete Content"
+      - admin
+      summary: Delete the content & its related endpoints specified in the path
+      operationId: Delete Content
+      parameters:
+      - name: db_name
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: table_name
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Invalid Request
+          content:
+            application/json:
+              schema:
+                type: object
       security:
-        - Bearer: []
-      parameters:
-        - name: "db_name"
-          required: true
-          in: "path"
-          type: "string"
-        - name: "table_name"
-          in: "path"
-          type: "string"
-          required: true
-      responses:
-        "400":
-          description: "Invalid Request"
-          schema:
-            properties:
-              result:
-                type: "string"
-                example: "The table table_name is linked to another table(s).Delete table(s) linked_table first"
-        "200":
-          description: "Success"
-          schema:
-            properties:
-              result:
-                type: "string"
-                example: "Successfully deleted module."
-  /{db_name}/{table_name}:
-    parameters:
-    - name: "db_name"
-      in: "path"
-      required: true
-      type: string
-    - name: "table_name"
-      in: "path"
-      required: true
-      type: string
+      - Bearer: []
+  /admin/notify/email:
     post:
-      summary: "Add data posted to the table"
       tags:
-      - content
-      consumes:
-      - application/json
-      produces:
-      - application/json
-      operationId: "Add content"
-      parameters:
-      - in: "body"
-        name: "content"
-        schema:
-          $ref: '#/definitions/Content'
+      - notification scripts
+      summary: Creates a script for sending Emails using SendGrid API
+      operationId: Admin Create Email Script
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminEmailScript'
+        required: true
       responses:
-        '200':
-          description: 'Successful update of rows'
-        '400':
-          description: 'Unsuccessful request'
-          schema:
-            type: "string"
-            example: "Foreign Key constraint failed for column "
+        200:
+          description: Successfully created E-mail notification script.
+          content: {}
+        500:
+          description: Response on error
+          content:
+            application/json:
+              schema:
+                type: object
+      security:
+      - Bearer: []
+      x-codegen-request-body-name: body
+  /admin/notify/sms:
+    post:
+      tags:
+      - notification scripts
+      summary: Creates a script for sending SMS notifications using Twilio API
+      operationId: ""
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminSMS'
+        required: true
+      responses:
+        200:
+          description: Successfully created sms notification script.
+          content: {}
+        500:
+          description: Response on error
+          content:
+            application/json:
+              schema:
+                type: object
+      security:
+      - Bearer: []
+      x-codegen-request-body-name: body
+  /admin/export/{platform}:
+    post:
+      tags:
+      - export
+      operationId: ExportstoAWS
+      parameters:
+      - name: platform
+        in: path
+        required: true
+        schema:
+          type: string
+          enum:
+          - aws
+          - heroku
+          - local
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExportApp'
+        required: false
+      responses:
+        500:
+          description: Response on error
+          content:
+            application/json:
+              schema:
+                type: object
+      security:
+      - Bearer: []
+      x-codegen-request-body-name: json_body
+  /{db_name}/{table_name}:
     get:
-      summary: "Retrieve content from the table"
       tags:
       - content
-      operationId: "Get content"
-      responses:
-        '200':
-          description: 'successful retrieval of data'
-          schema:
-            type: "array"
-            items:
-              $ref: '#/definitions/Content'
-        '404':
-          description: 'Content does not exist'
-        '500':
-          description: 'Bad Request'
-  /{db_name}/{table_name}/{id}:
-    parameters:
-      - name: "db_name"
-        in: "path"
-        required: true
-        type: string
-      - name: "table_name"
-        in: "path"
-        required: true
-        type: string
-      - name: "id"
-        in: "path"
-        type: integer
-        required: true
-    put:
-      summary: "Updates the existing content with the given input"
-      tags:
-        - content
-      consumes:
-        - application/json
-      produces:
-        - application/json
-      operationId: "Add content `jwt base`"
+      summary: Retrieve content from the table
+      operationId: Get content
       parameters:
-      - in: "body"
-        name: "content"
+      - name: db_name
+        in: path
+        required: true
         schema:
-          $ref: '#/definitions/Content'
+          type: string
+      - name: table_name
+        in: path
+        required: true
+        schema:
+          type: string
       responses:
-        '200':
-          description: 'Successfully updated row'
-        '400':
-          description: 'Does not exist'
+        200:
+          description: successful retrieval of data
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Content'
+        404:
+          description: Content does not exist
+          content: {}
+        500:
+          description: Bad Request
+          content: {}
+    post:
+      tags:
+      - content
+      summary: Add data posted to the table
+      operationId: Add content
+      parameters:
+      - name: db_name
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: table_name
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Content'
+        required: false
+      responses:
+        200:
+          description: Successful update of rows
+          content: {}
+        400:
+          description: Unsuccessful request
+          content:
+            application/json:
+              schema:
+                type: string
+                example: 'Foreign Key constraint failed for column '
+      x-codegen-request-body-name: content
+  /{db_name}/{table_name}/{id}:
+    put:
+      tags:
+      - content
+      summary: Updates the existing content with the given input
+      operationId: Add content `jwt base`
+      parameters:
+      - name: db_name
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: table_name
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Content'
+        required: false
+      responses:
+        200:
+          description: Successfully updated row
+          content: {}
+        400:
+          description: Does not exist
+          content: {}
+      x-codegen-request-body-name: content
     delete:
       tags:
-        - content
-      operationId: "Delete user from `jwt base`"
-      summary: "Delete values from the table"
+      - content
+      summary: Delete values from the table
+      operationId: Delete user from `jwt base`
+      parameters:
+      - name: db_name
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: table_name
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
       responses:
-        '200':
-          description: 'Successfully deleted.'
+        200:
+          description: Successfully deleted.
+          content: {}
   /{db_name}/{table_name}/login:
-    parameters:
-      - name: "db_name"
-        in: "path"
-        required: true
-        type: string
-      - name: "table_name"
-        in: "path"
-        required: true
-        type: string
     post:
       tags:
-        - base jwt
-      summary: "Endpoint to login to `base jwt` content, there will be a maximum of one of these per db_name ( database name )"
-      operationId: "Login JWT base content"
-      consumes:
-      - "application/json"
-      produces:
-      - "application/json"
+      - base jwt
+      summary: Endpoint to login to `base jwt` content, there will be a maximum of
+        one of these per db_name ( database name )
+      operationId: Login JWT base content
+      parameters:
+      - name: db_name
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: table_name
+        in: path
+        required: true
+        schema:
+          type: string
       responses:
-        "200":
-          description:  'successful login'
-          schema:
-            $ref: '#/definitions/JwtLoginRespose'
-        "400":
-          description: 'missing field error'
-          schema:
-            type: object
-            properties:
-              result:
-                type: "string"
-                example: "Missing field `field name`"
-        "500":
-          description: 'Bad Request'
-          schema :
-            $ref: '#/definitions/ErrorResponse'
-definitions:
-  Admin:
-    type: "object"
-    properties:
-      email:
-        type: "string"
-        format: "email"
-        description: "The email-id the admin will use to login"
-      password:
-        type: "string"
-        maxLength: 255
-        minLength: 2
-        description: "Password that the admin will use to login"
-      name:
-        type: "string"
-        maxLength: 32
-        minLength: 1
-        description: "This is the name of the admin"
-    required:
-    - email
-    - password
-  AdminResponse:
-    type: "object"
-    properties:
-      id:
-        type: "integer"
-      email:
-        type: "string"
-        format: "email"
-  AdminLogin:
-    type: "object"
-    properties:
-      email:
-        type: "string"
-        format: "email"
-      password:
-        type: "string"
-  Table:
-    type: "object"
-    properties:
-      table_name:
-        type: "string"
-      connection_name:
-        type: "string"
-      columns:
-        type: "array"
-        items:  
-          $ref: '#/definitions/Column'
-    required:
-    - table_name
-    - connection_name
-    - columns
-  Column:
-    type: "object"
-    properties:
-      default:
-        type: "string"
-      foreign_key:
-        type: "string"
-      name:
-        type: "string"
-      nullable:
-        type: "boolean"
-      type:
-        type: "string"
-        format: type
-      unique:
-        type: "boolean"
-    required:
+        200:
+          description: successful login
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JwtLoginRespose'
+        400:
+          description: missing field error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: string
+                    example: Missing field `field name`
+        500:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+components:
+  schemas:
+    Admin:
+      required:
+      - email
+      - password
+      type: object
+      properties:
+        email:
+          type: string
+          description: The email-id the admin will use to login
+          format: email
+        password:
+          maxLength: 255
+          minLength: 2
+          type: string
+          description: Password that the admin will use to login
+        name:
+          maxLength: 32
+          minLength: 1
+          type: string
+          description: This is the name of the admin
+    AdminResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+        email:
+          type: string
+          format: email
+    AdminLogin:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+    AdminEmailScript:
+      required:
+      - api_key
+      - template key
+      type: object
+      properties:
+        api_key:
+          type: string
+        to_emails:
+          type: object
+          properties:
+            name:
+              type: string
+        template key:
+          type: string
+        subject:
+          type: string
+        content:
+          type: string
+    AdminSMS:
+      required:
+      - _from
+      - account_sid
+      type: object
+      properties:
+        account_sid:
+          type: string
+        auth_token:
+          type: string
+        _from:
+          type: string
+        to:
+          type: array
+          items:
+            type: string
+            format: number
+        message:
+          type: string
+    AWSUserCredentials:
+      type: object
+      properties:
+        aws_secret_key:
+          type: string
+        aws_access_key:
+          type: string
+        aws_username:
+          type: string
+    AWSConfig:
+      type: object
+      properties:
+        region_name:
+          type: string
+          example: us-east-1
+        signature_version:
+          type: string
+          example: v4
+        max_attempts:
+          type: integer
+          example: 10
+        mode:
+          type: string
+          example: standard
+    AWSrdsConfig:
+      type: object
+      properties:
+        Engine:
+          type: string
+          description: This should be an engine recognised by AWS RDS
+          example: MySQL
+        AllocatedStorage:
+          type: integer
+          example: 20
+        DBInstanceIdentifier:
+          type: string
+          description: This should be the name of the DB instance you wish to create
+        DBInstanceClass:
+          type: string
+          description: This is the class if DB instance you wish to create
+          example: db.t2.micro
+        MasterUsername:
+          type: string
+          example: admin
+        MasterUserPassword:
+          type: string
+          example: password
+        MaxAllocatedStorage:
+          type: integer
+          example: 21
+    AWSEC2Config:
+      type: object
+      properties:
+        BlockDeviceMappings:
+          type: array
+          items:
+            $ref: '#/components/schemas/AWSBlockDeviceMappings'
+        InstanceType:
+          type: string
+          description: This should be a AWS recognised instance type
+          example: t2.micro
+        ImageId:
+          type: string
+          example: ami-0885b1f6bd170450c
+    AWSBlockDeviceMappings:
+      type: object
+      properties:
+        DeviceName:
+          type: string
+          example: /dev/sda1
+        Ebs:
+          type: object
+          properties:
+            schema:
+              $ref: '#/components/schemas/AWSEC2Sorage'
+        OtherStorageType:
+          type: object
+          properties:
+            schema:
+              $ref: '#/components/schemas/AWSEC2Sorage'
+    AWSEC2Sorage:
+      type: object
+      properties:
+        DeleteOnTermination:
+          type: boolean
+        VolumeSize:
+          type: integer
+          example: 8
+        VolumeType:
+          type: string
+          example: gp2
+    AWSExport:
+      type: object
+      properties:
+        app_name:
+          type: string
+          description: Name of the app/ db which you want to export
+        user_credentials:
+          $ref: '#/components/schemas/AWSUserCredentials'
+        confg:
+          $ref: '#/components/schemas/AWSConfig'
+        rds_config:
+          $ref: '#/components/schemas/AWSrdsConfig'
+        ec2_config:
+          $ref: '#/components/schemas/AWSEC2Config'
+    ExportApp:
+      type: object
+      properties:
+        schema:
+          oneOf:
+            - $ref: '#/components/schemas/AWSExport'
+            - $ref: '#/components/schemas/HerokuExport'
+            - $ref: '#/components/schemas/LocalExport'
+    HerokuExport:
+      required:
+      - app_name
+      type: object
+      properties:
+        app_name:
+          type: string
+        provision_db:
+          type: boolean
+          description: If DB is to be provisioned
+        tier:
+          type: object
+          description: Info about the db tier
+    LocalExport:
+      type: object
+      properties:
+        app_name:
+          type: string
+        export_path:
+          type: string
+    Table:
+      required:
+      - columns
+      - connection_name
+      - table_name
+      type: object
+      properties:
+        table_name:
+          type: string
+        connection_name:
+          type: string
+        columns:
+          type: array
+          items:
+            $ref: '#/components/schemas/Column'
+    Column:
+      required:
       - name
       - nullable
       - type
       - unique
-  Content:
-    type: object
-    additionalProperties: true
-    example:
-      name: "name"
-      id: "id"
-      prop3: "property3"
-  Database:
-    type: "object"
-    properties:
-      connection_name:
-        type: "string"
-      database_type:
-        type: "string"
-        enum: ['mysql','sqlite','postgres']
-      host:
-        type: "string"
-      port:
-        type: "string"
-      username:
-        type: "string"
-      password:
-        type: "string"
-    required:
+      type: object
+      properties:
+        default:
+          type: string
+        foreign_key:
+          type: string
+        name:
+          type: string
+        nullable:
+          type: boolean
+        type:
+          type: string
+          format: type
+        unique:
+          type: boolean
+    Content:
+      type: object
+      example:
+        name: name
+        id: id
+        prop3: property3
+    Database:
+      required:
       - connection_name
       - database_type
       - host
+      - password
       - port
       - username
-      - password
-  ErrorResponse:
-    description: 'Error Response'
-    type: object
-    properties:
-      result:
-        type: "string"
-        example: "Error message"
-  JwtLoginRespose:
-    type: "object"
-    properties:
-      result:
-        type: string
-        example: "Successfully logged in."
-      email:
-        type: string
-        format: email
-      id:
-        type: integer
-      access_token:
-        type: string
-        format: jwt
-      refresh_toke:
-        type: string
-        format: jwt
+      type: object
+      properties:
+        connection_name:
+          type: string
+        database_type:
+          type: string
+          enum:
+          - mysql
+          - sqlite
+          - postgres
+        host:
+          type: string
+        port:
+          type: string
+        username:
+          type: string
+        password:
+          type: string
+    ErrorResponse:
+      type: object
+      properties:
+        result:
+          type: string
+          example: Error message
+      description: Error Response
+    JwtLoginRespose:
+      type: object
+      properties:
+        result:
+          type: string
+          example: Successfully logged in.
+        email:
+          type: string
+          format: email
+        id:
+          type: integer
+        access_token:
+          type: string
+          format: jwt
+        refresh_toke:
+          type: string
+          format: jwt
+  securitySchemes:
+    Bearer:
+      type: apiKey
+      name: Authorization
+      in: header
