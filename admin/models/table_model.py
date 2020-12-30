@@ -78,9 +78,9 @@ class Table(Model):
         if table_name is not None and len(table_name) > 32:
             raise ValueError("Invalid value for `table_name`, length must be"
                              " less than or equal to `32`.")
-        if table_name is not None and len(table_name) < 2:
-            raise ValueError("Invalid value for `table_name`, length must be "
-                             "greater than or equal to `6`.")
+        if table_name is not None and table_name.isspace() is True:
+            raise ValueError("Invalid value for `table_name`, must contain "
+                             "characters")
 
         self._table_name = table_name
 

@@ -7,6 +7,8 @@ from pytest_postgresql import factories
 from app import app as flaskapp
 from app.utils import migrate as run_migration
 
+from admin.utils import set_jwt_secret_key
+
 from config import HOST, PORT
 
 
@@ -25,16 +27,16 @@ def app():
     yield flaskapp
 
 
-@pytest.fixture
+@pytest.fixture(autouse=True)
 def client(app):
     """A test client for the app."""
-    app.testing = True
     yield app.test_client()
 
 
 @pytest.fixture(scope="session", autouse=True)
 def delete_migrations():
     """To delete migration files and folders"""
+    set_jwt_secret_key()
     subprocess.run(['rm', '-rf', 'migrations'])
     subprocess.run(['rm', '-rf', 'old_migrations'])
     subprocess.run(['find', ' .', '-path "/migrations/.py" -not'
