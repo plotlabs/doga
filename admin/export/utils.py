@@ -231,6 +231,7 @@ def create_aws_config(**kwargs):
 
 def validate_ec2_instance_id(user_credentials, aws_config, ImageId):
 
+    """
     try:
         ec2_client = boto3.client('ec2',
                               aws_access_key_id=user_credentials['aws_access_key'],  # noqa 401
@@ -264,6 +265,8 @@ def validate_ec2_instance_id(user_credentials, aws_config, ImageId):
 
     print(platform)
     return platform
+    """
+    return "ubuntu"
 
 
 def create_and_store_keypair(ec2_instance, key_name=KEY_NAME) -> str:
@@ -440,7 +443,6 @@ def create_EC2(user_credentials, aws_config, rds_port, **kwargs):
                             )
 
     random_string = create_random_string(5)
-
     sg_name = SG_GROUP_NAME + random_string
     securitygroup = ec2.create_security_group(
         GroupName=sg_name,
@@ -454,7 +456,6 @@ def create_EC2(user_credentials, aws_config, rds_port, **kwargs):
                                             key_name=KEY_NAME +
                                             random_string
                                             )
-        print("created key pair")
     except ClientError as error:
         raise EC2CreationError('Unable to create EC2 instance: ' + str(error))
 
@@ -471,9 +472,6 @@ def create_EC2(user_credentials, aws_config, rds_port, **kwargs):
     Monitoring = {'Enabled': False}
     kwargs['Monitoring'] = kwargs.get('Monitoring', Monitoring)
     kwargs['KeyName'] = key_name  # this is the key we will create
-
-    # TODO: fix this
-    print("creating instance")
 
     ec2_instance = ec2.create_instances(
         BlockDeviceMappings=BlockDeviceMappings,
@@ -514,7 +512,7 @@ def deploy_to_aws(user_credentials, aws_config, ec2, key_name=KEY_NAME,
     try:
         ec2_client = boto3.client('ec2',
                                   aws_access_key_id=user_credentials['aws_access_key'],  # noqa 401
-                                  aws_secret_access_key=user_credentials['aws_secret_key'],  # noqa 401
+                                    aws_secret_access_key=user_credentials['aws_secret_key'],  # noqa 401
                                   region_name=aws_config.region_name,
                                   config=aws_config
                                 )
@@ -546,10 +544,10 @@ def deploy_to_aws(user_credentials, aws_config, ec2, key_name=KEY_NAME,
                 'InstanceInformationList']:
             associated_instances.append(i["InstanceId"])
 
-    this_folder = os.sep.join(__file__.split(os.sep)[:-2])
+    this_folder = os.sep.join(__file__.split(os.sep)[:-3])
     app_folder = os.sep.join(__file__.split(os.sep)[:-2]) + 'exported_app/*'
 
-    # TODO:
+    # from:
     # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/managing-users.html
 
     platforms = {
@@ -601,7 +599,9 @@ def deploy_to_aws(user_credentials, aws_config, ec2, key_name=KEY_NAME,
     stdout_data, stderr_data = sp.communicate()
     """
 
-    os.system('yes | scp -r -i ' + this_folder + key_name + '.pem '
+    os.system('scp -o UserKnownHostsFile=/dev/null -o '
+              'StrictHostKeyChecking=no -r -i ' + this_folder +
+              '/' + key_name + '.pem '
               + app_folder + ' ' + user + '@' + ec2.public_dns_name +
               ':exported_app/')
 
@@ -675,7 +675,6 @@ def connect_rds_to_ec2(rds, ec2, user_credentials, config, sg_name,
         InstanceId=ec2.instance_id,
     )
 
-    print(response)
     if b'success' in output:
         return True
 
