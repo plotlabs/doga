@@ -29,7 +29,8 @@ class Apis(Resource):
 
     @jwt_required
     def get(self, id=None):
-        if not verify_jwt(get_jwt_identity(), jwt_filter_keys, model_name):
+        # TODO: change
+        if not verify_jwt(get_jwt_identity(), model_name):
             return {"result": "JWT authorization invalid, user does not"
                     " exist."}
         if id is None:
@@ -47,7 +48,7 @@ class Apis(Resource):
 
     @jwt_required
     def put(self, id):
-        if not verify_jwt(get_jwt_identity(), jwt_filter_keys, model_name):
+        if not verify_jwt(get_jwt_identity(), model_name):
             return {"result": "JWT authorization invalid, user does not"
                     " exist."}
         data = request.get_json()
@@ -142,7 +143,7 @@ class Apis(Resource):
 
     @jwt_required
     def delete(self, id):
-        if not verify_jwt(get_jwt_identity(), jwt_filter_keys, model_name):
+        if not verify_jwt(get_jwt_identity(), model_name):
             return {"result": "JWT authorization invalid, user does not"
                     " exist."}
         try:

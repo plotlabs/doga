@@ -6,7 +6,6 @@ import string
 import typing
 
 from dbs import DB_DICT
-
 from config import JWTSET
 
 

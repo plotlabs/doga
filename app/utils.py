@@ -34,6 +34,19 @@ class AlchemyEncoder(json.JSONEncoder):
         return json.JSONEncoder.default(self, obj)
 
 
+def verify_jwt(jwt_identity, model):
+
+    query = model.query
+
+    for key, value in jwt_identity.items():
+        query = query.filter(getattr(model, key).like("%%%s%%" % value))
+
+    final_result = query.all()
+    if final_result is None:
+        return False
+    return True
+
+
 def migrate():
     """Function to stop the app to migrate and then restart it."""
     migrate_folder = os.path.exists('migrations')
@@ -44,27 +57,3 @@ def migrate():
     migrate_command = "flask db migrate --rev-id " + revision_id
     upgrade_command = "flask db upgrade"
     sys_platform = platform.system()
-
-
-"""
-    if sys_platform in ['Linux', 'Darwin']:
-        run_command = "sh restart.sh"
-    else:
-        run_command = "start "" /b restart.bat"
-    if pid != '':
-        os.system(migrate_command + " && " + upgrade_command + " && "
-                  + run_command + " " + str(pid))
-"""
-
-
-def verify_jwt(jwt_identity, filter_key, model_name):
-
-    query = model_name.query
-
-    for key, value in jwt_identity.items():
-        query = query.filter(getattr(model_name, key).like("%%%s%%" % value))
-
-    final_result = query.all()
-    if final_result is None:
-        return False
-    return True

@@ -13,6 +13,7 @@ from app.utils import AlchemyEncoder
 
 from config import HOST, PORT
 
+REPLACE_IF_JWT
 
 mod_model = Blueprint(bname, __name__)
 api_model = Api()

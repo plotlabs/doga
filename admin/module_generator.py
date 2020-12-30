@@ -73,7 +73,7 @@ def create_model(dir_path, data):
     o.close()
 
 
-def create_resources(model_name, dir_path, base_jwt,
+def create_resources(model_name, connection_name, dir_path, base_jwt,
                      expiry, restrict_by_jwt, filter_keys):
     """Function to create the CRUD Restful APIs for the module"""
     o = open(dir_path + "/resources.py", "w")
@@ -88,23 +88,59 @@ def create_resources(model_name, dir_path, base_jwt,
             line = line.replace("expiry_value", str(expiry['value']))
             line = line.replace("endpoint", '"/"')
             line = line.replace("param", '"/<int:id>"')
+            line = line.replace("param", '"/<int:id>"')
+            line = line.replace("REPLACE_IF_JWT", '')
             o.write(line)
 
     else:
         for line in open("templates/resources.py"):
 
             if restrict_by_jwt in [True, "True"]:
-                line = line.replace("def post", "@jwt_required\n    def post")
-                line = line.replace("def get", "@jwt_required\n    def get")
-                line = line.replace("def put", "@jwt_required\n    def put")
-                line = line.replace(
-                    "def delete", "@jwt_required\n    def delete")
 
+                base_jwt = JWT.query.filter_by(
+                    connection_name=connection_name).first()
+                base_table = base_jwt.table
+                db_name = base_jwt.database_name
+
+                verify_jwt = '        if not verify_jwt(get_jwt_identity(), ' \
+                             + base_table.title() + '):\n'
+                condn = '            return {"result": "JWT authorization invalid, entry does not exist."}  # noqa E401'
+
+                line = line.replace(
+                    "def post(self):",
+                    "@jwt_required\n    def post(self):\n" +
+                    verify_jwt +
+                    condn)
+                line = line.replace(
+                    "def get(self, id=None):",
+                    "@jwt_required\n    def get(self, id=None):\n" + verify_jwt
+                    + condn)
+                line = line.replace(
+                    "def put(self, id):",
+                    "@jwt_required\n    def put(self, id):\n        "
+                    "verify_jwt()\n" + verify_jwt + condn)
+                line = line.replace(
+                    "def delete(self, id):",
+                    "@jwt_required\n    def delete(self, id):\n        "
+                    "verify_jwt()\n" + verify_jwt + condn)
+                line = line.replace("param", '"/<int:id>"')
+                line = line.replace(
+                    "REPLACE_IF_JWT",
+                    'from app.' +
+                    db_name.lower() +
+                    '.' +
+                    base_table +
+                    '.models import ' +
+                    base_table.title())
+
+            else:
+                line = line.replace("REPLACE_IF_JWT", '')
             line = line.replace("modulename", model_name.lower())
             line = line.replace("modelname", model_name.title().split('.')[1])
             line = line.replace("bname", '"' + model_name.lower() + '"')
             line = line.replace("endpoint", '"/"')
             line = line.replace("param", '"/<int:id>"')
+
             o.write(line)
 
     o.close()
@@ -203,7 +239,6 @@ def add_new_db(conn_name):
     move_migration_files()
     if os.path.exists("migrations"):
         shutil.rmtree('migrations')
-    # migrate()
 
 
 def check_jwt_present(connection_name, database_name):
@@ -302,7 +337,7 @@ def add_jwt_list(connection_name, database_name, table_name):
     restrict_by_JWT table in the dafault connection
     """
     restricted_tables = Restricted_by_JWT.query.filter_by(
-                                    connection_name=connection_name).first()
+        connection_name=connection_name).first()
     if restricted_tables is None:
         try:
             restricted_jwt = Restricted_by_JWT(connection_name=connection_name,
@@ -314,12 +349,15 @@ def add_jwt_list(connection_name, database_name, table_name):
             return {"result": error}, 500
 
     # if the table was alredy in the database
-    if table_name in restricted_tables.restricted_tables:
-        return
-
-    restricted_tables.restricted_tables = restricted_tables.restricted_tables \
-        + "," + table_name
     try:
-        db.session.commit()
-    except Exception as error:
-        return {"result": error}
+        if table_name in restricted_tables.restricted_tables:
+            return
+
+        restricted_tables.restricted_tables = restricted_tables.restricted_tables + "," + table_name  # noqa E401
+        try:
+            db.session.commit()
+        except Exception as error:
+            return {"result": error}
+
+    except AttributeError as error:
+        pass

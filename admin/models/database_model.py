@@ -7,7 +7,7 @@ from admin import utils
 from admin.models.base_model_ import Model
 
 from dbs import DB_DICT
-from config import DEFAULT_PORTS
+from admin.default_values import DEFAULT_PORTS
 
 
 class Database(Model):
