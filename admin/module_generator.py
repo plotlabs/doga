@@ -103,7 +103,7 @@ def create_resources(model_name, connection_name, dir_path, base_jwt,
                 db_name = base_jwt.database_name
 
                 verify_jwt = '        if not verify_jwt(get_jwt_identity(), ' \
-                             + base_table + '):\n'
+                             + base_table.title() + '):\n'
                 condn = '            return {"result": "JWT authorization invalid, entry does not exist."}  # noqa E401'
 
                 line = line.replace(
@@ -349,12 +349,15 @@ def add_jwt_list(connection_name, database_name, table_name):
             return {"result": error}, 500
 
     # if the table was alredy in the database
-    if table_name in restricted_tables.restricted_tables:
-        return
-
-    restricted_tables.restricted_tables = restricted_tables.restricted_tables \
-        + "," + table_name
     try:
-        db.session.commit()
-    except Exception as error:
-        return {"result": error}
+        if table_name in restricted_tables.restricted_tables:
+            return
+
+        restricted_tables.restricted_tables = restricted_tables.restricted_tables + "," + table_name  # noqa E401
+        try:
+            db.session.commit()
+        except Exception as error:
+            return {"result": error}
+
+    except AttributeError as error:
+        pass

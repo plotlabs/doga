@@ -1,6 +1,6 @@
 #!/bin/sh
 
-docker swarm init
+sudo docker swarm init
 cd exported_app
-docker build --tag app:latest .
-docker service create --name app --replicas=1 app:latest
+sudo docker build --tag app:latest .
+sudo docker service create --name app -p PORT:PORT app:latest

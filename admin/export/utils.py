@@ -1,4 +1,10 @@
 import os
+from requests import get
+import itertools
+import random
+import shutil
+import string
+from time import sleep
 
 import boto3
 from botocore.config import Config
@@ -6,15 +12,6 @@ from botocore.exceptions import (BotoCoreError, ClientError,
                                  ParamValidationError)
 
 import paramiko
-
-from requests import get
-
-import random
-
-import shutil
-import string
-
-from time import sleep
 
 import pandas as pd
 
@@ -27,7 +24,7 @@ from app import db
 
 from dbs import DB_DICT
 
-import itertools
+from config import PORT
 
 KEY_NAME = 'doga_key'
 SG_GROUP_NAME = 'sg_doga'
@@ -457,6 +454,7 @@ def create_EC2(user_credentials, aws_config, rds_port, **kwargs):
                                             key_name=KEY_NAME +
                                             random_string
                                             )
+        print("created key pair")
     except ClientError as error:
         raise EC2CreationError('Unable to create EC2 instance: ' + str(error))
 
@@ -475,6 +473,8 @@ def create_EC2(user_credentials, aws_config, rds_port, **kwargs):
     kwargs['KeyName'] = key_name  # this is the key we will create
 
     # TODO: fix this
+    print("creating instance")
+
     ec2_instance = ec2.create_instances(
         BlockDeviceMappings=BlockDeviceMappings,
         ImageId=ImageId,
@@ -660,6 +660,10 @@ def connect_rds_to_ec2(rds, ec2, user_credentials, config, sg_name,
 
     load_app_commands = open('admin/export/create_and_startapp.sh', 'r'
                              ).read()
+
+    for line in load_app_commands:
+        line = line.replace("PORT", str(PORT))
+
     commands = [load_app_commands]
     response = ssm_client.send_command(DocumentName="AWS-RunShellScript",
                                        Parameters={'commands': commands},

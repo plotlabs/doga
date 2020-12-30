@@ -657,7 +657,7 @@ class DatabaseInit(Resource):
         """Create a database connection string"""
         # sample data
         # data = {
-        #     "type": "mysql/mongo/postgresql",
+        #     "type": "mysql/sqlite/postgresql",
         #     "connection_name": "db1",
         #     "username": "user",
         #     "password": "pass",
@@ -735,6 +735,11 @@ class DatabaseInit(Resource):
         #     "host": "localhost",
         #     "database_name": "database_name",
         # }
+
+        if not verify_jwt(get_jwt_identity(), Admin):
+            return {"result": "JWT authorization invalid, user does not"
+                    " exist."}
+
         if data['connection_name'] not in DB_DICT:
             return {
                 "result": "No connection with name: {} is present.".format(
@@ -812,7 +817,12 @@ class ExportApp(Resource):
     Endpoint that deals with deployment of the app to different platforms
     """
 
+    @jwt_required
     def post(self, platform):
+
+        if not verify_jwt(get_jwt_identity(), Admin):
+            return {"result": "JWT authorization invalid, user does not"
+                    " exist."}
 
         json_request = request.get_json()
         if json_request is None:
@@ -939,7 +949,7 @@ class ExportApp(Resource):
             db.session.add(app_deployed)
             db.session.commit()
 
-        elif platform == 'heroku':
+        elif platform == '  ':
 
             try:
                 provision_db = json_request['provision_db']
@@ -1042,7 +1052,12 @@ class CreateNotifications(Resource):
     Endpoint that Creates a script to send notifications
     """
 
+    @jwt_required
     def post(self, platform):
+
+        if not verify_jwt(get_jwt_identity(), Admin):
+            return {"result": "JWT authorization invalid, user does not"
+                    " exist."}
 
         json_request = request.get_json()
         if json_request is None:
