@@ -4,7 +4,6 @@ from flask_migrate import Migrate
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 
-
 # Define application object
 app = Flask(__name__)
 
@@ -14,7 +13,7 @@ app.config.from_pyfile("../config.py")
 db = SQLAlchemy(app)
 
 # Import all the blueprints
-from .blueprints import *
+from .blueprints import *  # noqa 402
 
 migrate = Migrate(app, db)
 

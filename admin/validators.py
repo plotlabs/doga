@@ -1,6 +1,6 @@
-import keyword
-import json
 import datetime
+import json
+import keyword
 import requests
 
 
@@ -9,7 +9,8 @@ from templates.models import metadata
 
 from dbs import DB_DICT
 from admin.module_generator import check_table
-from config import PORT
+from config import HOST, PORT
+
 
 def column_types():
     """Get a list of all possible column types"""
@@ -27,10 +28,6 @@ def column_validation(schema_list, connection_name, table_columns=None):
     msg = ""
     column_name_list = []
     for column in schema_list:
-        if column["name"] == "":
-            valid = False
-            msg = "Column name cannot be empty."
-            break
         if column["name"] in column_name_list:
             valid = False
             msg = "Columns cannot have same name."
@@ -138,11 +135,14 @@ def nullable_check(data):
                                            data['connection_name'],
                                            table.columns)
             if valid is False:
-                model_data = requests.get('http://localhost:' + PORT + '/'
-                 + data['table_name'])
+                model_data = requests.get('http://{}:'.format(HOST) + PORT
+                                          + '/' + data['table_name'])
                 if len(json.loads(model_data.content)["result"]) != 0:
                     return True
 
                 return False
 
     return False
+
+# TODO:
+# def jwt_filter_key_validator():

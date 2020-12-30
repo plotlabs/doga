@@ -6,6 +6,7 @@ __pycache__/
 # C extensions
 *.so
 .idea
+.vscode
 
 # Distribution / packaging
 .Python
@@ -71,3 +72,10 @@ _site
 .jekyll-cache
 .jekyll-metadata
 vendor
+
+# all migrations
+/migrations
+/old_migrations
+
+#all db files
+*.db
