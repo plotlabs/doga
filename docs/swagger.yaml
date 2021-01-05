@@ -1,4 +1,4 @@
-openapi: 3.0.1
+openapi: '3.0.0'
 info:
   title: DOGA
   description: ""
@@ -30,6 +30,8 @@ tags:
 - name: notification scripts
   description: These endpoints are defined to create & export a script to notofy provided
     emails/numbers notofications.
+- name: admin dashboard
+  description: These endpoints are used to get information for the admdin dashboard.
 paths:
   /admin/admin_profile:
     post:
@@ -327,6 +329,8 @@ paths:
             application/json:
               schema:
                 type: object
+        200: 
+          description: "Request Successful"
       security:
       - Bearer: []
       x-codegen-request-body-name: json_body
@@ -498,6 +502,38 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+  /admin/dashboard/stats/{section}/{filters}:
+    parameters:
+      - name: "section"
+        in: "path"
+        required: True
+        schema:
+          type: string
+          enum:
+          - app
+          - db
+      - name: "filters"
+        in: "path"
+        required: True
+        schema:
+          type: "string"
+          enum:
+          - mysql
+          - sqlite
+          - postgres
+    get:
+      tags:
+      - 'admin dashboard'
+      summary: "Used to get stats for operating the dashboard"
+      responses:
+        '200':
+          description: "Stats to populate the dashboard"
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/AdminDashboardDB'
+                  - $ref: '#/components/schemas/AdminDashboardApp'
 components:
   schemas:
     Admin:
@@ -574,6 +610,31 @@ components:
             format: number
         message:
           type: string
+    AdminDashboardDB:
+      type: "object"
+      properties:
+        result:
+          type: "object"
+          properties:
+            dbtype:
+              type: "string"
+              enum:
+              - mysql
+              - sqlite
+              - postgres
+            additionalProperties:
+              type: "array"
+              items:
+                type: "string"
+                description: "Names od databases"
+    AdminDashboardApp:
+      type: "object"
+      properties:
+        result:
+          type: "array"
+          items:
+            type: "string"
+            description: "App names listed"
     AWSUserCredentials:
       type: object
       properties:
@@ -753,6 +814,7 @@ components:
       required:
       - connection_name
       - database_type
+      - database_name
       - host
       - password
       - port
@@ -767,6 +829,8 @@ components:
           - mysql
           - sqlite
           - postgres
+        database_name:
+          type: string
         host:
           type: string
         port:
