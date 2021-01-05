@@ -45,9 +45,16 @@ def create_model(dir_path, data):
     for col in data["columns"]:
         if col["name"] == "id":
             pass
-        line = "    " + col["name"] + " = Column(" + col["type"] \
-               + ", nullable=" + str(col["nullable"]).title() \
-               + ", unique=" + str(col["unique"]).title()
+        try:
+            line = "    " + col["name"] + " = Column(" + col["type"] \
+                   + ", nullable=" + str(col["nullable"]).title() \
+                   + ", unique=" + str(col["unique"]).title()
+        except KeyError as error:
+            return {
+                "result": "Missing parameters for columns",
+                "parameters": err.args
+            }, 500
+
         if col["default"] == "":
             line = line + ")\n"
         else:

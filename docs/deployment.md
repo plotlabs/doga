@@ -201,12 +201,15 @@ and paste the following:
                 ServerName your-server-ip-here
                 ServerAdmin admin@your-server-ip-here
                 WSGIScriptAlias / /var/www/exported_app/app.wsgi
-                <Directory /var/www/exported_app/>
+                WSGIDaemonProcess app user=www-data group=www-data threads=5 python-home=/var/www/exported_app/venv
+                WSGIScriptAlias / /var/www/exported_app/app.wsgi
+                <Directory /var/www/app>
+                        WSGIProcessGroup app
+                        WSGIApplicationGroup %{GLOBAL}
                         Require all granted
                 </Directory>
                 ErrorLog ${APACHE_LOG_DIR}/error.log
 </VirtualHost>
-
 ```
 
 if you arent sure about the server name & admin, refer to the default config
