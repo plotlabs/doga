@@ -44,7 +44,7 @@ def extract_database_name(connection_name):
     connection_string = DB_DICT[connection_name]
     start = connection_string.rfind('/')
     if connection_string.startswith("mysql"):
-        end = connection_string.rfind('?')
+        end = len(connection_string)
     elif connection_string.startswith("postgresql"):
         end = len(connection_string)
     else:

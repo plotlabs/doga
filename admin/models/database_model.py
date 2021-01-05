@@ -102,7 +102,6 @@ class Database(Model):
         if database_name in [None, ""]:
             raise ValueError("Invalid value for `database_name`, must not be"
                              " `None`")
-
         self._database_name = database_name
 
     @property
@@ -259,14 +258,14 @@ class Database(Model):
     def db_string(self) -> str:
         string = ''
         if self.database_type == 'mysql':
-            string = 'mysql://{}:{}@{}:{}/{}?charset=utf8mb4'.format(
+            string = 'mysql://{}:{}@{}:{}/{}'.format(
                 self.username, self.password, self.host,
                 self.port, self.database_name)
 
-        if self.database_type == 'postgresql':
+        if self.database_type == 'postgres':
             string = 'postgresql+psycopg2://{}:{}@{}:{}/{}'.format(
                 self.username, self.password, self.host,
-                self.port, self.database_name)
+                self.port, self.database_name.lower())
 
         if self.database_type == 'sqlite':
             string = 'sqlite:////tmp/{}.db'.format(

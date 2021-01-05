@@ -97,8 +97,22 @@ class AdminApi(Resource):
             json serializeable dict
             integer response code
         """
+        json_request = request.get_json()
+        if json_request is None:
+            return {"result": "Error json body cannot be None."}, 500
+
+        required_keys = set(["name", "email", "password"])
+
+        missed_keys = required_keys.difference(json_request.keys())
+
+        if len(missed_keys) != 0:
+            return {
+                    "result": "Values for fields cannot be null",
+                    "required values": list(missed_keys)
+                    }, 500
+
         try:
-            admin = AdminObject.from_dict(request.get_json())
+            admin = AdminObject.from_dict(json_request)
         except ValueError as err:
             return {"result": "Error: ".join(err.args)}
 
@@ -170,7 +184,7 @@ class ContentType(Resource):
             add content to the app
 
         put(self):
-            Defines responses for the `/admin/cintent
+            Defines responses for the `/admin/content
 
         delete
 
@@ -334,6 +348,19 @@ class ContentType(Resource):
         #         },
         #     ]
         # }
+
+        if data is None:
+            return {"response": "JSON body cannot be empty."}, 500
+
+        required_keys = set(["table_name", "connection_name", "columns"])
+
+        missed_keys = required_keys.difference(data)
+        if len(missed_keys) != 0:       
+            return {
+                    "result": "Values for fields cannot be null.",
+                    "required values": list(missed_keys)
+                    }, 500
+
         try:
             Table = TableModel.from_dict(request.get_json())
         except ValueError as err:
@@ -356,7 +383,14 @@ class ContentType(Resource):
         # TODO: ask if this should be checked too, seems unlikely
         # if Table.table_name == "alembic_version":
 
-        valid, msg = column_validation(data["columns"], Table.connection_name)
+        try:
+            valid, msg = column_validation(data["columns"],
+                                           Table.connection_name)
+        except KeyError as err:
+            return {
+                "result": "Error, column is missing required property.",
+                "property": err.args
+            }, 500
         if valid is False:
             return {"result": msg}, 400
 
@@ -657,7 +691,7 @@ class DatabaseInit(Resource):
         """Create a database connection string"""
         # sample data
         # data = {
-        #     "type": "mysql/sqlite/postgresql",
+        #     "database_type": "mysql/sqlite/postgresql",
         #     "connection_name": "db1",
         #     "username": "user",
         #     "password": "pass",
@@ -668,12 +702,34 @@ class DatabaseInit(Resource):
         if not verify_jwt(get_jwt_identity(), Admin):
             return {"result": "JWT authorization invalid, user does not"
                     " exist."}
+
+        json_request = request.get_json()
+
+        if json_request is None:
+            return {"result": "Error, request body cannot be empty."}, 500
+
+        required_keys = set(["database_type", "connection_name", "username",
+                             "password", "database_name"])
+        missed_keys = required_keys.difference(json_request)
+        if len(missed_keys) != 0:
+            return {
+                    "result": "Values for fields cannot be null",
+                    "required values": list(missed_keys)
+                    }, 500
+
         try:
-            database = DatabaseObject.from_dict(request.get_json())
+            database = DatabaseObject.from_dict(json_request)
+
         except ValueError as err:
             return {"result": "Error: " + "".join(err.args)}, 400
 
         string = database.db_string()
+
+        if string == "":
+            return {
+                "result": "Please provide all parameters to connect/create "
+                " db instance."
+            }, 500
 
         try:
             engine = create_engine(string)
@@ -682,17 +738,17 @@ class DatabaseInit(Resource):
             engine.dispose()
             db_created = ""
         except OperationalError as err:
-            if "unknown database" or database.database_name + "does not exist"\
-                    in str(err).lower():
+            if "unknown database" or database._database_name + \
+               "does not exist" in str(err).lower():
                 try:
-                    string = re.split(database.database_name, string)[0]
+                    string = re.split(database._database_name, string)[0]
                     engine = create_engine(string)
                     conn = engine.connect()
                     conn.execute("commit")
-                    conn.execute("CREATE DATABASE " + database.database_name)
+                    conn.execute("CREATE DATABASE " + database._database_name)
                     conn.invalidate()
                     engine.dispose()
-                    db_created = " New database " + database.database_name +\
+                    db_created = " New database " + database._database_name +\
                         " created."
                 except OperationalError:
                     return {
@@ -710,12 +766,12 @@ class DatabaseInit(Resource):
         with open('dbs.py', 'w+') as f:
             for i, line in enumerate(lines):
                 if line.startswith('}'):
-                    line = '    "' + database.connection_name + '": "' + \
-                        string + '",\n' + line
+                    line = '    "' + database._connection_name + '": "' + \
+                            database.db_string() + '",\n' + line
                 f.write(line)
             f.close()
 
-        add_new_db(database.connection_name)
+        add_new_db(database._connection_name)
 
         return {
             "result": "Successfully created database connection string." +
@@ -1087,6 +1143,56 @@ class CreateNotifications(Resource):
             }, 404
 
 
+class AdminDashboardStats(Resource):
+    """
+    Endpoint to return information that should be displayed to the Admin
+    """
+
+    def get(self, section, filter=None):
+
+        result = {}
+        if section.lower() == "db":
+            for connection_name, connection_string in DB_DICT.items():
+                db_name = extract_database_name(connection_name)
+                engine = connection_string.split(':')[0]
+
+                if engine == "postgresql+psycopg2":
+                    engine = "postgres"
+
+                if filter not in ["mysql", "postgres", "sqlite"]:
+                    try:
+                        result[engine].extend([db_name])
+                    except KeyError:
+                        r1 = {engine: [db_name]}
+                        result = {**result, **r1}
+                else:
+                    if engine == filter:
+                        result[db_name] = connection_name
+
+            return {
+                "result": result
+            }, 200
+
+        elif section.lower() == "app":
+            if filter not in [None, "", "all"]:
+                return {
+                    "result": "Error, filters are not available for this "
+                              "resource"
+                }
+
+            else:
+                parent_dir = os.sep.join(__file__.split(os.sep)[:-2])
+                remove = set(['__init__.py', 'blueprints.py', 'utils.py',
+                              '__pycache__'])
+                result = set(os.listdir(parent_dir + '/app/')) - remove
+            return {"result": list(result)}, 200
+
+        else:
+            return {
+                "result": "Error resource not created yet."
+            }, 404
+
+
 api_admin.add_resource(AdminApi, '/admin_profile',
                        '/admin_profile/<string:email>')
 api_admin.add_resource(Login, '/login')
@@ -1103,3 +1209,7 @@ api_admin.add_resource(ColumnType, '/columntypes')
 api_admin.add_resource(ExportApp, '/export/<string:platform>')
 
 api_admin.add_resource(CreateNotifications, '/notify/<string:platform>')
+
+api_admin.add_resource(AdminDashboardStats,
+                       '/dashboard/stats/<string:section>/<string:filter>'
+                       )
