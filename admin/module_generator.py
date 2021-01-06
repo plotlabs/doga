@@ -49,10 +49,15 @@ def create_model(dir_path, data):
             line = "    " + col["name"] + " = Column(" + col["type"] \
                    + ", nullable=" + str(col["nullable"]).title() \
                    + ", unique=" + str(col["unique"]).title()
+            if col["foreign_key"] != "":
+                line = "    " + col["name"] + " = Column(" + col["type"] \
+                   + ", ForeignKey('" + col["foreign_key"].lower() + "')" \
+                   + ", nullable=" + str(col["nullable"]).title() \
+                   + ", unique=" + str(col["unique"]).title()
         except KeyError as error:
             return {
                 "result": "Missing parameters for columns",
-                "parameters": err.args
+                "parameters": error.args
             }, 500
 
         if col["default"] == "":
@@ -73,9 +78,6 @@ def create_model(dir_path, data):
                 else:
                     line = line + ", server_default=text('" + str(
                         col["default"]) + "'))\n"
-        if col["foreign_key"] != "":
-            line = line + "\n    " + col["foreign_key"].lower() + \
-                " = relationship('" + col["foreign_key"] + "')\n"
         o.write(line)
     o.close()
 
@@ -87,7 +89,8 @@ def create_resources(model_name, connection_name, dir_path, base_jwt,
 
     if base_jwt in [True, "True"]:
         for line in open("templates/jwt_resource.py"):
-            line = line.replace("modulename", model_name.lower())
+            line = line.replace("modulename", model_name)
+            line = line.replace("module_endp", model_name.title().split('.')[0])  # noqa E401
             line = line.replace("modelname", model_name.title().split('.')[1])
             line = line.replace("bname", '"' + model_name.lower() + '"')
             line = line.replace("jwt_key", str(filter_keys))
@@ -134,7 +137,7 @@ def create_resources(model_name, connection_name, dir_path, base_jwt,
                 line = line.replace(
                     "REPLACE_IF_JWT",
                     'from app.' +
-                    db_name.lower() +
+                    db_name +
                     '.' +
                     base_table +
                     '.models import ' +
@@ -142,7 +145,8 @@ def create_resources(model_name, connection_name, dir_path, base_jwt,
 
             else:
                 line = line.replace("REPLACE_IF_JWT", '')
-            line = line.replace("modulename", model_name.lower())
+            line = line.replace("modulename", model_name)
+            line = line.replace("module_endp", model_name.title().split('.')[0])  # noqa E401
             line = line.replace("modelname", model_name.title().split('.')[1])
             line = line.replace("bname", '"' + model_name.lower() + '"')
             line = line.replace("endpoint", '"/"')
@@ -174,6 +178,48 @@ def check_table(table_name, connection_name=''):
             else:
                 exist = True
 
+    return exist
+
+
+def check_column(table_name, column_name, column_type, connection_name=''):
+    """Checks if the table exists or not"""
+    allowed_foreign_keys = [
+        "BIGINT",
+        "BINARY",
+        "BOOLEAN",
+        "BigInteger",
+        "Binary",
+        "CHAR",
+        "Concatenable",
+        "Enum",
+        "INT",
+        "INTEGER",
+        "Indexable",
+        "Integer",
+        "Interval",
+        "LargeBinary",
+        "NCHAR",
+        "NUMERIC",
+        "NVARCHAR",
+        "Numeric",
+        "REAL",
+        "SMALLINT",
+        "SmallInteger",
+    ]
+    exist = False
+    for table in metadata.sorted_tables:
+        if table.name.lower() == table_name.lower():
+            for column in table.columns:
+                if column_name.lower() == column.name:
+                    if str(column.type) not in allowed_foreign_keys:
+                        raise TypeError("Foreign key can only be allowed"
+                                        " types", allowed_foreign_keys)
+                    if column_type != str(column.type):
+                        print(column_type)
+                        raise TypeError("Foreign key and column must have "
+                                        "same type.")
+
+                    exist = True
     return exist
 
 

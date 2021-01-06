@@ -8,7 +8,7 @@ from sqlalchemy import types
 from templates.models import metadata
 
 from dbs import DB_DICT
-from admin.module_generator import check_table
+from admin.module_generator import check_column
 from config import HOST, PORT
 
 
@@ -26,9 +26,9 @@ def column_validation(schema_list, connection_name, table_columns=None):
     """Validate columns"""
     valid = True
     msg = ""
-    column_name_list = []
+    column_name_list = [column["name"].lower() for column in schema_list]
     for column in schema_list:
-        if column["name"] in column_name_list:
+        if len(set(column_name_list)) < len(column_name_list):
             valid = False
             msg = "Columns cannot have same name."
             break
@@ -38,10 +38,25 @@ def column_validation(schema_list, connection_name, table_columns=None):
                 column["name"])
             break
         if column["foreign_key"] != "":
-            if not check_table(column["foreign_key"], connection_name):
+            try:
+                table_name = column["foreign_key"].split(".")[0]
+                column_name = column["foreign_key"].split(".")[1]
+            except IndexError:
                 valid = False
-                msg = "The Foreign Key module does not exist."
+                msg = "Please format the foreign key in the correct format" \
+                      " 'TableName.ColumnName' . "
                 break
+            try:
+                if not check_column(table_name, column_name,
+                                    column["type"].split("(")[0],
+                                    connection_name):
+                    valid = False
+                    msg = "Foreign Key Module " + column["name"] + " does not"\
+                          + " exist."
+                    break
+            except TypeError as err:
+                valid = False
+                msg = str(err.args)
         if column["type"].lower().startswith("string"):
             if "(" not in column["type"] and ")" not in column["type"]:
                 valid = False
@@ -123,7 +138,6 @@ def column_validation(schema_list, connection_name, table_columns=None):
                         and column["nullable"] == "False":
                     valid = False
                     break
-        column_name_list.append(column["name"])
 
     return valid, msg
 

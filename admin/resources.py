@@ -355,12 +355,11 @@ class ContentType(Resource):
         required_keys = set(["table_name", "connection_name", "columns"])
 
         missed_keys = required_keys.difference(data)
-        if len(missed_keys) != 0:       
+        if len(missed_keys) != 0:
             return {
                     "result": "Values for fields cannot be null.",
                     "required values": list(missed_keys)
                     }, 500
-
         try:
             Table = TableModel.from_dict(request.get_json())
         except ValueError as err:
@@ -373,7 +372,6 @@ class ContentType(Resource):
 
         if check_table(Table.table_name):
             return {"result": "Module with this name is already present."}, 400
-
         if Table.table_name in ["admin", "jwt", "restricted_by_jwt"] and \
                 Table.connection_name == "default":
             return {"result": "Table with name {} is not allowed since it "
@@ -382,7 +380,6 @@ class ContentType(Resource):
 
         # TODO: ask if this should be checked too, seems unlikely
         # if Table.table_name == "alembic_version":
-
         try:
             valid, msg = column_validation(data["columns"],
                                            Table.connection_name)

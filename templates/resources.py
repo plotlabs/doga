@@ -98,10 +98,16 @@ class Apis(Resource):
                     for f in col.foreign_keys:
                         model_endp = str(f).split("'")[1].split('.')[0]
                         foreign_obj = requests.get(
-                            'http://{}:{}/'.format(HOST, PORT) + model_endp +
-                            '/' + str(data[col.name]))
+                                'http://{}:{}/'.format(HOST, PORT)
+                                + module_endp
+                                + '/' + model_endp.title()
+                                + '/' + str(data[col.name]))
                         result = json.loads(foreign_obj.content)["result"]
 
+                        if foreign_obj.status_code != 200:
+                            return {
+                                "result": "Foreign object does not exist."
+                            }
                         if len(result) == 0:
                             return {"result": "Foreign Key constraint "
                                               "failed for column "
@@ -186,10 +192,18 @@ class Apis(Resource):
                         for f in col.foreign_keys:
                             model_endp = str(f).split("'")[1].split('.')[0]
                             foreign_obj = requests.get(
-                                'http://{}:{}/'.format(HOST, PORT) + model_endp
+                                'http://{}:{}/'.format(HOST, PORT)
+                                + module_endp
+                                + '/' + model_endp.title()
                                 + '/' + str(data[col.name]))
+
                             result = json.loads(foreign_obj.content)[
                                 "result"]
+
+                            if foreign_obj.status_code != 200:
+                                return {
+                                    "result": "Foreign object does not exist."
+                                }
 
                             if len(result) == 0:
                                 return {"result": "Foreign Key constraint "
