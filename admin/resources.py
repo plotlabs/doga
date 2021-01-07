@@ -119,9 +119,9 @@ class AdminApi(Resource):
         admin_exists = Admin.query.filter_by(email=admin.email.lower(
         )).first()
         if admin_exists is None:
-            password_hash = ALGORITHM.hash(admin._password)
-            admin = Admin(email=admin._email.lower(),
-                          password=password_hash, name=admin._name,
+            password_hash = ALGORITHM.hash(admin.password)
+            admin = Admin(email=admin.email.lower(),
+                          password=password_hash, name=admin.name,
                           create_dt=datetime.datetime.utcnow())
             db.session.add(admin)
             db.session.commit()
@@ -498,7 +498,7 @@ class ContentType(Resource):
             return {"result:" "Module cannot be both base_jwt and"
                     " restricted_by_jwt."}
 
-        if not check_table(Table.table_name, Table._connection_name):
+        if not check_table(Table.table_name, Table.connection_name):
             return {
                 "result": "Module with this name not present. Please choose a"
                 " an existing one to edit."
@@ -735,17 +735,17 @@ class DatabaseInit(Resource):
             engine.dispose()
             db_created = ""
         except OperationalError as err:
-            if "unknown database" or database._database_name + \
+            if "unknown database" or database.database_name + \
                "does not exist" in str(err).lower():
                 try:
-                    string = re.split(database._database_name, string)[0]
+                    string = re.split(database.database_name, string)[0]
                     engine = create_engine(string)
                     conn = engine.connect()
                     conn.execute("commit")
-                    conn.execute("CREATE DATABASE " + database._database_name)
+                    conn.execute("CREATE DATABASE " + database.database_name)
                     conn.invalidate()
                     engine.dispose()
-                    db_created = " New database " + database._database_name +\
+                    db_created = " New database " + database.database_name +\
                         " created."
                 except OperationalError:
                     return {
@@ -758,17 +758,15 @@ class DatabaseInit(Resource):
 
         with open('dbs.py', 'r') as f:
             lines = f.readlines()
-            f.close()
 
         with open('dbs.py', 'w+') as f:
             for i, line in enumerate(lines):
                 if line.startswith('}'):
-                    line = '    "' + database._connection_name + '": "' + \
+                    line = '    "' + database.connection_name + '": "' + \
                             database.db_string() + '",\n' + line
                 f.write(line)
-            f.close()
 
-        add_new_db(database._connection_name)
+        add_new_db(database.connection_name)
 
         return {
             "result": "Successfully created database connection string." +
@@ -804,7 +802,7 @@ class DatabaseInit(Resource):
         except KeyError:
             pass
 
-        if db_type != data['type']:
+        if db_type != data['database_type']:
             return {
                 "result": "The type of database string cannot be "
                           "changed. Create a new connection or choose the "
@@ -815,20 +813,30 @@ class DatabaseInit(Resource):
         new_db = data['database_name']
 
         path = 'app/' + old_db
-        if len(os.listdir(path)) != 0:
-            # str(len(os.listdir(path))/2)
-            return {"result": "Found  content in the old database connection"
-                    " please remove them first."}
+
+        try:
+            if len(os.listdir(path)) != 0:
+                # str(len(os.listdir(path))/2)
+                return {"result": "Found  content in the old database"
+                        " connection"
+                        " please remove them first."}
+
+        except FileNotFoundError:
+            pass
 
         string = ''
-        if data['type'] == 'mysql':
+        if data['database_type'] == 'mysql':
             string = 'mysql://{}:{}@{}:3306/{}?charset=utf8mb4'.format(
                 data['username'], data['password'], data['host'],
                 data['database_name'])
 
-        if data['type'] == 'postgresql':
+        if data['database_type'] == 'postgresql':
             string = 'postgresql+psycopg2://{}:{}@{}/{}'.format(
                 data['username'], data['password'], data['host'],
+                data['database_name'])
+
+        if data['database_type'] == 'sqlite':
+            string = 'sqlite:////tmp/{}.db'.format(
                 data['database_name'])
 
         try:
@@ -961,15 +969,6 @@ class ExportApp(Resource):
                     "request": json_request
                 }, 500
 
-        # @after_this_request
-        #    def deployment(response,
-        #                   app_name=app_name,
-        #                   rds=rds,
-        #                   user_credentials=user_credentials,
-        #                   config=config,
-        #                   ec2=ec2,
-        #                   ):
-        #        print("after request....")
             try:
                 create_app_dir(app_name, rds, user_credentials, config,
                                platform)

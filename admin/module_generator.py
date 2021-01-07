@@ -243,29 +243,32 @@ def remove_alembic_versions():
 
 def add_alembic_model(conn_name):
     """Add alembic version table model for new database connection"""
-    o = open("admin/version_models.py", "a")
+
+    o = open("admin/version_models.py", "a+")
     conn_name = str(conn_name).lower()
     base = "Base_" + conn_name
     column_name = "Column" + conn_name
-    o.write(conn_name + " = SQLAlchemy(app)\n")
-    o.write(base + " = " + conn_name + ".Model\n")
-    o.write(column_name + " = " + conn_name + ".Column\n\n\n")
-    o.write("class AlembicVersion" + conn_name.title() + "(" + base + "):\n")
-    o.write("    __tablename__ = 'alembic_version'\n")
-    o.write("    __bind_key__ = '" + conn_name + "'\n")
-    o.write("    version_num = " + column_name + "(String(32), "
-                                                 "primary_key=True)\n\n\n")
-    o.close()
+    to_write = ""
+    to_write = to_write + conn_name + " = SQLAlchemy(app)\n"
+    to_write = to_write + base + " = " + conn_name + ".Model\n"
+    to_write = to_write + column_name + " = " + conn_name + ".Column\n\n\n"
+    to_write = to_write + "class AlembicVersion" + conn_name.title() + "(" + base + "):\n"
+    to_write = to_write + "    __tablename__ = 'alembic_version'\n"
+    to_write = to_write + "    __bind_key__ = '" + conn_name + "'\n"
+    to_write = to_write + "    version_num = " + column_name + "(String(32), primary_key=True)\n\n\n"
 
-    with open('dbs.py', 'r') as f:
-        lines = f.readlines()
+    f = open('dbs.py', 'r+')
+    lines = f.readlines()
+    lines_to_write = ""
+    for i, line in enumerate(lines):
+        if line.startswith(']'):
+            line = '    "AlembicVersion' + str(conn_name).title() + \
+                    '",\n' + line
+        lines_to_write = lines_to_write + line
 
-    with open('dbs.py', 'w') as f:
-        for i, line in enumerate(lines):
-            if line.startswith(']'):
-                line = '    "AlembicVersion' + str(conn_name).title() + \
-                       '",\n' + line
-            f.write(line)
+    f.seek(0)
+    f.write(lines_to_write)
+    o.write(to_write)
 
 
 def move_migration_files():
@@ -287,11 +290,9 @@ def move_migration_files():
 def add_new_db(conn_name):
     """Save old migrations in another folder, delete current migration folder
     and initialize migrations again"""
-    remove_alembic_versions()
     add_alembic_model(conn_name)
+    remove_alembic_versions()
     move_migration_files()
-    if os.path.exists("migrations"):
-        shutil.rmtree('migrations')
 
 
 def check_jwt_present(connection_name, database_name):
