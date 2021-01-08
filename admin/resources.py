@@ -1,8 +1,10 @@
-import os
 import json
 import re
+import subprocess
 
-from flask import Blueprint, request, jsonify, after_this_request
+from typing import  Dict, Tuple
+
+from flask import Blueprint, request, jsonify
 from flask_restful import Api, Resource
 from flask_jwt_extended import (jwt_required, create_access_token,
                                 create_refresh_token, get_jwt_identity)
@@ -14,7 +16,6 @@ from admin.module_generator import *
 from admin.models import Admin, Deployments
 from admin.models.admin_model import Admin as AdminObject
 from admin.models.table_model import Table as TableModel
-from admin.models.column_model import Column as ColumnObject
 from admin.models.database_model import Database as DatabaseObject
 from admin.models.email_notifications import Email_Notify
 from admin.models.sms_notificataions import Sms_Notify
@@ -29,7 +30,6 @@ from admin.export.exportapp import create_app_dir, check_if_exist
 from app.utils import AlchemyEncoder, verify_jwt
 from templates.models import metadata
 
-from admin.default_values import DEFAULT_PORTS
 from dbs import DB_DICT
 
 ALGORITHM = sha512_crypt
@@ -59,7 +59,7 @@ class AdminApi(Resource):
     """
 
     @jwt_required
-    def get(self, email=None) -> dict:
+    def get(self, email=None) -> Tuple[Dict[str, str], int]:
         """
         Defines responses for the `/admin/admin_adminprofile/<email-id>`
         endpoint
@@ -71,7 +71,7 @@ class AdminApi(Resource):
         """
         if not verify_jwt(get_jwt_identity(), Admin):
             return {"result": "JWT authorization invalid, user does not"
-                    " exist."}
+                    " exist."}, 401
 
         if email is None:
             return {"result": "Please add admin`email` parameter to path"}, 404
@@ -101,7 +101,7 @@ class AdminApi(Resource):
         if json_request is None:
             return {"result": "Error json body cannot be None."}, 500
 
-        required_keys = set(["name", "email", "password"])
+        required_keys = {"name", "email", "password"}
 
         missed_keys = required_keys.difference(json_request.keys())
 
@@ -114,7 +114,7 @@ class AdminApi(Resource):
         try:
             admin = AdminObject.from_dict(json_request)
         except ValueError as err:
-            return {"result": "Error: ".join(err.args)}
+            return {"result": "Error: ".join(err.args)}, 500
 
         admin_exists = Admin.query.filter_by(email=admin.email.lower(
         )).first()
@@ -127,7 +127,7 @@ class AdminApi(Resource):
             db.session.commit()
             set_jwt_secret_key()
             return {"result": "Admin created successfully.",
-                    "id": admin.id, "email": admin.email}
+                    "id": admin.id, "email": admin.email}, 200
 
         else:
             return {"result": "Admin already exists."}, 403
@@ -292,7 +292,7 @@ class ContentType(Resource):
                         column_list.append(obj)
                     table_list.append({'table_name': table.name,
                                        'connection_name': table.info[
-                                           'bind_key'], 'columns': column_lists
+                                           'bind_key'], 'columns': column_list
                                        })
 
         if table_list == []:
@@ -352,7 +352,7 @@ class ContentType(Resource):
         if data is None:
             return {"response": "JSON body cannot be empty."}, 500
 
-        required_keys = set(["table_name", "connection_name", "columns"])
+        required_keys = {"table_name", "connection_name", "columns"}
 
         missed_keys = required_keys.difference(data)
         if len(missed_keys) != 0:
@@ -705,8 +705,8 @@ class DatabaseInit(Resource):
         if json_request is None:
             return {"result": "Error, request body cannot be empty."}, 500
 
-        required_keys = set(["database_type", "connection_name", "username",
-                             "password", "database_name"])
+        required_keys = {"database_type", "connection_name", "username",
+                         "password", "database_name"}
         missed_keys = required_keys.difference(json_request)
         if len(missed_keys) != 0:
             return {
@@ -930,7 +930,7 @@ class ExportApp(Resource):
                 missing_keys['config'] = str(error)
 
             try:
-                rds = create_RDS(user_credentials,
+                rds = create_rds(user_credentials,
                                  config,
                                  app_name,
                                  **json_request['rds_config']
@@ -945,7 +945,7 @@ class ExportApp(Resource):
                 }, 500
 
             try:
-                key_pair, sg_name, ec2, vpc_sg, platform = create_EC2(
+                key_pair, sg_name, ec2, vpc_sg, platform = create_ec2(
                                                             user_credentials,
                                                             config,
                                                             rds['Endpoint']['Port'],  # noqa 401
@@ -1085,7 +1085,7 @@ class ExportApp(Resource):
 
             create_app_dir(app_name,
                            rds=None,
-                           user_credentails=None,
+                           user_credentials='none',
                            config=None,
                            platform='heroku',
                            **{'deploy_db': False}
@@ -1178,8 +1178,7 @@ class AdminDashboardStats(Resource):
 
             else:
                 parent_dir = os.sep.join(__file__.split(os.sep)[:-2])
-                remove = set(['__init__.py', 'blueprints.py', 'utils.py',
-                              '__pycache__'])
+                remove = {'__init__.py', 'blueprints.py', 'utils.py', '__pycache__'}
                 result = set(os.listdir(parent_dir + '/app/')) - remove
             return {"result": list(result)}, 200
 
