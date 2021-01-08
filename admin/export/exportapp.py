@@ -1,6 +1,8 @@
 from admin.export.utils import *
 from admin.export.errors import DogaHerokuDeploymentError, DogaAppNotFound
 
+from admin.models import JWT
+
 from config import PORT
 
 to_deploy = False
@@ -30,7 +32,6 @@ def create_export_files(platform, parent_dir, app_name, deploy, rds_engine,
             'Dockerfile',
             'config.py',
             'dbs.py',
-            'jwt_dict.py',
         ]
 
     if platform == 'heroku':
@@ -38,6 +39,13 @@ def create_export_files(platform, parent_dir, app_name, deploy, rds_engine,
             db_engine = extract_engine_or_fail(app_name)
         except DogaAppNotFound:
             return
+
+    # check if app has JWT hare if not remove JWT from runserver
+    isJWT = True
+    isJWT = JWT.query.filter_by(database_name=app_name).first()
+
+    if isJWT is None:
+        isJWT is False
 
     # copy app endpoints and resources
     for file in os.listdir(parent_dir + '/app/' + app_name):
@@ -85,6 +93,18 @@ def create_export_files(platform, parent_dir, app_name, deploy, rds_engine,
             d = parent_dir + '/exported_app/' + file
             os.makedirs(os.path.dirname(d), exist_ok=True)
             shutil.copy2(s, d)
+
+            if not isJWT:
+                f = open(d, 'r+')
+                lines = f.readlines()
+                f.truncate(0)
+                f.seek(0)
+                for line in lines:
+                    if line.startswith('JWT'):
+                        pass
+                    else:
+                        f.write(line)
+
         elif file == 'dbs.py':
             if platform == 'aws':
                 create_dbs_file(
@@ -105,11 +125,54 @@ def create_export_files(platform, parent_dir, app_name, deploy, rds_engine,
                     d = parent_dir + '/exported_app/' + file
                     os.makedirs(os.path.dirname(d), exist_ok=True)
                     shutil.copy2(s, d)
-        elif file == 'jwt_dict.py':
-            create_jwt_dict(
-                app_name,
-                parent_dir + '/exported_app/' + file,
-            )
+        elif file == 'runserver.py':
+            s = file
+            d = parent_dir + '/exported_app/' + file
+            os.makedirs(os.path.dirname(d), exist_ok=True)
+            shutil.copy2(s, d)
+
+            with open(d, 'r+') as f:
+                lines = f.readlines()
+                f.truncate(0)
+                f.seek(0)
+                for line in lines:
+                    line = line.replace(
+                        'from admin.utils import set_jwt_secret_key', ''
+                        )
+                    line = line.replace(
+                        'set_jwt_secret_key()', ''
+                    )
+                    f.write(line)
+
+        elif file == 'app/__init__.py':
+            s = file
+            d = parent_dir + '/exported_app/' + file
+            os.makedirs(os.path.dirname(d), exist_ok=True)
+            shutil.copy2(s, d)
+
+            with open(d, 'a+') as f:
+                f.write("\ndb.createall()\n")
+        elif file == 'app/utils.py':
+            s = file
+            d = parent_dir + '/exported_app/' + file
+            os.makedirs(os.path.dirname(d), exist_ok=True)
+            shutil.copy2(s, d)
+
+            f = open(d, 'r+')
+            lines = f.readlines()
+            f.truncate(0)
+            f.seek(0)
+            check_for_tab = False
+            for line in lines:
+                if line.startswith('def migrate():'):
+                    check_for_tab = True
+                elif check_for_tab:
+                    if line.startswith('    ') or line.startswith('\n'):
+                        pass
+                    else:
+                        check_for_tab = False
+                else:
+                    f.write(line)
         else:
             s = file
             d = parent_dir + '/exported_app/' + file

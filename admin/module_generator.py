@@ -1,12 +1,8 @@
 import os
-import platform
 import shutil
-import subprocess
-import datetime
 
 from sqlalchemy.exc import OperationalError, ProgrammingError
 
-from app import db
 from admin.version_models import *
 from dbs import ALEMBIC_LIST, DB_DICT
 from admin.models import JWT, Restricted_by_JWT
@@ -31,6 +27,7 @@ def create_model(dir_path, data):
         conn_name = "default"
 
     o = open(dir_path + "/models.py", "a")
+    o.write("\n\n")
     o.write("class " + data["table_name"].title() + "(Base):\n")
     o.write("    __tablename__ = '" + data["table_name"].lower() + "'\n")
     o.write("    __bind_key__ = '" + conn_name + "'\n\n")
@@ -51,9 +48,9 @@ def create_model(dir_path, data):
                    + ", unique=" + str(col["unique"]).title()
             if col["foreign_key"] != "":
                 line = "    " + col["name"] + " = Column(" + col["type"] \
-                   + ", ForeignKey('" + col["foreign_key"].lower() + "')" \
-                   + ", nullable=" + str(col["nullable"]).title() \
-                   + ", unique=" + str(col["unique"]).title()
+                    + ", ForeignKey('" + col["foreign_key"].lower() + "')" \
+                    + ", nullable=" + str(col["nullable"]).title() \
+                    + ", unique=" + str(col["unique"]).title()
         except KeyError as error:
             return {
                 "result": "Missing parameters for columns",
@@ -144,6 +141,7 @@ def create_resources(model_name, connection_name, dir_path, base_jwt,
                     base_table.title())
 
             else:
+                line = line.replace("\nREPLACE_IF_JWT", '')
                 line = line.replace("REPLACE_IF_JWT", '')
             line = line.replace("modulename", model_name)
             line = line.replace("module_endp", model_name.title().split('.')[0])  # noqa E401
@@ -170,14 +168,13 @@ def append_blueprint(model_name):
 def check_table(table_name, connection_name=''):
     """Checks if the table exists or not"""
     exist = False
-    for table in metadata.sorted_tables:
-        if table.name == table_name.lower():
+    for sorted_table in metadata.sorted_tables:
+        if sorted_table.name == table_name.lower():
             if connection_name != '':
-                if table.info['bind_key'] == connection_name:
+                if sorted_table.info['bind_key'] == connection_name:
                     exist = True
             else:
                 exist = True
-
     return exist
 
 
@@ -207,18 +204,17 @@ def check_column(table_name, column_name, column_type, connection_name=''):
         "SmallInteger",
     ]
     exist = False
-    for table in metadata.sorted_tables:
-        if table.name.lower() == table_name.lower():
-            for column in table.columns:
-                if column_name.lower() == column.name:
-                    if str(column.type) not in allowed_foreign_keys:
+    for sorted_table in metadata.sorted_tables:
+        if sorted_table.name.lower() == table_name.lower():
+            for column_ in sorted_table.columns:
+                if column_name.lower() == column_.name:
+                    if str(column_.type) not in allowed_foreign_keys:
                         raise TypeError("Foreign key can only be allowed"
                                         " types", allowed_foreign_keys)
-                    if column_type != str(column.type):
+                    if column_type != str(column_.type):
                         print(column_type)
                         raise TypeError("Foreign key and column must have "
                                         "same type.")
-
                     exist = True
     return exist
 
@@ -252,10 +248,12 @@ def add_alembic_model(conn_name):
     to_write = to_write + conn_name + " = SQLAlchemy(app)\n"
     to_write = to_write + base + " = " + conn_name + ".Model\n"
     to_write = to_write + column_name + " = " + conn_name + ".Column\n\n\n"
-    to_write = to_write + "class AlembicVersion" + conn_name.title() + "(" + base + "):\n"
+    to_write = to_write + "class AlembicVersion" + \
+        conn_name.title() + "(" + base + "):\n"
     to_write = to_write + "    __tablename__ = 'alembic_version'\n"
     to_write = to_write + "    __bind_key__ = '" + conn_name + "'\n"
-    to_write = to_write + "    version_num = " + column_name + "(String(32), primary_key=True)\n\n\n"
+    to_write = to_write + "    version_num = " + \
+        column_name + "(String(32), primary_key=True)\n\n\n"
 
     f = open('dbs.py', 'r+')
     lines = f.readlines()
@@ -263,7 +261,7 @@ def add_alembic_model(conn_name):
     for i, line in enumerate(lines):
         if line.startswith(']'):
             line = '    "AlembicVersion' + str(conn_name).title() + \
-                    '",\n' + line
+                '",\n' + line
         lines_to_write = lines_to_write + line
 
     f.seek(0)
@@ -307,7 +305,7 @@ def validate_filter_keys_names(filter_keys, columns):
     if "id" in filter_keys:
         return True
     column_names = [col['name'] for col in columns]
-    return (set(filter_keys).issubset(set(column_names)))
+    return set(filter_keys).issubset(set(column_names))
 
 
 def validate_filter_keys_jwt(filter_keys, columns):
@@ -347,7 +345,6 @@ def set_expiry(expiry):
                 "unit": 'hours',
                 "value": 4
             }
-        valid = True
         return msg, valid, expiry
     except KeyError as e:
         return {"result": "Key error", "error": str(e)}, 500
@@ -402,7 +399,7 @@ def add_jwt_list(connection_name, database_name, table_name):
         except Exception as error:
             return {"result": error}, 500
 
-    # if the table was alredy in the database
+    # if the table was already in the database
     try:
         if table_name in restricted_tables.restricted_tables:
             return
@@ -413,5 +410,5 @@ def add_jwt_list(connection_name, database_name, table_name):
         except Exception as error:
             return {"result": error}
 
-    except AttributeError as error:
+    except AttributeError:
         pass

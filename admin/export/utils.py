@@ -1,10 +1,8 @@
 import os
 from requests import get
-import itertools
 import random
 import shutil
 import string
-from time import sleep
 
 import boto3
 from botocore.config import Config
@@ -17,10 +15,10 @@ import pandas as pd
 
 from admin.aws_config import *
 from admin.export.errors import *
-from admin.models import Restricted_by_JWT, JWT
+from admin.models import Restricted_by_JWT
 from admin.utils import extract_database_name
 
-from app import db
+from admin.export.aws_defaults import *
 
 from dbs import DB_DICT
 
@@ -112,29 +110,8 @@ def create_dbs_file(
 
     for connection, string in DB_DICT.items():
         for app_name in string:
-            connection_string = string
+            # connection_string = string
             break
-
-    """
-    try:
-        rds_client = boto3.client('rds',
-                                  aws_access_key_id=user_credentials['aws_access_key'],  # noqa 401
-                                  aws_secret_access_key=user_credentials['aws_secret_key'],  # noqa 401
-                                  region_name=aws_config.region_name,
-                                  config=aws_config
-                                  )
-
-        waiter = rds_client.get_waiter('db_instance_available')
-        waiter.wait(
-            DBInstanceIdentifier=rds["DBInstance"]["DBInstanceIdentifier"])
-
-        rds_instance = rds_client.describe_db_instances(
-            DBInstanceIdentifier=rds["DBInstance"]["DBInstanceIdentifier"]
-        )['DBInstances'][0]
-
-    except ClientError as error:
-        raise DogaDirectoryCreationError(str(error))
-    """
 
     engine = rds_instance['Engine']
     username = rds_instance['MasterUsername']
@@ -143,10 +120,10 @@ def create_dbs_file(
     server = rds_instance['Endpoint']['Address']
     port = str(rds_instance['Endpoint']['Port'])
 
-    string = engine + '://' + username + ':' + password + \
+    url = engine + '://' + username + ':' + password + \
         '@' + server + ':' + port + '/' + app_name + '.db'
 
-    content = 'DB_DICT = { "' + connection + '": "' + string + '"}'
+    content = 'DB_DICT = { "' + connection + '": "' + url + '"}'
 
     to_write.write(content)
     to_write.close()
@@ -166,7 +143,7 @@ def create_jwt_dict(app_name, destination):
     jwt_dict = Restricted_by_JWT.query.filter_by(
         connection_name=bind_key).first()
     if jwt_dict is not None:
-        jwt_dict = jwt_dict[0]._asdict()
+        jwt_dict = jwt_dict[0].asdict()
     file = open(destination, 'a+')
     file.write(str(jwt_dict))
 
@@ -174,7 +151,7 @@ def create_jwt_dict(app_name, destination):
 
 
 def create_user_credentials(**kwargs):
-    required_keys = set(['aws_username', 'aws_access_key', 'aws_secret_key'])
+    required_keys = {'aws_username', 'aws_access_key', 'aws_secret_key'}
 
     missed_keys = required_keys.difference(kwargs.keys())
 
@@ -224,12 +201,12 @@ def create_aws_config(**kwargs):
         return aws_config
     except BotoCoreError as e:
         return {
-            'result': 'An error occured while trying to create the config',
+            'result': 'An error occurred while trying to create the config',
             'error': str(e)
         }
 
 
-def validate_ec2_instance_id(user_credentials, aws_config, ImageId):
+def validate_ec2_instance_id(user_credentials, aws_config, image_id):
 
     """
     try:
@@ -251,7 +228,7 @@ def validate_ec2_instance_id(user_credentials, aws_config, ImageId):
         raise EC2CreationError("Image ID provided is not valid.")
 
     image_info = image_frame.loc[
-            image_frame['ImageId'] == ImageId
+            image_frame['ImageId'] == image_id
             ].to_dict()
 
     info = str(image_info)
@@ -284,10 +261,6 @@ def create_and_store_keypair(ec2_instance, key_name=KEY_NAME) -> str:
 
 def create_security_group(ec2_client, ec2, db_port, group_id='sg_id',
                           **kwargs):
-    SG_IP_PROTOCOL = 'tcp'
-    SG_FROM_PORT = 22
-    SG_TO_PORT = 22
-    SG_IP = get_current_ip() + '/32'
 
     ec2.reload()
     waiter = ec2_client.get_waiter('instance_running')
@@ -296,10 +269,10 @@ def create_security_group(ec2_client, ec2, db_port, group_id='sg_id',
     ec2_client.authorize_security_group_ingress(
         GroupId=group_id,
         IpPermissions=[
-            {'IpProtocol': SG_IP_PROTOCOL,
-             'FromPort': SG_FROM_PORT,
-             'ToPort': SG_TO_PORT,
-             'IpRanges': [{'CidrIp': SG_IP}]},
+            {'IpProtocol': sg_defaults["SG_IP_PROTOCOL"],
+             'FromPort': sg_defaults["SG_FROM_PORT"],
+             'ToPort': sg_defaults["SG_TO_PORT"],
+             'IpRanges': [{'CidrIp': sg_defaults["SG_IP"]}]},
             {'IpProtocol': 'tcp',
              'FromPort': 80,
              'ToPort': 80,
@@ -330,7 +303,7 @@ def create_security_group(ec2_client, ec2, db_port, group_id='sg_id',
     return ec2, vpc_sg
 
 
-def create_RDS(user_credentials, aws_config, app_name, **kwargs):
+def create_rds(user_credentials, aws_config, app_name, **kwargs):
     """
     Function used to create a RDS instance
 
@@ -340,10 +313,8 @@ def create_RDS(user_credentials, aws_config, app_name, **kwargs):
 
     returns: RDSCreationError or RDS details in a dict
     """
-    required_keys = set(['MasterUsername', 'MasterUserPassword',
-                         'DBInstanceIdentifier', 'MaxAllocatedStorage',
-                         'AllocatedStorage',
-                         ])
+    required_keys = {'MasterUsername', 'MasterUserPassword', 'DBInstanceIdentifier', 'MaxAllocatedStorage',
+                     'AllocatedStorage'}
 
     missed_keys = required_keys.difference(kwargs.keys())
 
@@ -351,29 +322,28 @@ def create_RDS(user_credentials, aws_config, app_name, **kwargs):
         raise KeyError(list(missed_keys))
 
     # these are defined in DOGA while creation of app
-    DBName = kwargs.get('DBName', app_name)
-    Engine = kwargs.get('Engine', extract_engine_or_fail(app_name))
-    MasterUsername = kwargs['MasterUsername']
-    MasterUserPassword = kwargs['MasterUserPassword']
-    # DBSecurityGroups = kwargs['DBSecurityGroups']
 
-    # from user while exporing
+    dbname = kwargs.get('DBName', app_name)
+    engine = kwargs.get('Engine', extract_engine_or_fail(app_name))
+    master_username = kwargs['MasterUsername']
+    master_password = kwargs['MasterUserPassword']
+
     # REQUIRED
-    DBInstanceIdentifier = kwargs['DBInstanceIdentifier']
-    AllocatedStorage = kwargs['AllocatedStorage']
-    MaxAllocatedStorage = kwargs['MaxAllocatedStorage']
+    db_instance_identifier = kwargs['DBInstanceIdentifier']
+    allocated_storage = kwargs['AllocatedStorage']
+    max_allocated_storage = kwargs['MaxAllocatedStorage']
 
     # Optional
-    DBInstanceClass = kwargs.get('DBInstanceClass', 'db.t2.micro')
-    DeletionProtection = kwargs.get('DeletionProtection', False),
-    EnableIAMDatabaseAuthentication = kwargs.get('EnableIAMDatabaseAuthentication', True)  # noqa 401
+    db_instance_class = kwargs.get('DBInstanceClass', 'db.t2.micro')
+    delete_protection = kwargs.get('DeletionProtection', False),
+    enable_iam_database_authentication = kwargs.get('EnableIAMDatabaseAuthentication', True)  # noqa 401
     EnablePerformanceInsights = kwargs.get('EnablePerformanceInsights', False)  # noqa 401
-    MultiAZ = kwargs.get('MultiAZ', False)
-    PubliclyAccessible = kwargs.get('PubliclyAccessible', True)
-    PerformanceInsightsKMSKeyId = kwargs.get(
-        'PerformanceInsightsKMSKeyId', '')
+    multi_az = kwargs.get('MultiAZ', False)
+    publicly_accessible = kwargs.get('PubliclyAccessible', True)
+
     # TODO: what should be the default
     # EnableCloudwatchLogsExports = kwargs.get()
+    # PerformanceInsightsKMSKeyId
 
     try:
         rds_client = boto3.client('rds',
@@ -384,17 +354,19 @@ def create_RDS(user_credentials, aws_config, app_name, **kwargs):
                                   )
 
         rds = rds_client.create_db_instance(
-            AllocatedStorage=AllocatedStorage,
-            DBInstanceIdentifier=DBInstanceIdentifier,
-            DBInstanceClass=DBInstanceClass,
-            Engine=Engine,
-            DBName=DBName,
-            MasterUsername=MasterUsername,
-            MasterUserPassword=MasterUserPassword,
-            MaxAllocatedStorage=MaxAllocatedStorage,
+            AllocatedStorage=allocated_storage,
+            DBInstanceIdentifier=db_instance_identifier,
+            DBInstanceClass=db_instance_class,
+            DeletionProtection=delete_protection,
+            Engine=engine,
+            DBName=dbname,
+            MasterUsername=master_username,
+            MasterUserPassword=master_password,
+            MaxAllocatedStorage=max_allocated_storage,
+            EnableIAMDatabaseAuthentication=enable_iam_database_authentication,
+            MultiAZ=multi_az,
+            PubliclyAccessible=publicly_accessible,
         )
-    #                                **kwargs,
-    # )
 
         waiter = rds_client.get_waiter('db_instance_available')
         waiter.wait(
@@ -407,17 +379,17 @@ def create_RDS(user_credentials, aws_config, app_name, **kwargs):
         return rds_instance
 
     except ParamValidationError as e:
-        raise RDSCreationError("Error creating RDS with given kwags",
+        raise RDSCreationError("Error creating RDS with given arguments",
                                str(e))
 
     except ClientError as e:
-        raise RDSCreationError("Error creating RDS with given kwags",
+        raise RDSCreationError("Error creating RDS with given arguments",
                                str(e))
 
 
-def create_EC2(user_credentials, aws_config, rds_port, **kwargs):
+def create_ec2(user_credentials, aws_config, rds_port, **kwargs):
 
-    required_keys = set(['BlockDeviceMappings', 'ImageId', 'InstanceType'])
+    required_keys = {'BlockDeviceMappings', 'ImageId', 'InstanceType'}
 
     missed_keys = required_keys.difference(kwargs.keys())
 
@@ -444,13 +416,13 @@ def create_EC2(user_credentials, aws_config, rds_port, **kwargs):
 
     random_string = create_random_string(5)
     sg_name = SG_GROUP_NAME + random_string
-    securitygroup = ec2.create_security_group(
+    security_group = ec2.create_security_group(
         GroupName=sg_name,
         Description='created by doga to allow ssh from doga and http/https'
                     'from everywhere else',
     )
 
-    group_id = securitygroup.id
+    group_id = security_group.id
     try:
         key_name = create_and_store_keypair(ec2_instance=ec2,
                                             key_name=KEY_NAME +
@@ -459,24 +431,20 @@ def create_EC2(user_credentials, aws_config, rds_port, **kwargs):
     except ClientError as error:
         raise EC2CreationError('Unable to create EC2 instance: ' + str(error))
 
-    BlockDeviceMappings = kwargs['BlockDeviceMappings']
-    ImageId = kwargs['ImageId']
-    InstanceType = kwargs['InstanceType']
+    block_device_mappings = kwargs['BlockDeviceMappings']
+    image_id = kwargs['ImageId']
+    instance_type = kwargs['InstanceType']
 
     # Optional
     kwargs['MaxCount'] = kwargs.get('MaxCount', 1)
     kwargs['MinCount'] = kwargs.get('MinCount', 1)
-
-    # KeyName = kwargs.get('KeyName', ''),  we will create the key
-    # ourselves
-    Monitoring = {'Enabled': False}
-    kwargs['Monitoring'] = kwargs.get('Monitoring', Monitoring)
+    kwargs['Monitoring'] = kwargs.get('Monitoring', {'Enabled': False})
     kwargs['KeyName'] = key_name  # this is the key we will create
 
     ec2_instance = ec2.create_instances(
-        BlockDeviceMappings=BlockDeviceMappings,
-        ImageId=ImageId,
-        InstanceType=InstanceType,
+        BlockDeviceMappings=block_device_mappings,
+        ImageId=image_id,
+        InstanceType=instance_type,
         MaxCount=kwargs['MaxCount'],
         MinCount=kwargs['MinCount'],
         Monitoring=kwargs['Monitoring'],
@@ -491,7 +459,7 @@ def create_EC2(user_credentials, aws_config, rds_port, **kwargs):
         ec2_client=ec2_client,
         ec2=ec2_instance[0],
         db_port=rds_port,
-        group_id=securitygroup.id,
+        group_id=security_group.id,
         **{
             "aws_access_key_id": user_credentials['aws_access_key'],
             "aws_secret_access_key": user_credentials['aws_secret_key'],
@@ -525,7 +493,7 @@ def deploy_to_aws(user_credentials, aws_config, ec2, key_name=KEY_NAME,
                              )
 
     except ClientError as e:
-        raise EC2CreationError("Error connecting to EC2 with given kwags ",
+        raise EC2CreationError("Error connecting to EC2 with given key word arguments.",
                                str(e))
 
     ec2_client.reboot_instances(
@@ -572,7 +540,7 @@ def deploy_to_aws(user_credentials, aws_config, ec2, key_name=KEY_NAME,
             username="ubuntu",
             pkey=key)
 
-        stdin, stdout, stderr = client.exec_command(
+        client.exec_command(
             'mkdir -p $HOME/exported_app')
 
         # close the client connection once the job is done
@@ -580,24 +548,6 @@ def deploy_to_aws(user_credentials, aws_config, ec2, key_name=KEY_NAME,
 
     except Exception as e:
         print(e)
-
-    """
-    args = ['scp', '-r', '-i', this_folder + key_name + '.pem', app_folder,
-            'ubuntu@' + ec2.public_dns_name + ':exported_app/']
-    sp = subprocess.Popen(args, shell=True, stdout=subprocess.PIPE,
-                          stderr=subprocess.STDOUT)
-    stdout_data, stderr_data = sp.communicate()
-    """
-    # args = ['rsync', '-rv', '-e', '"ssh -i ' + key_name + '.pem" ',
-    #        app_folder, 'ubuntu@' + ec2.public_dns_name + ':/',
-    #        '-yes']
-
-    # copy content of files
-    """
-    sp = subprocess.Popen(args, shell=True, stdout=subprocess.PIPE,
-                          stderr=subprocess.STDOUT)
-    stdout_data, stderr_data = sp.communicate()
-    """
 
     os.system('scp -o UserKnownHostsFile=/dev/null -o '
               'StrictHostKeyChecking=no -r -i ' + this_folder +
@@ -632,11 +582,7 @@ def connect_rds_to_ec2(rds, ec2, user_credentials, config, sg_name,
             DBInstanceIdentifier=rds['DBInstanceIdentifier'],
             VpcSecurityGroupIds=[
                 vpc_sg.id
-                # security_groups[0]['GroupId'],
             ],
-            # DBSecurityGroups=[
-            #    ec2.security_groups[0]['GroupId'],
-            # ],
             ApplyImmediately=True,
         )
 

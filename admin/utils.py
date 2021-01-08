@@ -25,7 +25,7 @@ def set_jwt_secret_key():
         return
     jwt_secret_key = generate_secret_key()
     o = open("./config.py", "a")
-    o.write("JWT_SECRET_KEY = ' " + jwt_secret_key + "'\n")
+    o.write("JWT_SECRET_KEY = '" + jwt_secret_key + "'\n")
     o.close()
 
     with open('./config.py', 'r') as file:
