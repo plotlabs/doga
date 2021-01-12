@@ -41,11 +41,11 @@ def create_export_files(platform, parent_dir, app_name, deploy, rds_engine,
             return
 
     # check if app has JWT hare if not remove JWT from runserver
-    isJWT = True
-    isJWT = JWT.query.filter_by(database_name=app_name).first()
+    is_jwt = True
+    is_jwt = JWT.query.filter_by(database_name=app_name).first()
 
-    if isJWT is None:
-        isJWT is False
+    if is_jwt is None:
+        is_jwt is False
 
     # copy app endpoints and resources
     for file in os.listdir(parent_dir + '/app/' + app_name):
@@ -72,7 +72,7 @@ def create_export_files(platform, parent_dir, app_name, deploy, rds_engine,
                 )
             else:
                 create_requirements(
-                    db_engine.lower(),
+                    rds_engine,
                     parent_dir + '/templates/export/requirements',
                     parent_dir + '/exported_app'
                 )
@@ -94,7 +94,7 @@ def create_export_files(platform, parent_dir, app_name, deploy, rds_engine,
             os.makedirs(os.path.dirname(d), exist_ok=True)
             shutil.copy2(s, d)
 
-            if not isJWT:
+            if not is_jwt:
                 f = open(d, 'r+')
                 lines = f.readlines()
                 f.truncate(0)

@@ -59,18 +59,18 @@ def create_requirements(db_engine: str, parent_dir, target_dir):
     file.close()
 
 
-def create_dockerfile(PORT, parent_dir, target_dir):
+def create_dockerfile(port, parent_dir, target_dir):
     # open dockerfile template
-    Dockerfile = open('templates/export/Dockerfile', 'r')
-    Dockerfile_contents = Dockerfile.read()
-    Dockerfile_contents = Dockerfile_contents.replace('PORT', str(PORT))
+    dockerfile = open('templates/export/Dockerfile', 'r')
+    dockerfile_contents = dockerfile.read()
+    dockerfile_contents = dockerfile_contents.replace('PORT', str(port))
 
     # create Dockerfile
-    exported_Dockerfile = open(target_dir, 'a+')
-    exported_Dockerfile.write(Dockerfile_contents)
+    exported_dockerfile = open(target_dir, 'a+')
+    exported_dockerfile.write(dockerfile_contents)
 
-    exported_Dockerfile.close()
-    Dockerfile.close()
+    exported_dockerfile.close()
+    dockerfile.close()
 
 
 def export_blueprints(app_name, parent_dir, target_dir):
@@ -108,15 +108,15 @@ def create_dbs_file(
 
     to_write = open(destination, 'a+')
 
-    for connection, string in DB_DICT.items():
-        for app_name in string:
+    connection = ""
+    for connection, string_ in DB_DICT.items():
+        for app_name in string_:
             # connection_string = string
             break
 
     engine = rds_instance['Engine']
     username = rds_instance['MasterUsername']
-    password = 'password'
-    # password = rds_instance['PendingModifiedValues']['MasterUserPassword']
+    password = rds_instance['MasterUserPassword']
     server = rds_instance['Endpoint']['Address']
     port = str(rds_instance['Endpoint']['Port'])
 
@@ -131,6 +131,7 @@ def create_dbs_file(
 
 def create_jwt_dict(app_name, destination):
 
+    bind_key = ""
     for bind_key, db_string in DB_DICT.items():
         if app_name == extract_database_name(bind_key):
             break
@@ -234,9 +235,9 @@ def validate_ec2_instance_id(user_credentials, aws_config, image_id):
     info = str(image_info)
 
     platform = 'other'
-    platfroms = ['amazon linux', 'centos', 'debian', 'fedora', 'ubuntu']
+    platforms = ['amazon linux', 'centos', 'debian', 'fedora', 'ubuntu']
 
-    for i in platfroms:
+    for i in platforms:
         if i in info:
             return i
 
@@ -262,9 +263,9 @@ def create_and_store_keypair(ec2_instance, key_name=KEY_NAME) -> str:
 def create_security_group(ec2_client, ec2, db_port, group_id='sg_id',
                           **kwargs):
 
-    ec2.reload()
     waiter = ec2_client.get_waiter('instance_running')
     waiter.wait(InstanceIds=[ec2.instance_id])
+    ec2.reload()
 
     ec2_client.authorize_security_group_ingress(
         GroupId=group_id,
@@ -335,9 +336,9 @@ def create_rds(user_credentials, aws_config, app_name, **kwargs):
 
     # Optional
     db_instance_class = kwargs.get('DBInstanceClass', 'db.t2.micro')
-    delete_protection = kwargs.get('DeletionProtection', False),
-    enable_iam_database_authentication = kwargs.get('EnableIAMDatabaseAuthentication', True)  # noqa 401
-    EnablePerformanceInsights = kwargs.get('EnablePerformanceInsights', False)  # noqa 401
+    delete_protection = kwargs.get('DeletionProtection', False)
+    enable_iam_database_authentication = kwargs.get('EnableIAMDatabaseAuthentication',True)  # noqa 401
+    EnablePerformanceInsights = kwargs.get('EnablePerformanceInsights',False)  # noqa 401
     multi_az = kwargs.get('MultiAZ', False)
     publicly_accessible = kwargs.get('PubliclyAccessible', True)
 
@@ -513,7 +514,7 @@ def deploy_to_aws(user_credentials, aws_config, ec2, key_name=KEY_NAME,
             associated_instances.append(i["InstanceId"])
 
     this_folder = os.sep.join(__file__.split(os.sep)[:-3])
-    app_folder = os.sep.join(__file__.split(os.sep)[:-2]) + 'exported_app/*'
+    app_folder = os.sep.join(__file__.split(os.sep)[:-3]) + '/exported_app/*'
 
     # from:
     # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/managing-users.html
