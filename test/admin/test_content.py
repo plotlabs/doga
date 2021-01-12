@@ -46,16 +46,6 @@ class Test_Content:
                               headers=headers)
         assert b'No matching content found' in response.data
 
-    """TODO: the app doesn't refresh in test so templates don't load. fix it.
-    def test_add_rows_to_content(self, client):
-        response = client.post('/test/test_table',json={},headers=headers)
-        assert b'asdasdads' in response.data
-
-    def test_add_to_content_table(self, client):
-        response = client.get('/test/test_table')
-        assert b'[]' in response.data
-    """
-
 
 """Tests to check that the admin model's constraints at endpoint:
    `admin/content/types`

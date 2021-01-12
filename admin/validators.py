@@ -157,6 +157,3 @@ def nullable_check(data):
                 return False
 
     return False
-
-# TODO:
-# def jwt_filter_key_validator():

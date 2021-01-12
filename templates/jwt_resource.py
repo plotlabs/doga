@@ -29,7 +29,6 @@ class Apis(Resource):
 
     @jwt_required
     def get(self, id=None):
-        # TODO: change
         if not verify_jwt(get_jwt_identity(), model_name):
             return {"result": "JWT authorization invalid, user does not"
                     " exist."}

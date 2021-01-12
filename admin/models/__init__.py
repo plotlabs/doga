@@ -1,4 +1,5 @@
 from sqlalchemy import Integer, String, DateTime, text, Boolean
+from sqlalchemy.schema import UniqueConstraint
 
 from app import db
 
@@ -31,12 +32,13 @@ class JWT(Base):
     jwt_flag = Column(Boolean, nullable=False, unique=False)
     connection_name = Column(String(255), nullable=False, unique=True)
 
-    # TODO: make database_name & table combination should be unique
     database_name = Column(String(255), nullable=False, unique=False)
     table = Column(String(255), nullable=False, unique=False)
+    UniqueConstraint('database_name', 'table', name='uix_1')
 
-    # TODO: confirm length for the filter key fields ( and find a better way
+    # confirm length for the filter key fields ( and find a better way
     # to store the filter keys keep in mind Arrays are not allowed in SQLite)
+
     filter_keys = Column(String(255), nullable=False)
     create_dt = Column(DateTime(), server_default=text('CURRENT_TIMESTAMP'))
 

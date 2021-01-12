@@ -185,8 +185,7 @@ def create_aws_config(**kwargs):
     kwargs['retries']['max_attempts'] = kwargs.get('max_attempts', max_attempts)  # noqa E401
     kwargs['retries']['mode'] = kwargs.get('mode', mode)
 
-    # passed as kwargs for now
-    # TODO: check default values we need to modify
+    # PASSED AS KWARGS for now :
     # user_agent
     # user_agent_extra
     # connect_timeout
@@ -314,7 +313,8 @@ def create_rds(user_credentials, aws_config, app_name, **kwargs):
 
     returns: RDSCreationError or RDS details in a dict
     """
-    required_keys = {'MasterUsername', 'MasterUserPassword', 'DBInstanceIdentifier', 'MaxAllocatedStorage',
+    required_keys = {'MasterUsername', 'MasterUserPassword',
+                     'DBInstanceIdentifier', 'MaxAllocatedStorage',
                      'AllocatedStorage'}
 
     missed_keys = required_keys.difference(kwargs.keys())
@@ -323,7 +323,6 @@ def create_rds(user_credentials, aws_config, app_name, **kwargs):
         raise KeyError(list(missed_keys))
 
     # these are defined in DOGA while creation of app
-
     dbname = kwargs.get('DBName', app_name)
     engine = kwargs.get('Engine', extract_engine_or_fail(app_name))
     master_username = kwargs['MasterUsername']
@@ -337,12 +336,12 @@ def create_rds(user_credentials, aws_config, app_name, **kwargs):
     # Optional
     db_instance_class = kwargs.get('DBInstanceClass', 'db.t2.micro')
     delete_protection = kwargs.get('DeletionProtection', False)
-    enable_iam_database_authentication = kwargs.get('EnableIAMDatabaseAuthentication',True)  # noqa 401
-    EnablePerformanceInsights = kwargs.get('EnablePerformanceInsights',False)  # noqa 401
+    enable_iam_database_authentication = kwargs.get('EnableIAMDatabaseAuthentication', True)  # noqa 401
+    EnablePerformanceInsights = kwargs.get('EnablePerformanceInsights', False)  # noqa 401
     multi_az = kwargs.get('MultiAZ', False)
     publicly_accessible = kwargs.get('PubliclyAccessible', True)
 
-    # TODO: what should be the default
+    # NOT PASSED FOR NOW: what should be the default
     # EnableCloudwatchLogsExports = kwargs.get()
     # PerformanceInsightsKMSKeyId
 
@@ -494,8 +493,8 @@ def deploy_to_aws(user_credentials, aws_config, ec2, key_name=KEY_NAME,
                              )
 
     except ClientError as e:
-        raise EC2CreationError("Error connecting to EC2 with given key word arguments.",
-                               str(e))
+        raise EC2CreationError("Error connecting to EC2 with given key word"
+                               " arguments.", str(e))
 
     ec2_client.reboot_instances(
         InstanceIds=[
