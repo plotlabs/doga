@@ -8,7 +8,6 @@ def test_post_jwt(client):
     response = client.post('/admin/content/types',
                            json=invalid_jwt_table,
                            headers=headers)
-    # TODO: check if it can be changeed to per database
     assert b'Only one table is allowed to set jwt perdatabase' in response.data
 
 

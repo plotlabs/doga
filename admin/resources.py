@@ -144,7 +144,6 @@ class Login(Resource):
                 return {"result": "Admin does not exist."}, 404
             else:
                 match = ALGORITHM.verify(data["password"], admin.password)
-                # TODO: add an expiry value
                 # expiry_time = datetime.timedelta(expiry_unit=expiry_value)
                 if not match:
                     return {"result": "Invalid password."}, 401
@@ -241,7 +240,6 @@ class ContentType(Resource):
                             foreign_key = foreign_key.split(".")[0].title()
                     if foreign_key != "":
                         column_type = str(column.foreign_keys).split("}")[0][1:]  # noqa 501
-                    # TODO: use Column Model here & write to TableModel
                     col = {
                         "name": column.name,
                         "type": column_type,
@@ -378,8 +376,6 @@ class ContentType(Resource):
                               "is used to manage admin login internally."
                               .format(Table.table_name)}, 400
 
-        # TODO: ask if this should be checked too, seems unlikely
-        # if Table.table_name == "alembic_version":
         try:
             valid, msg = column_validation(data["columns"],
                                            Table.connection_name)
@@ -403,7 +399,6 @@ class ContentType(Resource):
                 return {"result": "Only one table is allowed to set jwt per"
                                   "database connection."}, 400
 
-            # TODO: check if the filter keys are valid in TableModel & set
             if (data.get("filter_keys") is None or
                     len(data.get("filter_keys", [])) == 0):
                 data["filter_keys"] = ["id"]
@@ -537,10 +532,6 @@ class ContentType(Resource):
             # delete this entry from the jwt table
                 delete_jwt(Table.connection_name)
                 delete_restricted_by_jwt(Table.connection_name)
-
-        # TODO:
-        # add a check for filter keys for jwt & add a function to change the
-        # JWT key function
 
         check = nullable_check(data)
         if check:
@@ -1178,7 +1169,8 @@ class AdminDashboardStats(Resource):
 
             else:
                 parent_dir = os.sep.join(__file__.split(os.sep)[:-2])
-                remove = {'__init__.py', 'blueprints.py', 'utils.py', '__pycache__'}
+                remove = {'__init__.py', 'blueprints.py', 'utils.py',
+                          '__pycache__'}
                 result = set(os.listdir(parent_dir + '/app/')) - remove
             return {"result": list(result)}, 200
 

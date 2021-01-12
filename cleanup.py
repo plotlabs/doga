@@ -26,7 +26,7 @@ for connection_name in DB_DICT:
             continue
 
 """
-#TODO: could not find a way to import the metadata even from inside the app folder
+#note: could not find a way to import the metadata even from inside the app folder
        * maybe have a cleanup endpoint from inside the app
 for table in reversed(meta.sorted_tables):
 
