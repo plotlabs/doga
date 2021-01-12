@@ -2,7 +2,7 @@ import json
 import re
 import subprocess
 
-from typing import  Dict, Tuple
+from typing import Dict, Tuple
 
 from flask import Blueprint, request, jsonify
 from flask_restful import Api, Resource
@@ -16,7 +16,7 @@ from admin.module_generator import *
 from admin.models import Admin, Deployments
 from admin.models.admin_model import Admin as AdminObject
 from admin.models.table_model import Table as TableModel
-from admin.models.database_model import Database as DatabaseObject
+from admin.models.database_model import Database as DatabaseObjects
 from admin.models.email_notifications import Email_Notify
 from admin.models.sms_notificataions import Sms_Notify
 

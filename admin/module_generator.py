@@ -207,7 +207,7 @@ def check_column(table_name, column_name, column_type, connection_name=''):
     for sorted_table in metadata.sorted_tables:
         if sorted_table.name.lower() == table_name.lower():
             for column_ in sorted_table.columns:
-                if column_name.lower() == column_.name:
+                if column_name.lower() == column_.name.lower():
                     if str(column_.type) not in allowed_foreign_keys:
                         raise TypeError("Foreign key can only be allowed"
                                         " types", allowed_foreign_keys)
