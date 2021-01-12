@@ -16,7 +16,7 @@ from admin.module_generator import *
 from admin.models import Admin, Deployments
 from admin.models.admin_model import Admin as AdminObject
 from admin.models.table_model import Table as TableModel
-from admin.models.database_model import Database as DatabaseObjects
+from admin.models.database_model import Database as DatabaseObject
 from admin.models.email_notifications import Email_Notify
 from admin.models.sms_notificataions import Sms_Notify
 
@@ -80,7 +80,7 @@ class AdminApi(Resource):
         admin = Admin.query.filter_by(email=email).first()
         if admin is not None:
             user_obj = json.dumps(admin, cls=AlchemyEncoder)
-            return {"result": json.loads(user_obj)}
+            return {"result": json.loads(user_obj)}, 200
 
         return {"result": "Admin does not exist."}, 404
 
