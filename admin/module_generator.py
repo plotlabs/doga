@@ -244,7 +244,7 @@ def add_alembic_model(conn_name):
     conn_name = str(conn_name).lower()
     base = "Base_" + conn_name
     column_name = "Column" + conn_name
-    to_write = ""
+    to_write = "\n"
     to_write = to_write + conn_name + " = SQLAlchemy(app)\n"
     to_write = to_write + base + " = " + conn_name + ".Model\n"
     to_write = to_write + column_name + " = " + conn_name + ".Column\n\n\n"
@@ -253,7 +253,7 @@ def add_alembic_model(conn_name):
     to_write = to_write + "    __tablename__ = 'alembic_version'\n"
     to_write = to_write + "    __bind_key__ = '" + conn_name + "'\n"
     to_write = to_write + "    version_num = " + \
-        column_name + "(String(32), primary_key=True)\n\n\n"
+        column_name + "(String(32), primary_key=True)\n\n"
 
     f = open('dbs.py', 'r+')
     lines = f.readlines()

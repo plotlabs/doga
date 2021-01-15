@@ -5,10 +5,14 @@ import requests
 
 
 from sqlalchemy import types
+from sqlalchemy import create_engine, MetaData
 from templates.models import metadata
 
 from dbs import DB_DICT
+
 from admin.module_generator import check_column
+from admin.utils import extract_database_name
+
 from config import HOST, PORT
 
 
@@ -157,3 +161,18 @@ def nullable_check(data):
                 return False
 
     return False
+
+
+def foreign_key_options(app_name, type):
+
+    result = {}
+    for table in metadata.sorted_tables:
+        if app_name == extract_database_name(table.info['bind_key']):
+            for column in table.columns:
+                if type in str(column.type):
+                    try:
+                        result[table.name].append(column.name)
+                    except KeyError:
+                        result[table.name] = [column.name]
+            return result
+    raise ValueError

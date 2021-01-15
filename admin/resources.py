@@ -22,7 +22,8 @@ from admin.models.sms_notificataions import Sms_Notify
 
 
 from admin.utils import *
-from admin.validators import column_types, column_validation, nullable_check
+from admin.validators import (column_types, column_validation, nullable_check,
+                              foreign_key_options)
 
 from admin.export.utils import *
 from admin.export.exportapp import create_app_dir, check_if_exist
@@ -630,6 +631,41 @@ class ContentType(Resource):
         return {"result": "Successfully deleted module."}
 
 
+class ColumnRelations(Resource):
+    """
+    Defines the responses to identify tables to create relationships with
+    """
+
+    @jwt_required
+    def post(self):
+        if not verify_jwt(get_jwt_identity(), Admin):
+            return {"result": "JWT authorization invalid, user does not"
+                    " exist."}
+
+        data = request.get_json()
+
+        if data is None:
+            return {"response": "JSON body cannot be empty."}, 500
+
+        required_keys = {"app_name", "type"}
+
+        missed_keys = required_keys.difference(data)
+        if len(missed_keys) != 0:
+            return {
+                    "result": "Values for fields cannot be null.",
+                    "required values": list(missed_keys)
+                    }, 500
+
+        try:
+            result = foreign_key_options(data["app_name"], data["type"])
+
+        except ValueError:
+            return {"result": "Error while fetching app data, make sure there"
+                              "is a connection for the app."}, 500
+
+        return result, 200
+
+
 class DatabaseInit(Resource):
 
     @jwt_required
@@ -1192,6 +1228,8 @@ api_admin.add_resource(ContentType, '/content/types',
                        '/content/types/<string:db_name>/<string:content_type>')
 
 api_admin.add_resource(ColumnType, '/columntypes')
+
+api_admin.add_resource(ColumnRelations, '/content/relations')
 
 api_admin.add_resource(ExportApp, '/export/<string:platform>')
 

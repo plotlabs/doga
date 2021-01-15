@@ -282,6 +282,10 @@ def create_security_group(ec2_client, ec2, db_port, group_id='sg_id',
              'ToPort': 443,
              'IpRanges': [{'CidrIp': '0.0.0.0/0'}]},
             {'IpProtocol': 'tcp',
+             'FromPort': 8080,
+             'ToPort': 8080,
+             'IpRanges': [{'CidrIp': '0.0.0.0/0'}]},
+            {'IpProtocol': 'tcp',
              'FromPort': db_port,
              'ToPort': db_port,
              'IpRanges': [{'CidrIp': ec2.public_ip_address + '/32'}]}
@@ -298,6 +302,26 @@ def create_security_group(ec2_client, ec2, db_port, group_id='sg_id',
         Description='created by doga to allow RDS and EC2 connect'
                     'from everywhere else',
         GroupName="doga_" + group_id[-5:],
+    )
+
+    ec2_client.authorize_security_group_ingress(
+            GroupId=vpc_sg.id,
+            IpPermissions=[
+                {'IpProtocol': sg_defaults["SG_IP_PROTOCOL"],
+                 'FromPort': sg_defaults["SG_FROM_PORT"],
+                 'ToPort': sg_defaults["SG_TO_PORT"],
+                 'IpRanges': [{'CidrIp': sg_defaults["SG_IP"]}]},
+                {'IpProtocol': 'tcp',
+                 'FromPort': 80,
+                 'ToPort': 80,
+                 'IpRanges': [{'CidrIp': '0.0.0.0/0'}]},
+                {'IpProtocol': 'tcp',
+                 'FromPort': db_port,
+                 'ToPort': db_port,
+                 'IpRanges': [{'CidrIp': '0.0.0.0/0'}]
+                 # ec2.public_ip_address + '/32'}]
+                 }
+            ]
     )
 
     return ec2, vpc_sg
