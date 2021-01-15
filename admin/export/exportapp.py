@@ -151,7 +151,7 @@ def create_export_files(platform, parent_dir, app_name, deploy, rds_engine,
             shutil.copy2(s, d)
 
             with open(d, 'a+') as f:
-                f.write("\ndb.createall()\n")
+                f.write("\ndb.create_all()\n")
         elif file == 'app/utils.py':
             s = file
             d = parent_dir + '/exported_app/' + file
