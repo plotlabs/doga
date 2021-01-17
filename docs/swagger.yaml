@@ -28,10 +28,10 @@ tags:
   description: These endpoints are used to export created apps to aws, heroku or to
     your local machine where you can decide how to deploy them
 - name: notification scripts
-  description: These endpoints are defined to create & export a script to notofy provided
-    emails/numbers notofications.
+  description: These endpoints are defined to create & export a script to notify provided
+    emails/numbers notifications.
 - name: admin dashboard
-  description: These endpoints are used to get information for the admdin dashboard.
+  description: These endpoints are used to get information for the admin dashboard.
 paths:
   /admin/admin_profile:
     post:
@@ -105,7 +105,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/JwtLoginRespose'
+                $ref: '#/components/schemas/JwtLoginResponse'
         403:
           description: Admin already exists
           content: {}
@@ -122,11 +122,8 @@ paths:
   /admin/content/types:
     get:
       tags:
-      - admin
       - content info
-      - content
-      summary: Lists all the available content tables as well as the admin and jwt
-        lists
+      summary: Lists all the content (as columns) of the app_name created by user along with the connection name.
       operationId: List Content
       responses:
         200:
@@ -485,7 +482,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/JwtLoginRespose'
+                $ref: '#/components/schemas/JwtLoginResponse'
         400:
           description: missing field error
           content:
@@ -775,6 +772,8 @@ components:
       - table_name
       type: object
       properties:
+        app_name:
+          type: string
         table_name:
           type: string
         connection_name:
@@ -795,6 +794,12 @@ components:
           type: string
         foreign_key:
           type: string
+        reltaionship:
+          type: string
+          enum:
+            - 'one-one'
+            - 'many-one'
+            - 'many-many'
         name:
           type: string
         nullable:
@@ -806,10 +811,22 @@ components:
           type: boolean
     Content:
       type: object
-      example:
-        name: name
-        id: id
-        prop3: property3
+      required:
+        - columns
+        - connection_name
+        - app_name
+        - table_name
+      properties:
+        columns:
+          type: array
+          items:
+            $ref: '#/components/schemas/Column'
+        table_name:
+          type: string
+        app_name: 
+          type: string
+        connection_name:
+          type: string
     Database:
       required:
       - connection_name
@@ -846,7 +863,7 @@ components:
           type: string
           example: Error message
       description: Error Response
-    JwtLoginRespose:
+    JwtLoginResponse:
       type: object
       properties:
         result:
