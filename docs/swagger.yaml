@@ -326,7 +326,7 @@ paths:
             application/json:
               schema:
                 type: object
-        200: 
+        200:
           description: "Request Successful"
       security:
       - Bearer: []
