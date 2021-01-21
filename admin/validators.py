@@ -155,7 +155,7 @@ def nullable_check(data):
     for table in metadata.sorted_tables:
         if table.name == data['table_name']:
             valid, msg = column_validation(data["columns"],
-                                           data['connection_name'],
+                                           data['app_name'],
                                            table.columns)
             if valid is False:
                 model_data = requests.get('http://{}:'.format(HOST) + PORT

@@ -49,7 +49,6 @@ def extract_database_name(connection_name):
         end = len(connection_string)
     else:
         end = connection_string.rfind('.db')
-
     return connection_string[start+1:end]
 
 

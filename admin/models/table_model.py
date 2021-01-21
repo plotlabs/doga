@@ -82,7 +82,7 @@ class Table(Model):
             raise ValueError("Invalid value for `table_name`, must contain "
                              "characters")
 
-        self._table_name = table_name
+        self._table_name = table_name.lower()
 
     @property
     def connection_name(self) -> str:
