@@ -472,8 +472,7 @@ def create_relationsips(app_name, relation_type, related_table, related_field,
                                     related_field.title() + \
                                     '")\n'
 
-        elif relation_type == 'many-many':
-
+        if relation_type == 'many-many':
             class_name = related_table.Title() + \
                          current_table.Title() + \
                          related_field.Title()
@@ -497,7 +496,7 @@ def create_relationsips(app_name, relation_type, related_table, related_field,
                      '/models.py', 'a')
             f.write(assoc_string)
 
-        elif relation_type == 'one-one':
+        if relation_type == 'one-one':
             present_relationships = present_relationships + '    ' + \
                                     'parent = relationship("' + \
                                     related_table.title() + \
@@ -516,10 +515,7 @@ def create_relationsips(app_name, relation_type, related_table, related_field,
             f.seek(0)
             f.write(''.join(contents))
 
-        elif relation_type == 'many-one':
-            # establish foreign key on parent
-            print('app/'+ app_name + '/' + \
-                related_table + '/models.py')
+        if relation_type == 'many-one':
             f = open('app/'+ app_name + '/' + \
                 related_table + '/models.py', 'r+')
 

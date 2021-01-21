@@ -487,12 +487,20 @@ class ContentType(Resource):
         #         }
         #     ]
         # }
+
+        if data is None:
+            return {"result": "JSON body cannot be empty."}
+
         if not verify_jwt(get_jwt_identity(), Admin):
             return {"result": "JWT authorization invalid, user does not"
                     " exist."}
         try:
-            Table = TableModel.from_dict(request.get_json())
+            data['connection_name'] = data['app_name']
+            Table = TableModel.from_dict(data)
+
         except ValueError as err:
+            return {"result": "Error: " + "".join(err.args)}, 400
+        except KeyError as err:
             return {"result": "Error: " + "".join(err.args)}, 400
 
         database_name = extract_database_name(Table.connection_name)
