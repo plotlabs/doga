@@ -122,7 +122,7 @@ paths:
   /admin/content/types:
     get:
       tags:
-      - content info
+      - admin
       summary: Lists all the content (as columns) of the app_name created by user along with the connection name.
       operationId: List Content
       responses:
@@ -139,7 +139,6 @@ paths:
     post:
       tags:
       - admin
-      - content
       summary: Adds the given content to the database connection specified & creates
         API resources for the same
       operationId: Post Content
@@ -168,7 +167,6 @@ paths:
   /admin/columntypes:
     get:
       tags:
-      - admin
       - content info
       operationId: List Possible Column Types
       responses:
@@ -216,38 +214,6 @@ paths:
       security:
       - Bearer: []
       x-codegen-request-body-name: data
-  /admin/content/types/{db_name}/{table_name}:
-    delete:
-      tags:
-      - admin
-      summary: Delete the content & its related endpoints specified in the path
-      operationId: Delete Content
-      parameters:
-      - name: db_name
-        in: path
-        required: true
-        schema:
-          type: string
-      - name: table_name
-        in: path
-        required: true
-        schema:
-          type: string
-      responses:
-        200:
-          description: Success
-          content:
-            application/json:
-              schema:
-                type: object
-        400:
-          description: Invalid Request
-          content:
-            application/json:
-              schema:
-                type: object
-      security:
-      - Bearer: []
   /admin/notify/email:
     post:
       tags:
@@ -326,7 +292,7 @@ paths:
             application/json:
               schema:
                 type: object
-        200:
+        200: 
           description: "Request Successful"
       security:
       - Bearer: []
@@ -534,7 +500,7 @@ paths:
   /admin/content/relations:
     post:
       tags:
-      - 'content'
+      - 'content info'
       parameters:
       - name: "app_name"
         in: "query"
@@ -818,11 +784,16 @@ components:
           $ref: '#/components/schemas/ColumnRelationship'
         name:
           type: string
+          format: lowercase
         nullable:
           type: boolean
         type:
           type: string
-          format: type
+          enum:
+          - INT
+          - INTEGER
+          - VARCHAR
+          - etc
         unique:
           type: boolean
     ColumnRelationship:
@@ -838,6 +809,7 @@ components:
             - 'one-one'
             - 'many-one'
             - 'many-many'
+            - 'one-many'
         related_field:
           type: string
         related_table:
@@ -917,8 +889,6 @@ components:
       type: "object"
       properties:
         TableName:
-          type: "string"
-          additionalProperties:
             type: "array"
             items:
               type: "string"
