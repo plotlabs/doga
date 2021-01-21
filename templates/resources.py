@@ -41,6 +41,9 @@ class Apis(Resource):
 
     def post(self):
         data = request.get_json()
+        if data is None:
+            return {"response": "JSON body cannot be empty."}, 500
+
         model_obj = model_name()
         for col in model_name.__table__.columns:
             col_name = col.name
@@ -134,6 +137,9 @@ class Apis(Resource):
 
     def put(self, id):
         data = request.get_json()
+        if data is None:
+            return {"response": "JSON body cannot be empty."}, 500
+
         model_obj = model_name.query.filter_by(id=id).first()
         if model_obj is not None:
             for col in model_name.__table__.columns:

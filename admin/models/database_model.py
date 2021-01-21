@@ -112,7 +112,7 @@ class Database(Model):
         :return: The connection_name of this Database.
         :rtype: str
         """
-        return self._connection_name
+        return self._connection_name.lower()
 
     @connection_name.setter
     def connection_name(self, connection_name: str):

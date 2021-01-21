@@ -145,14 +145,13 @@ class Login(Resource):
                 return {"result": "Admin does not exist."}, 404
             else:
                 match = ALGORITHM.verify(data["password"], admin.password)
-                # expiry_time = datetime.timedelta(expiry_unit=expiry_value)
+                expiry_time = datetime.timedelta(minutes=30)
                 if not match:
                     return {"result": "Invalid password."}, 401
                 else:
                     filter_keys = {key: data[key] for key in jwt_filter_keys}
-                    # , expires_delta=expiry_time)
                     access_token = create_access_token(
-                        identity=filter_keys)
+                        identity=filter_keys, expires_delta=expiry_time)
                     refresh_token = create_refresh_token(
                         identity=filter_keys)
 
@@ -214,8 +213,12 @@ class ContentType(Resource):
                 if table.name in ["alembic_version"]:
                     continue
 
-                if table.name in ["jwt", "admin", "restricted_by_jwt"] and \
-                        table.info['bind_key'] == "default":
+                if table.name in ["jwt", "admin", "restricted_by_jwt",
+                                  "Deployments"] and \
+                                  table.info['bind_key'] == "default":
+                    continue
+
+                if 'generatedAssociation' in table.name:
                     continue
 
                 column_list = []
@@ -251,8 +254,12 @@ class ContentType(Resource):
                     }
                     column_list.append(col)
                 table_list.append({'table_name': table.name,
-                                   'connection_name': table.info[
-                                       'bind_key'], 'columns': column_list})
+                                   'app_name': table.info[
+                                       'bind_key'],
+                                   'columns': column_list,
+                                   #'app_name': extract_database_name(
+                                   #    table.info['bind_key'])
+                                   })
             else:
                 if table.name in ["alembic_version"]:
                     continue
@@ -295,7 +302,7 @@ class ContentType(Resource):
                                        })
 
         if table_list == []:
-            return {"result": "No matching content found."}, 404
+            return {"result": "No apps and content created yet."}, 404
 
         return jsonify(table_list)
         # return {"result": table_list}
@@ -351,7 +358,7 @@ class ContentType(Resource):
         if data is None:
             return {"response": "JSON body cannot be empty."}, 500
 
-        required_keys = {"table_name", "connection_name", "columns"}
+        required_keys = {"table_name", "app_name", "columns"}
 
         missed_keys = required_keys.difference(data)
         if len(missed_keys) != 0:
@@ -359,6 +366,8 @@ class ContentType(Resource):
                     "result": "Values for fields cannot be null.",
                     "required values": list(missed_keys)
                     }, 500
+
+        data['connection_name'] = data['app_name'].lower()
         try:
             Table = TableModel.from_dict(request.get_json())
         except ValueError as err:
@@ -523,11 +532,13 @@ class ContentType(Resource):
             # regenerate all the endpoints that previously required JWT
             for table in associatedTables.restricted_tables.split(","):
                 dir_path = "app/" + database_name + "/" + Table.table_name
-                create_resources(database_name + "." + table,
+                create_model(dir_path, data)
+                create_resources(database_name + "." + Table.table_name,
+                                 Table.connection_name,
                                  dir_path,
-                                 False,
+                                 base_jwt,
                                  data.get("expiry", {}),
-                                 False,
+                                 restrict_by_jwt,
                                  data.get("filter_keys", []))
 
             # delete this entry from the jwt table
@@ -575,6 +586,7 @@ class ContentType(Resource):
         dir_path = 'app/' + database_name + "/" + Table.table_name
         create_model(dir_path, data)
         create_resources(database_name + "." + Table.table_name,
+                         Table.connection_name,
                          dir_path,
                          base_jwt,
                          data.get("expiry", {}),
@@ -677,7 +689,7 @@ class DatabaseInit(Resource):
         connection_list = []
         for key, value in DB_DICT.items():
             if value.startswith("sqlite"):
-                database_name = value.split("/")[-1]
+                database_name = value.split("/")[-1].rstrip('.db')
                 database_type = "sqlite"
                 host = ""
                 port = ""
@@ -732,9 +744,12 @@ class DatabaseInit(Resource):
         if json_request is None:
             return {"result": "Error, request body cannot be empty."}, 500
 
-        required_keys = {"database_type", "connection_name", "username",
+        required_keys = {"database_type", "username",
                          "password", "database_name"}
         missed_keys = required_keys.difference(json_request)
+
+        json_request['connection_name'] = json_request['database_name'].lower()
+
         if len(missed_keys) != 0:
             return {
                     "result": "Values for fields cannot be null",
@@ -793,7 +808,7 @@ class DatabaseInit(Resource):
                             database.db_string() + '",\n' + line
                 f.write(line)
 
-        add_new_db(database.connection_name)
+        add_new_db(database.database_name)
 
         return {
             "result": "Successfully created database connection string." +
@@ -807,7 +822,6 @@ class DatabaseInit(Resource):
         # sample data
         # data = {
         #     "type": "mysql/mongo/postgresql",
-        #     "connection_name": "db1",
         #     "username": "user",
         #     "password": "pass",
         #     "host": "localhost",
@@ -817,6 +831,8 @@ class DatabaseInit(Resource):
         if not verify_jwt(get_jwt_identity(), Admin):
             return {"result": "JWT authorization invalid, user does not"
                     " exist."}
+
+        data['connection_name'] = data['database_name'].lower()
 
         if data['connection_name'] not in DB_DICT:
             return {
@@ -836,7 +852,7 @@ class DatabaseInit(Resource):
                           "correct type."}, 400
 
         # check if content exists in old or new database:
-        old_db = extract_database_name(data['connection_name'])
+        old_db = extract_database_name(data['connection_name'].lower())
         new_db = data['database_name']
 
         path = 'app/' + old_db
@@ -879,7 +895,7 @@ class DatabaseInit(Resource):
 
         with open('dbs.py', 'w') as f:
             for i, line in enumerate(lines):
-                if line.startswith('    "' + data['connection_name']):
+                if line.startswith('    "' + data['connection_name'].lower()):
                     line = line.replace(line, '    "' + data[
                         'connection_name'] + '": "' + string + '",\n')
                 f.write(line)

@@ -6,6 +6,8 @@ from sqlalchemy.exc import OperationalError, ProgrammingError
 from admin.version_models import *
 from dbs import ALEMBIC_LIST, DB_DICT
 from admin.models import JWT, Restricted_by_JWT
+from admin.utils import extract_database_name
+from admin.errors import *
 
 
 def create_dir(model_name):
@@ -19,12 +21,21 @@ def create_dir(model_name):
 
 
 def create_model(dir_path, data):
+    """Function used while creating tables for the user to add their content.
+    This creates a /app_name/models.py file using contents of the
+    /templates/models.py
+    It add all columns, connections, and relationships associated.
+    """
+
     shutil.copy2('templates/models.py', dir_path)
 
     if "connection_name" in data:
         conn_name = data["connection_name"]
     else:
         conn_name = "default"
+
+    app_name = extract_database_name(conn_name)
+    relationships = ""
 
     o = open(dir_path + "/models.py", "a")
     o.write("\n\n")
@@ -39,9 +50,43 @@ def create_model(dir_path, data):
     o.write("    create_dt = Column(DateTime(), server_default=text("
             "'CURRENT_TIMESTAMP'))\n")
 
-    for col in data["columns"]:
+
+    for col in data['columns']:
         if col["name"] == "id":
             pass
+
+        try:
+            relation = col['relationship']
+            relation_type = relation['relationship_type']
+            relations = ['one-one', 'many-one', 'many-many', 'one-many']
+            if relation_type not in relations:
+                return {"result": "Relation type for column" +
+                                  col["name"] +
+                                  "must be of type " +
+                                  ','.join(relations)}
+            if relation_type in ['one-one', 'one-many']:
+                # TODO: what if user has their own foreign key too
+                # deal with a list of foreign keys
+                col["foreign_key"] = relation['related_table'].lower() + "." +\
+                                     relation['related_field'].lower()
+            try:
+                relationships = create_relationsips(app_name,
+                                                    relation_type,
+                                                    relation['related_table'],
+                                                    relation['related_field'],
+                                                    data['table_name'],
+                                                    col["name"],
+                                                    col['type'],
+                                                    relationships
+                                                   )
+            except RelatedContentNotFound as err:
+                return {
+                    "result": list(err.args)[0]
+                }, 500
+
+        except KeyError as error:
+            relation_type = None
+
         try:
             line = "    " + col["name"] + " = Column(" + col["type"] \
                    + ", nullable=" + str(col["nullable"]).title() \
@@ -76,11 +121,12 @@ def create_model(dir_path, data):
                     line = line + ", server_default=text('" + str(
                         col["default"]) + "'))\n"
         o.write(line)
+    o.write(relationships)
     o.close()
 
 
 def create_resources(model_name, connection_name, dir_path, base_jwt,
-                     expiry, restrict_by_jwt, filter_keys):
+                     expiry, restrict_by_jwt, filter_keys=""):
     """Function to create the CRUD Restful APIs for the module"""
     o = open(dir_path + "/resources.py", "w")
 
@@ -412,3 +458,92 @@ def add_jwt_list(connection_name, database_name, table_name):
 
     except AttributeError:
         pass
+
+
+def create_relationsips(app_name, relation_type, related_table, related_field,
+                        current_table, current_field, col_type,
+                        present_relationships=""):
+    try:
+        if relation_type == 'one-many':
+            present_relationships = present_relationships + '    ' + \
+                                    'parent = relationship("' + \
+                                    related_table.lower() + \
+                                    '", back_populates="' + \
+                                    related_field.title() + \
+                                    '")\n'
+
+        elif relation_type == 'many-many':
+
+            class_name = related_table.Title() + \
+                         current_table.Title() + \
+                         related_field.Title()
+
+            right_id = related_table + "." + related_field.lower()
+            left_id = current_table + "." + current_field.lower()
+
+            assoc_string = 'class GeneratedAssociation' + class_name + \
+                            '(Base):\n' + \
+                            '    __tablename__ = "generatedAssociation' + \
+                            class_name + \
+                            '"\n' + \
+                            '    __bind_key__ = "' + connection + '"\n\n' + \
+                            '    id = Column(Integer, primary_key=True)\n' + \
+                            '    left_id = Column(Text, ForeignKey("' + \
+                            right_id + '"))\n' + \
+                            '    right_id = Column(Text, ForeignKey("' + \
+                            left_id + '"))\n'
+
+            f = open('app/' + app_name + '/' + current_table +
+                     '/models.py', 'a')
+            f.write(assoc_string)
+
+        elif relation_type == 'one-one':
+            present_relationships = present_relationships + '    ' + \
+                                    'parent = relationship("' + \
+                                    related_table.title() + \
+                                    '", back_populates="' + related_field +\
+                                    '")\n'
+
+            f = open('app/' + app_name + '/' + related_table +
+                     '/models.py', "r+")
+            f.seek(0)
+            contents = f.readlines()
+            contents[-1] = '    ' + current_table.lower() + \
+                           ' = relationship("' + \
+                           current_table.title() + \
+                           '", uselist=False, back_populates="' + \
+                           related_table.lower() + '")\n'
+            f.seek(0)
+            f.write(''.join(contents))
+
+        elif relation_type == 'many-one':
+            # establish foreign key on parent
+            print('app/'+ app_name + '/' + \
+                related_table + '/models.py')
+            f = open('app/'+ app_name + '/' + \
+                related_table + '/models.py', 'r+')
+
+            lines = f.readlines()
+            f.seek(0)
+
+            related_key = related_table.lower() + "." + related_field
+            current_key = current_table.lower() + "." + current_field
+
+            for line in lines:
+                if related_key in line:
+                    print(line)
+                    line = line[:-1] + ", ForeignKey('" + current_key + \
+                    "'" + ')\n'
+                f.write(line)
+            # create back_populates on the child
+            present_relationships = present_relationships + '    ' + \
+                                current_field + ' = relationship("' + \
+                                related_table + \
+                                '", back_populates='+ '"'+ \
+                                current_field + '")\m'
+    except FileNotFoundError as err:
+        raise  RelatedContentNotFound("The table " +
+                                      str(list(err.args)[0]) +
+                                      " was not found.")
+
+    return present_relationships
