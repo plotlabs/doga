@@ -32,6 +32,7 @@ def column_validation(schema_list, connection_name, table_columns=None):
     msg = ""
     column_name_list = [column["name"].lower() for column in schema_list]
     for column in schema_list:
+        column["name"] = column["name"].lower()
         if len(set(column_name_list)) < len(column_name_list):
             valid = False
             msg = "Columns cannot have same name."
@@ -41,26 +42,30 @@ def column_validation(schema_list, connection_name, table_columns=None):
             msg = "Invalid column type for column {}.".format(
                 column["name"])
             break
-        if column["foreign_key"] != "":
-            try:
-                table_name = column["foreign_key"].split(".")[0]
-                column_name = column["foreign_key"].split(".")[1]
-            except IndexError:
-                valid = False
-                msg = "Please format the foreign key in the correct format" \
-                      " 'TableName.ColumnName' . "
-                break
-            try:
-                if not check_column(table_name, column_name,
-                                    column["type"].split("(")[0],
-                                    connection_name):
+        try:
+            if column["foreign_key"] != "":
+                try:
+                    table_name = column["foreign_key"].split(".")[0]
+                    column_name = column["foreign_key"].split(".")[1]
+                except IndexError:
                     valid = False
-                    msg = "Foreign Key Module " + column["name"] + " does not"\
-                          + " exist."
+                    msg = "Please format the foreign key in the correct format" \
+                          " 'TableName.ColumnName' . "
                     break
-            except TypeError as err:
-                valid = False
-                msg = str(err.args)
+                try:
+                    if not check_column(table_name, column_name,
+                                        column["type"].split("(")[0],
+                                        connection_name):
+                        valid = False
+                        msg = "Foreign Key Module " + column["name"] + " does not"\
+                              + " exist."
+                        break
+                except TypeError as err:
+                    valid = False
+                    msg = str(err.args)
+        except KeyError:
+            column["foreign_key"] = ""
+
         if column["type"].lower().startswith("string"):
             if "(" not in column["type"] and ")" not in column["type"]:
                 valid = False
