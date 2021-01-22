@@ -108,9 +108,9 @@ class AdminApi(Resource):
 
         if len(missed_keys) != 0:
             return {
-                    "result": "Values for fields cannot be null",
-                    "required values": list(missed_keys)
-                    }, 500
+                "result": "Values for fields cannot be null",
+                "required values": list(missed_keys)
+            }, 500
 
         try:
             admin = AdminObject.from_dict(json_request)
@@ -214,8 +214,8 @@ class ContentType(Resource):
                     continue
 
                 if table.name in ["jwt", "admin", "restricted_by_jwt",
-                                  "Deployments"] and \
-                                  table.info['bind_key'] == "default":
+                                  "Deployments"] and\
+                        table.info['bind_key'] == "default":
                     continue
 
                 if 'generatedAssociation' in table.name:
@@ -257,7 +257,7 @@ class ContentType(Resource):
                                    'app_name': table.info[
                                        'bind_key'],
                                    'columns': column_list,
-                                   #'app_name': extract_database_name(
+                                   # 'app_name': extract_database_name(
                                    #    table.info['bind_key'])
                                    })
             else:
@@ -363,9 +363,9 @@ class ContentType(Resource):
         missed_keys = required_keys.difference(data)
         if len(missed_keys) != 0:
             return {
-                    "result": "Values for fields cannot be null.",
-                    "required values": list(missed_keys)
-                    }, 500
+                "result": "Values for fields cannot be null.",
+                "required values": list(missed_keys)
+            }, 500
 
         data['connection_name'] = data['app_name'].lower()
         try:
@@ -672,9 +672,9 @@ class ColumnRelations(Resource):
         missed_keys = required_keys.difference(data)
         if len(missed_keys) != 0:
             return {
-                    "result": "Values for fields cannot be null.",
-                    "required values": list(missed_keys)
-                    }, 500
+                "result": "Values for fields cannot be null.",
+                "required values": list(missed_keys)
+            }, 500
 
         try:
             result = foreign_key_options(data["app_name"], data["type"])
@@ -760,9 +760,9 @@ class DatabaseInit(Resource):
 
         if len(missed_keys) != 0:
             return {
-                    "result": "Values for fields cannot be null",
-                    "required values": list(missed_keys)
-                    }, 500
+                "result": "Values for fields cannot be null",
+                "required values": list(missed_keys)
+            }, 500
 
         try:
             database = DatabaseObject.from_dict(json_request)
@@ -789,7 +789,11 @@ class DatabaseInit(Resource):
                "does not exist" in str(err).lower():
                 try:
                     string = re.split(database.database_name, string)[0]
-                    engine = create_engine(string)
+                    engine = create_engine(string, connect_args={
+                        "check_same_thread": False
+                    },
+                        poolclass=StaticPool
+                    )
                     conn = engine.connect()
                     conn.execute("commit")
                     conn.execute("CREATE DATABASE " + database.database_name)
@@ -813,7 +817,7 @@ class DatabaseInit(Resource):
             for i, line in enumerate(lines):
                 if line.startswith('}'):
                     line = '    "' + database.connection_name + '": "' + \
-                            database.db_string() + '",\n' + line
+                        database.db_string() + '",\n' + line
                 f.write(line)
 
         add_new_db(database.database_name)
