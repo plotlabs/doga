@@ -6,6 +6,7 @@ import requests
 
 from sqlalchemy import types
 from sqlalchemy import create_engine, MetaData
+from sqlalchemy.pool import StaticPool
 from templates.models import metadata
 
 from dbs import DB_DICT
@@ -49,16 +50,16 @@ def column_validation(schema_list, connection_name, table_columns=None):
                     column_name = column["foreign_key"].split(".")[1]
                 except IndexError:
                     valid = False
-                    msg = "Please format the foreign key in the correct format" \
-                          " 'TableName.ColumnName' . "
+                    msg = "Please format the foreign key in the correct ' \
+                          'format 'TableName.ColumnName' . "
                     break
                 try:
                     if not check_column(table_name, column_name,
                                         column["type"].split("(")[0],
                                         connection_name):
                         valid = False
-                        msg = "Foreign Key Module " + column["name"] + " does not"\
-                              + " exist."
+                        msg = "Foreign Key Module " + \
+                            column["name"] + " does not" + " exist."
                         break
                 except TypeError as err:
                     valid = False

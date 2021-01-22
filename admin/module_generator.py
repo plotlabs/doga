@@ -50,7 +50,6 @@ def create_model(dir_path, data):
     o.write("    create_dt = Column(DateTime(), server_default=text("
             "'CURRENT_TIMESTAMP'))\n")
 
-
     for col in data['columns']:
         if col["name"] == "id":
             pass
@@ -68,7 +67,7 @@ def create_model(dir_path, data):
                 # TODO: what if user has their own foreign key too
                 # deal with a list of foreign keys
                 col["foreign_key"] = relation['related_table'].lower() + "." +\
-                                     relation['related_field'].lower()
+                    relation['related_field'].lower()
             try:
                 relationships = create_relationsips(app_name,
                                                     relation_type,
@@ -78,7 +77,7 @@ def create_model(dir_path, data):
                                                     col["name"],
                                                     col['type'],
                                                     relationships
-                                                   )
+                                                    )
             except RelatedContentNotFound as err:
                 return {
                     "result": list(err.args)[0]
@@ -120,6 +119,7 @@ def create_model(dir_path, data):
                 else:
                     line = line + ", server_default=text('" + str(
                         col["default"]) + "'))\n"
+        print(line)
         o.write(line)
     o.write(relationships)
     o.close()
@@ -466,58 +466,54 @@ def create_relationsips(app_name, relation_type, related_table, related_field,
     try:
         if relation_type == 'one-many':
             present_relationships = present_relationships + '    ' + \
-                                    'parent = relationship("' + \
-                                    related_table.lower() + \
-                                    '", back_populates="' + \
-                                    related_field.title() + \
-                                    '")\n'
+                'parent = relationship("' + \
+                related_table.lower() + \
+                '", back_populates="' + \
+                related_field.title() + \
+                '")\n'
 
         if relation_type == 'many-many':
             class_name = related_table.Title() + \
-                         current_table.Title() + \
-                         related_field.Title()
+                current_table.Title() + \
+                related_field.Title()
 
             right_id = related_table + "." + related_field.lower()
             left_id = current_table + "." + current_field.lower()
 
             assoc_string = 'class GeneratedAssociation' + class_name + \
-                            '(Base):\n' + \
-                            '    __tablename__ = "generatedAssociation' + \
-                            class_name + \
-                            '"\n' + \
-                            '    __bind_key__ = "' + connection + '"\n\n' + \
-                            '    id = Column(Integer, primary_key=True)\n' + \
-                            '    left_id = Column(Text, ForeignKey("' + \
-                            right_id + '"))\n' + \
-                            '    right_id = Column(Text, ForeignKey("' + \
-                            left_id + '"))\n'
+                '(Base):\n' + \
+                '    __tablename__ = "generatedAssociation' + \
+                class_name + \
+                '"\n' + \
+                '    __bind_key__ = "' + connection + '"\n\n' + \
+                '    id = Column(Integer, primary_key=True)\n' + \
+                '    left_id = Column(Text, ForeignKey("' + \
+                right_id + '"))\n' + \
+                '    right_id = Column(Text, ForeignKey("' + \
+                left_id + '"))\n'
 
             f = open('app/' + app_name + '/' + current_table +
                      '/models.py', 'a')
             f.write(assoc_string)
 
         if relation_type == 'one-one':
-            present_relationships = present_relationships + '    ' + \
-                                    'parent = relationship("' + \
-                                    related_table.title() + \
-                                    '", back_populates="' + related_field +\
-                                    '")\n'
 
             f = open('app/' + app_name + '/' + related_table +
                      '/models.py', "r+")
             f.seek(0)
             contents = f.readlines()
-            contents[-1] = '    ' + current_table.lower() + \
-                           ' = relationship("' + \
-                           current_table.title() + \
-                           '", uselist=False, back_populates="' + \
-                           related_table.lower() + '")\n'
+            contents[-1] = present_relationships + '    ' + \
+                related_field + ' = relationship("' + \
+                related_table.title() + \
+                '", backref ="' + current_table.lower() +\
+                '")\n'
+
             f.seek(0)
             f.write(''.join(contents))
 
         if relation_type == 'many-one':
-            f = open('app/'+ app_name + '/' + \
-                related_table + '/models.py', 'r+')
+            f = open('app/' + app_name + '/' +
+                     related_table + '/models.py', 'r+')
 
             lines = f.readlines()
             f.seek(0)
@@ -529,17 +525,17 @@ def create_relationsips(app_name, relation_type, related_table, related_field,
                 if related_key in line:
                     print(line)
                     line = line[:-1] + ", ForeignKey('" + current_key + \
-                    "'" + ')\n'
+                        "'" + ')\n'
                 f.write(line)
             # create back_populates on the child
             present_relationships = present_relationships + '    ' + \
-                                current_field + ' = relationship("' + \
-                                related_table + \
-                                '", back_populates='+ '"'+ \
-                                current_field + '")\m'
+                current_field + ' = relationship("' + \
+                related_table + \
+                                '", back_populates=' + '"' + \
+                                current_field + r'")\m'
     except FileNotFoundError as err:
-        raise  RelatedContentNotFound("The table " +
-                                      str(list(err.args)[0]) +
-                                      " was not found.")
+        raise RelatedContentNotFound("The table " +
+                                     str(list(err.args)[0]) +
+                                     " was not found.")
 
     return present_relationships
