@@ -203,6 +203,7 @@ class ContentType(Resource):
             return {"result": "JWT authorization invalid, user does not"
                     " exist."}
         table_list = []
+        app_table_columns = {}
         # Iterate though the tables stored using FlaskSqlAlchemy
         for table in metadata.sorted_tables:
             # if content is not specified then return a list of all tables in
@@ -253,13 +254,20 @@ class ContentType(Resource):
                         "foreign_key": foreign_key
                     }
                     column_list.append(col)
-                table_list.append({'table_name': table.name,
-                                   'app_name': table.info[
-                                       'bind_key'],
-                                   'columns': column_list,
-                                   # 'app_name': extract_database_name(
-                                   #    table.info['bind_key'])
+
+                app_name = table.info['bind_key']
+                try:
+                    app_table_columns[app_name][table.name] = column_list
+                except KeyError:
+                    app_table_columns[app_name] = {table.name: column_list}
+
+                table_list.append({table.info['bind_key']: {
+                                                'table_name': table.name,
+                                                'columns': column_list,
+                                                }
                                    })
+                table_list = app_table_columns
+
             else:
                 if table.name in ["alembic_version"]:
                     continue
@@ -302,7 +310,7 @@ class ContentType(Resource):
                                        })
 
         if table_list == []:
-            return {"result": "No apps and content created yet."}, 404
+            return {"result": "No apps and content created yet."}, 200
 
         return jsonify(table_list)
         # return {"result": table_list}
@@ -458,7 +466,7 @@ class ContentType(Resource):
         append_blueprint(database_name + "." + Table.table_name)
         remove_alembic_versions()
         move_migration_files()
-        return {"result": "Successfully created module."}
+        return {"result": "Successfully created module."}, 200
 
     @jwt_required
     def put(self):
@@ -874,7 +882,7 @@ class DatabaseInit(Resource):
                 # str(len(os.listdir(path))/2)
                 return {"result": "Found  content in the old database"
                         " connection"
-                        " please remove them first."}
+                        " please remove them first."}, 400
 
         except FileNotFoundError:
             pass
@@ -916,7 +924,7 @@ class DatabaseInit(Resource):
         move_migration_files()
         return {
             "result": "Successfully edited database connection string."
-        }
+        }, 200
 
 
 class ColumnType(Resource):
@@ -925,7 +933,7 @@ class ColumnType(Resource):
         """Get a list of all valid column types available."""
         return {
             "result": column_types()
-        }
+        }, 200
 
 
 class ExportApp(Resource):
@@ -938,13 +946,13 @@ class ExportApp(Resource):
 
         if not verify_jwt(get_jwt_identity(), Admin):
             return {"result": "JWT authorization invalid, user does not"
-                    " exist."}
+                    " exist."}, 400
 
         json_request = request.get_json()
         if json_request is None:
             return {
                 "result": "Request body cannot be empty"
-            }
+            }, 400
         missing_keys = {}
 
         try:
@@ -980,7 +988,7 @@ class ExportApp(Resource):
                     "result": "Error creating config",
                     "error": str(error),
                     "request": request.get_json()
-                }
+                }, 400
             except KeyError as error:
                 missing_keys['config'] = str(error)
 
@@ -997,7 +1005,7 @@ class ExportApp(Resource):
                     "result": "Error creating RDS",
                     "error": str(error),
                     "request": json_request
-                }, 500
+                }, 400
 
             try:
                 key_pair, sg_name, ec2, vpc_sg, platform = create_ec2(
@@ -1015,14 +1023,14 @@ class ExportApp(Resource):
                     "result": "Error creating EC2",
                     "error": str(error),
                     "request": json_request
-                }, 500
+                }, 400
 
             if len(missing_keys) != 0:
                 return {
                     "result": "Please Provide the following details: ",
                     "required fields": missing_keys,
                     "request": json_request
-                }, 500
+                }, 400
 
             try:
                 create_app_dir(app_name, rds, user_credentials, config,
@@ -1032,7 +1040,7 @@ class ExportApp(Resource):
                         " app.",
                         "error": str(error),
                         "request": json_request,
-                        }, 500
+                        }, 400
             ec2 = deploy_to_aws(user_credentials, config, ec2, key_pair,
                                 platform)
             try:
@@ -1045,7 +1053,7 @@ class ExportApp(Resource):
                         rds['DBInstanceIdentifier'],
                         "error": str(error),
                         "request": json_request
-                        }, 500
+                        }, 400
 
             app_deployed = Deployments(
                 app_name=app_name,
@@ -1076,7 +1084,7 @@ class ExportApp(Resource):
                     "result": "Please Provide the following details: ",
                     "required fields": missing_keys,
                     "request": json_request
-                }, 500
+                }, 400
 
             # TO create the app json file for heroku
             app_json = {
@@ -1100,7 +1108,7 @@ class ExportApp(Resource):
                     "response": "Could not create app for Heroku.",
                     "error": str(error),
                     "request": json_request
-                }
+                }, 400
 
             file_location = os.sep.join(__file__.split(os.sep)[:-1])
 
@@ -1120,7 +1128,7 @@ class ExportApp(Resource):
                                  '/export/heroku_deploy.sh',
                                  app_deployed.lower()])
 
-            return {"response": "heroku app deployed."}
+            return {"response": "heroku app deployed."}, 200
 
         elif platform == 'local':
             if len(missing_keys) != 0:
@@ -1128,7 +1136,7 @@ class ExportApp(Resource):
                     "result": "Please Provide the following details: ",
                     "required fields": missing_keys,
                     "request": json_request
-                }, 500
+                }, 400
 
             try:
                 check_if_exist(app_name)
@@ -1136,7 +1144,7 @@ class ExportApp(Resource):
                 return {
                     "result": "Given app " + app_name + " doesn't exit.",
                     "request": request.get_json()
-                }, 500
+                }, 400
 
             create_app_dir(app_name,
                            rds=None,
@@ -1147,7 +1155,7 @@ class ExportApp(Resource):
                            )
 
         else:
-            return {"result": "Platform " + platform + " unsupported."}
+            return {"result": "Platform " + platform + " unsupported."}, 400
 
         return {
             "result": "App exported & deployed to " + platform + "."
@@ -1191,7 +1199,7 @@ class CreateNotifications(Resource):
                 "response": 'Currently we only create scripts for SMS '
                             'notifications though Twilio and E-mail though'
                             ' SendGrid.'
-            }, 404
+            }, 400
 
 
 class AdminDashboardStats(Resource):
@@ -1229,7 +1237,7 @@ class AdminDashboardStats(Resource):
                 return {
                     "result": "Error, filters are not available for this "
                               "resource"
-                }
+                }, 400
 
             else:
                 parent_dir = os.sep.join(__file__.split(os.sep)[:-2])
@@ -1241,7 +1249,7 @@ class AdminDashboardStats(Resource):
         else:
             return {
                 "result": "Error resource not created yet."
-            }, 404
+            }, 400
 
 
 api_admin.add_resource(AdminApi, '/admin_profile',
