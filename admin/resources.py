@@ -261,11 +261,6 @@ class ContentType(Resource):
                 except KeyError:
                     app_table_columns[app_name] = {table.name: column_list}
 
-                table_list.append({table.info['bind_key']: {
-                                                'table_name': table.name,
-                                                'columns': column_list,
-                                                }
-                                   })
                 table_list = app_table_columns
 
             else:
