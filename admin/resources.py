@@ -228,6 +228,7 @@ class ContentType(Resource):
                     continue
 
                 for column in table.columns:
+                    foreign_col = ''
                     if column.name in ['id', 'create_dt']:
                         continue
                     default = str(column.default)
@@ -237,21 +238,22 @@ class ContentType(Resource):
                         ].replace("'", "")
                     column_type = str(column.type)
                     foreign_key = str(column.foreign_keys)
-                    if column.foreign_keys != "":
+                    if foreign_key != set():
                         foreign_key = foreign_key[
                             foreign_key.find("(") + 1:foreign_key.find(")")
                         ].replace("'", "")
                         if foreign_key != "":
+                            foreign_col = foreign_key.split(".")[1]
                             foreign_key = foreign_key.split(".")[0].title()
                     if foreign_key != "":
-                        column_type = str(column.foreign_keys).split("}")[0][1:]  # noqa 501
+                        column_type = str(foreign_key).split("}")[0][1:]  # noqa 501
                     col = {
                         "name": column.name,
                         "type": column_type,
                         "nullable": str(bool(column.nullable)).lower(),
                         "unique": str(bool(column.unique)).lower(),
                         "default": default,
-                        "foreign_key": foreign_key
+                        "foreign_key": [foreign_key, foreign_col]
                     }
                     column_list.append(col)
 
