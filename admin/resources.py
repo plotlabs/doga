@@ -242,18 +242,15 @@ class ContentType(Resource):
                         foreign_key = foreign_key[
                             foreign_key.find("(") + 1:foreign_key.find(")")
                         ].replace("'", "")
-                        if foreign_key != "":
-                            foreign_col = foreign_key.split(".")[1]
-                            foreign_key = foreign_key.split(".")[0].title()
-                    if foreign_key != "":
-                        column_type = str(foreign_key).split("}")[0][1:]  # noqa 501
+                    # if foreign_key != [""]:
+                    #    column_type = str(foreign_key).split("}")[0][1:]  # noqa 501
                     col = {
                         "name": column.name,
                         "type": column_type,
                         "nullable": str(bool(column.nullable)).lower(),
                         "unique": str(bool(column.unique)).lower(),
                         "default": default,
-                        "foreign_key": [foreign_key, foreign_col]
+                        "foreign_key": foreign_key
                     }
                     column_list.append(col)
 
