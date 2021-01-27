@@ -119,7 +119,6 @@ def create_model(dir_path, data):
                 else:
                     line = line + ", server_default=text('" + str(
                         col["default"]) + "'))\n"
-        print(line)
         o.write(line)
     o.write(relationships)
     o.close()
@@ -463,58 +462,69 @@ def add_jwt_list(connection_name, database_name, table_name):
 def create_relationsips(app_name, relation_type, related_table, related_field,
                         current_table, current_field, col_type,
                         present_relationships=""):
+
+    directory = '/'.join(__file__.split('/')[:-2])
+
     try:
         if relation_type == 'one-many':
             present_relationships = present_relationships + '    ' + \
                 'parent = relationship("' + \
-                related_table.lower() + \
-                '", back_populates="' + \
-                related_field.title() + \
+                related_table.title() + \
+                '" ,secondary="' + \
+                current_table.lower() + \
+                '" , backref="' + \
+                current_table.lower() + \
                 '")\n'
 
         if relation_type == 'many-many':
-            class_name = related_table.Title() + \
-                current_table.Title() + \
-                related_field.Title()
+            class_name = related_table.title() + \
+                current_table.title() + \
+                related_field.title()
 
             right_id = related_table + "." + related_field.lower()
-            left_id = current_table + "." + current_field.lower()
+            left_id = current_table.lower() + "." + current_field.lower()
 
-            assoc_string = 'class GeneratedAssociation' + class_name + \
+            assoc_string = '\n\nclass GeneratedAssociation' + class_name + \
                 '(Base):\n' + \
                 '    __tablename__ = "generatedAssociation' + \
                 class_name + \
                 '"\n' + \
-                '    __bind_key__ = "' + connection + '"\n\n' + \
+                '    __bind_key__ = "' + app_name + '"\n\n' + \
                 '    id = Column(Integer, primary_key=True)\n' + \
                 '    left_id = Column(Text, ForeignKey("' + \
                 right_id + '"))\n' + \
                 '    right_id = Column(Text, ForeignKey("' + \
                 left_id + '"))\n'
 
-            f = open('app/' + app_name + '/' + current_table +
+            f = open(directory + '/app/' + app_name + '/' +
+                     current_table.lower() +
                      '/models.py', 'a')
             f.write(assoc_string)
 
         if relation_type == 'one-one':
 
-            f = open('app/' + app_name + '/' + related_table +
+            f = open(directory + '/app/' + app_name + '/' + related_table +
                      '/models.py', "r+")
             f.seek(0)
             contents = f.readlines()
             contents[-1] = present_relationships + '    ' + \
-                related_field + ' = relationship("' + \
+                'relation_' + related_field + ' = relationship("' + \
                 related_table.title() + \
-                '", backref ="' + current_table.lower() +\
+                '" ,secondary="' + \
+                current_table.lower() + \
+                '" , backref="' + \
+                current_table.lower() + \
                 '")\n'
 
             f.seek(0)
             f.write(''.join(contents))
 
         if relation_type == 'many-one':
-            f = open('app/' + app_name + '/' +
+
+            f = open(directory + '/app/' + app_name + '/' +
                      related_table + '/models.py', 'r+')
 
+            f.seek(0)
             lines = f.readlines()
             f.seek(0)
 
@@ -522,18 +532,18 @@ def create_relationsips(app_name, relation_type, related_table, related_field,
             current_key = current_table.lower() + "." + current_field
 
             for line in lines:
-                if related_key in line:
-                    print(line)
-                    line = line[:-1] + ", ForeignKey('" + current_key + \
-                        "'" + ')\n'
+                if related_field in line:
+                    line = ','.join(line.split(',').insert(2, " ForeignKey('" +
+                                                           current_key +
+                                                           "'" + ')\n'))
                 f.write(line)
             # create back_populates on the child
             present_relationships = present_relationships + '    ' + \
-                current_field + ' = relationship("' + \
-                related_table + \
-                                '", back_populates=' + '"' + \
-                                current_field + r'")\m'
-    except FileNotFoundError as err:
+                'relation_' + current_filed.lower() + ' = relationship("' + \
+                related_table.title() + \
+                '", backref =' + '"' + \
+                current_table.lower() + '")\n'
+    except KeyError as err:
         raise RelatedContentNotFound("The table " +
                                      str(list(err.args)[0]) +
                                      " was not found.")
