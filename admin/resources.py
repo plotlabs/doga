@@ -145,7 +145,7 @@ class Login(Resource):
                 return {"result": "Admin does not exist."}, 404
             else:
                 match = ALGORITHM.verify(data["password"], admin.password)
-                expiry_time = datetime.timedelta(minutes=30)
+                expiry_time = datetime.timedelta(hours=4)
                 if not match:
                     return {"result": "Invalid password."}, 401
                 else:
@@ -758,13 +758,13 @@ class DatabaseInit(Resource):
                          "password", "database_name"}
         missed_keys = required_keys.difference(json_request)
 
-        json_request['connection_name'] = json_request['database_name'].lower()
-
         if len(missed_keys) != 0:
             return {
                 "result": "Values for fields cannot be null",
                 "required values": list(missed_keys)
             }, 500
+
+        json_request['connection_name'] = json_request['database_name'].lower()
 
         try:
             database = DatabaseObject.from_dict(json_request)
