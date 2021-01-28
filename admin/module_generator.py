@@ -53,7 +53,6 @@ def create_model(dir_path, data):
     for col in data['columns']:
         if col["name"] == "id":
             pass
-
         try:
             relation = col['relationship']
             relation_type = relation['relationship_type']
@@ -79,9 +78,7 @@ def create_model(dir_path, data):
                                                     relationships
                                                     )
             except RelatedContentNotFound as err:
-                return {
-                    "result": list(err.args)[0]
-                }, 500
+                pass
 
         except KeyError as error:
             relation_type = None
@@ -257,7 +254,6 @@ def check_column(table_name, column_name, column_type, connection_name=''):
                         raise TypeError("Foreign key can only be allowed"
                                         " types", allowed_foreign_keys)
                     if column_type != str(column_.type):
-                        print(column_type)
                         raise TypeError("Foreign key and column must have "
                                         "same type.")
                     exist = True
@@ -470,8 +466,6 @@ def create_relationsips(app_name, relation_type, related_table, related_field,
             present_relationships = present_relationships + '    ' + \
                 'parent = relationship("' + \
                 related_table.title() + \
-                '" ,secondary="' + \
-                current_table.lower() + \
                 '" , backref="' + \
                 current_table.lower() + \
                 '")\n'

@@ -200,7 +200,6 @@ class Apis(Resource):
                             foreign_obj = requests.get(
                                 'http://{}:{}/'.format(HOST, PORT)
                                 + module_endp
-                                + '/' + model_endp.title()
                                 + '/' + str(data[col.name]))
 
                             result = json.loads(foreign_obj.content)[
