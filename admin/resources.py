@@ -232,18 +232,20 @@ class ContentType(Resource):
                     if column.name in ['id', 'create_dt']:
                         continue
                     default = str(column.default)
-                    if column.default is not None:
-                        default = default[
-                            default.find("(") + 1:default.find(")")
-                        ].replace("'", "")
+                    if column.server_default is not None:
+                        default = column.server_default.arg
                     column_type = str(column.type)
                     foreign_key = str(column.foreign_keys)
                     if foreign_key != set():
                         foreign_key = foreign_key[
                             foreign_key.find("(") + 1:foreign_key.find(")")
                         ].replace("'", "")
-                    # if foreign_key != [""]:
-                    #    column_type = str(foreign_key).split("}")[0][1:]  # noqa 501
+
+                    try:
+                        default = int(str(default))
+                    except ValueError:
+                        pass
+
                     col = {
                         "name": column.name,
                         "type": column_type,
@@ -305,6 +307,23 @@ class ContentType(Resource):
 
         if table_list == []:
             return {"result": "No apps and content created yet."}, 200
+
+        for bind_key, _ in table_list.items():
+            jwt_base = JWT.query.filter_by(connection_name=bind_key).first()
+            if jwt_base is not None:
+                table_list[bind_key]['jwt_info'] = {
+                    'base_table': jwt_base.table,
+                    'filter_keys': jwt_base.filter_keys
+                }
+
+            restricted_tables = Restricted_by_JWT.query.filter_by(
+                                        connection_name=bind_key).first()
+
+            if restricted_tables is not None:
+                table_list[bind_key]['jwt_info'] = \
+                    table_list[bind_key]['jwt_info'] + {
+                    'restricted_tables': restricted_tables.restricted_tables
+                }
 
         return jsonify(table_list)
         # return {"result": table_list}
