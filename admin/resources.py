@@ -313,7 +313,7 @@ class ContentType(Resource):
             if jwt_base is not None:
                 table_list[bind_key]['jwt_info'] = {
                     'base_table': jwt_base.table,
-                    'filter_keys': jwt_base.filter_keys
+                    'filter_keys': jwt_base.filter_keys.split(",")
                 }
 
             restricted_tables = Restricted_by_JWT.query.filter_by(

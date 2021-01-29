@@ -355,7 +355,8 @@ def validate_filter_keys_jwt(filter_keys, columns):
         return True
     for col in columns:
         if col["name"] in filter_keys:
-            if col["unique"] == 'True' and col["nullable"] == 'False':
+            if str(col["unique"]).lower() == 'true' and \
+                 str(col["nullable"]).lower() == 'false':
                 return True
     return False
 
