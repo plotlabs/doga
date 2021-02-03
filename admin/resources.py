@@ -215,7 +215,7 @@ class ContentType(Resource):
                     continue
 
                 if table.name in ["jwt", "admin", "restricted_by_jwt",
-                                  "Deployments"] and\
+                                  "Deployments", "Relationships"] and\
                         table.info['bind_key'] == "default":
                     continue
 
@@ -321,7 +321,7 @@ class ContentType(Resource):
 
             if restricted_tables is not None:
                 table_list[bind_key]['jwt_info']['restricted_tables'] = \
-                     restricted_tables.restricted_tables
+                     restricted_tables.restricted_tables.split(",")
 
         return jsonify(table_list)
         # return {"result": table_list}
