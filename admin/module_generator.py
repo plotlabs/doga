@@ -126,7 +126,7 @@ def create_resources(model_name, connection_name, dir_path, base_jwt,
     """Function to create the CRUD Restful APIs for the module"""
     o = open(dir_path + "/resources.py", "w")
 
-    if base_jwt in [True, "True"]:
+    if base_jwt in [True, "True", "true"]:
         for line in open("templates/jwt_resource.py"):
             line = line.replace("modulename", model_name)
             line = line.replace("module_endp", model_name.title().split('.')[0])  # noqa E401
@@ -150,6 +150,14 @@ def create_resources(model_name, connection_name, dir_path, base_jwt,
                     connection_name=connection_name).first()
                 base_table = base_jwt.table
                 db_name = base_jwt.database_name
+
+                # fix import statements
+
+                if line == 'from flask_jwt_extended import jwt_required\n':
+                    line = 'from flask_jwt_extended import (jwt_required, create_access_token, create_refresh_token, get_jwt_identity)\n'  # noqa 501
+
+                if line == 'from app.utils import AlchemyEncoder\n':
+                    line = 'from app.utils import AlchemyEncoder, verify_jwt\n'
 
                 verify_jwt = '        if not verify_jwt(get_jwt_identity(), ' \
                              + base_table.title() + '):\n'

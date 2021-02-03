@@ -124,7 +124,15 @@ def create_export_files(platform, parent_dir, app_name, deploy, rds_engine,
                     s = file
                     d = parent_dir + '/exported_app/' + file
                     os.makedirs(os.path.dirname(d), exist_ok=True)
-                    shutil.copy2(s, d)
+                    contents = open(s, 'r').readlines()
+
+                    for line in contents:
+                        if app_name in line:
+                            dbs = 'DB_DICT = {\n' + line + '}\n'
+                        if 'AlembicVersion' + app_name.title() in line:
+                            alembic_list = 'ALEMBIC_LIST = [\n' + line + ']\n'
+                    open(d, 'w+').write(dbs + '\n' + alembic_list)
+
         elif file == 'runserver.py':
             s = file
             d = parent_dir + '/exported_app/' + file

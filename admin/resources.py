@@ -320,10 +320,8 @@ class ContentType(Resource):
                                         connection_name=bind_key).first()
 
             if restricted_tables is not None:
-                table_list[bind_key]['jwt_info'] = \
-                    table_list[bind_key]['jwt_info'] + {
-                    'restricted_tables': restricted_tables.restricted_tables
-                }
+                table_list[bind_key]['jwt_info']['restricted_tables'] = \
+                     restricted_tables.restricted_tables
 
         return jsonify(table_list)
         # return {"result": table_list}
@@ -720,10 +718,10 @@ class DatabaseInit(Resource):
             if value.startswith("sqlite"):
                 database_name = value.split("/")[-1].rstrip('.db')
                 database_type = "sqlite"
-                host = ""
-                port = ""
-                username = ""
-                password = ""
+                host = "local"
+                port = None
+                username = None
+                password = None
             elif value.startswith("mysql"):
                 database_name = value.split("/")[-1].split("?")[0]
                 database_type = "mysql"
