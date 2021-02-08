@@ -69,3 +69,17 @@ class Deployments(Base):
     status = Column(String(255), nullable=False)
     # ID of the things & other dicts
     deployment_info = Column(String(1000))
+
+
+class Relationship(Base):
+    """ Defines a table Relationships to store the deployed apps and where they
+    have been deployed
+    """
+    __tablename__ = 'Relationships'
+    __bind_key__ = 'default'
+
+    id = Column(Integer, primary_key=True)
+    app_name = Column(String(255))
+    table1_column = Column(String(255), nullable=False)
+    relationship = Column(String(255), nullable=False)
+    table2_column = Column(String(255), nullable=False)

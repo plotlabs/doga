@@ -21,8 +21,8 @@ def check_if_exist(app_name):
         raise DogaAppNotFound(error)
 
 
-def create_export_files(platform, parent_dir, app_name, deploy, rds_engine,
-                        rds, user_credentials, config):
+def create_export_files(platform, parent_dir, dest_dir, app_name, deploy,
+                        rds_engine, rds, user_credentials, config):
     to_copy = [
             'app/utils.py',
             'app/__init__.py',  # to ad db.create-all()
@@ -47,11 +47,14 @@ def create_export_files(platform, parent_dir, app_name, deploy, rds_engine,
     if is_jwt is None:
         is_jwt is False
 
+    if dest_dir is None:
+        dest_dir = parent_dir
+
     # copy app endpoints and resources
     for file in os.listdir(parent_dir + '/app/' + app_name):
         s = os.path.join(parent_dir + '/app/' + app_name, file)
         d = os.path.join(
-            parent_dir +
+            dest_dir +
             '/exported_app/app/' +
             app_name,
             file)
@@ -68,29 +71,29 @@ def create_export_files(platform, parent_dir, app_name, deploy, rds_engine,
                 create_requirements(
                     rds_engine,
                     parent_dir + '/templates/export/requirements',
-                    parent_dir + '/exported_app'
+                    dest_dir + '/exported_app'
                 )
             else:
                 create_requirements(
                     rds_engine,
                     parent_dir + '/templates/export/requirements',
-                    parent_dir + '/exported_app'
+                    dest_dir + '/exported_app'
                 )
         elif file == 'Dockerfile':
             create_dockerfile(
                 PORT,
                 parent_dir + '/templates/export/Dockerfile',
-                parent_dir + '/exported_app/Dockerfile'
+                dest_dir + '/exported_app/Dockerfile'
             )
         elif file == 'blueprints.py':
             export_blueprints(
                 app_name,
                 parent_dir + '/app/blueprints.py',
-                parent_dir + '/exported_app/app/blueprints.py'
+                dest_dir + '/exported_app/app/blueprints.py'
             )
         elif file == 'config.py':
             s = parent_dir + '/' + file
-            d = parent_dir + '/exported_app/' + file
+            d = dest_dir + '/exported_app/' + file
             os.makedirs(os.path.dirname(d), exist_ok=True)
             shutil.copy2(s, d)
 
@@ -122,7 +125,7 @@ def create_export_files(platform, parent_dir, app_name, deploy, rds_engine,
                     )
                 else:
                     s = file
-                    d = parent_dir + '/exported_app/' + file
+                    d = dest_dir + '/exported_app/' + file
                     os.makedirs(os.path.dirname(d), exist_ok=True)
                     contents = open(s, 'r').readlines()
 
@@ -135,7 +138,7 @@ def create_export_files(platform, parent_dir, app_name, deploy, rds_engine,
 
         elif file == 'runserver.py':
             s = file
-            d = parent_dir + '/exported_app/' + file
+            d = dest_dir + '/exported_app/' + file
             os.makedirs(os.path.dirname(d), exist_ok=True)
             shutil.copy2(s, d)
 
@@ -154,7 +157,7 @@ def create_export_files(platform, parent_dir, app_name, deploy, rds_engine,
 
         elif file == 'app/__init__.py':
             s = file
-            d = parent_dir + '/exported_app/' + file
+            d = dest_dir + '/exported_app/' + file
             os.makedirs(os.path.dirname(d), exist_ok=True)
             shutil.copy2(s, d)
 
@@ -162,7 +165,7 @@ def create_export_files(platform, parent_dir, app_name, deploy, rds_engine,
                 f.write("\ndb.create_all()\n")
         elif file == 'app/utils.py':
             s = file
-            d = parent_dir + '/exported_app/' + file
+            d = dest_dir + '/exported_app/' + file
             os.makedirs(os.path.dirname(d), exist_ok=True)
             shutil.copy2(s, d)
 
@@ -183,7 +186,7 @@ def create_export_files(platform, parent_dir, app_name, deploy, rds_engine,
                     f.write(line)
         else:
             s = file
-            d = parent_dir + '/exported_app/' + file
+            d = dest_dir + '/exported_app/' + file
             os.makedirs(os.path.dirname(d), exist_ok=True)
             shutil.copy2(s, d)
 
@@ -216,9 +219,21 @@ def create_app_dir(
             raise DogaHerokuDeploymentError("Only a managed postgres db can"
                                             " be provisioned")
 
-        create_export_files(platform, parent_dir, app_name, deploy, db_engine,
-                            None, None, None)
+        create_export_files(platform, parent_dir, None, app_name, deploy,
+                            db_engine, None, None, None)
+
+    elif platform == 'local':
+
+        path = kwargs['path']
+        try:
+            db_engine = extract_engine_or_fail(app_name)
+        except DogaAppNotFound:
+            return
+
+        create_export_files(platform, parent_dir, path, app_name, False,
+                            db_engine, None, None, None)
+
     else:
-        create_export_files(platform, parent_dir, app_name, False,
+        create_export_files(platform, parent_dir, None, app_name, False,
                             rds['Engine'].lower(), rds, user_credentials,
                             config)

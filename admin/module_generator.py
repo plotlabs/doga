@@ -5,7 +5,7 @@ from sqlalchemy.exc import OperationalError, ProgrammingError
 
 from admin.version_models import *
 from dbs import ALEMBIC_LIST, DB_DICT
-from admin.models import JWT, Restricted_by_JWT
+from admin.models import JWT, Restricted_by_JWT, Relationship
 from admin.utils import extract_database_name
 from admin.errors import *
 
@@ -68,6 +68,15 @@ def create_model(dir_path, data):
                 col["foreign_key"] = relation['related_table'].lower() + "." +\
                     relation['related_field'].lower()
             try:
+                relationships = Relationship.query.all()
+                if relationships is None:
+                    relation = Relationship(
+                            app_name=app_name,
+                            table1_column=relation['related_table'],
+                            relationship=relation['related_field'],
+                            table2_column=col["name"]
+                            )
+                    db.session.add(relation)
                 relationships = create_relationsips(app_name,
                                                     relation_type,
                                                     relation['related_table'],
@@ -77,6 +86,7 @@ def create_model(dir_path, data):
                                                     col['type'],
                                                     relationships
                                                     )
+
             except RelatedContentNotFound as err:
                 pass
 
