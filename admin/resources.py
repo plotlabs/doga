@@ -316,12 +316,12 @@ class ContentType(Resource):
                     'filter_keys': jwt_base.filter_keys.split(",")
                 }
 
-            restricted_tables = Restricted_by_JWT.query.filter_by(
+                restricted_tables = Restricted_by_JWT.query.filter_by(
                                         connection_name=bind_key).first()
 
-            if restricted_tables is not None:
-                table_list[bind_key]['jwt_info']['restricted_tables'] = \
-                     restricted_tables.restricted_tables.split(",")
+                if restricted_tables is not None:
+                    table_list[bind_key]['jwt_info']['restricted_tables'] = \
+                        restricted_tables.restricted_tables.split(",")
 
         return jsonify(table_list)
         # return {"result": table_list}
@@ -1075,7 +1075,7 @@ class ExportApp(Resource):
             db.session.add(app_deployed)
             db.session.commit()
 
-        elif platform == '  ':
+        elif platform == 'heroku':
 
             try:
                 provision_db = json_request['provision_db']
@@ -1109,7 +1109,7 @@ class ExportApp(Resource):
             try:
                 create_app_dir(app_name,
                                rds=None,
-                               user_credentails=None,
+                               user_credentials=None,
                                config=None,
                                platform=platform,
                                **{'deploy_db': deploy}
@@ -1157,19 +1157,24 @@ class ExportApp(Resource):
                     "request": request.get_json()
                 }, 400
 
+            try:
+                path = json_request['path']
+            except KeyError as err:
+                path = None
+
             create_app_dir(app_name,
                            rds=None,
                            user_credentials='none',
                            config=None,
-                           platform='heroku',
-                           **{'deploy_db': False}
+                           platform='local',
+                           **{'path': path}
                            )
 
         else:
             return {"result": "Platform " + platform + " unsupported."}, 400
 
         return {
-            "result": "App exported & deployed to " + platform + "."
+            "result": "App exported & to " + platform + " at " + path + " ."
         }, 200
 
 
@@ -1217,8 +1222,12 @@ class AdminDashboardStats(Resource):
     """
     Endpoint to return information that should be displayed to the Admin
     """
-
+    @jwt_required
     def get(self, section, filter=None):
+
+        if not verify_jwt(get_jwt_identity(), Admin):
+            return {"result": "JWT authorization invalid, user does not"
+                    " exist."}
 
         result = {}
         if section.lower() == "db":
