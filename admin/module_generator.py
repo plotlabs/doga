@@ -184,12 +184,12 @@ def create_resources(model_name, connection_name, dir_path, base_jwt,
                     + condn)
                 line = line.replace(
                     "def put(self, id):",
-                    "@jwt_required\n    def put(self, id):\n        "
-                    "verify_jwt()\n" + verify_jwt + condn)
+                    "@jwt_required\n    def put(self, id):\n" + verify_jwt
+                    + condn)
                 line = line.replace(
                     "def delete(self, id):",
-                    "@jwt_required\n    def delete(self, id):\n        "
-                    "verify_jwt()\n" + verify_jwt + condn)
+                    "@jwt_required\n    def delete(self, id):\n" + verify_jwt
+                    + condn)
                 line = line.replace("param", '"/<int:id>"')
                 line = line.replace(
                     "REPLACE_IF_JWT",
