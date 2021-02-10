@@ -68,7 +68,6 @@ class Deployments(Base):
     platfrom = Column(String(255), nullable=False)
     status = Column(String(255), nullable=False)
     # ID of the things & other dicts
-    deployment_info = Column(String(1000))
     create_dt = Column(DateTime(), server_default=text('CURRENT_TIMESTAMP'))
 
 
