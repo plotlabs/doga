@@ -1,7 +1,12 @@
+import os
+
+from app import db
+
 from admin.export.utils import *
 from admin.export.errors import DogaHerokuDeploymentError, DogaAppNotFound
 
-from admin.models import JWT
+from admin.models import JWT, Deployments
+from admin.export.css_helper import *
 
 from config import PORT
 
@@ -24,15 +29,15 @@ def check_if_exist(app_name):
 def create_export_files(platform, parent_dir, dest_dir, app_name, deploy,
                         rds_engine, rds, user_credentials, config):
     to_copy = [
-            'app/utils.py',
-            'app/__init__.py',  # to ad db.create-all()
-            'runserver.py',
-            'blueprints.py',
-            'requirements.txt',
-            'Dockerfile',
-            'config.py',
-            'dbs.py',
-        ]
+        'app/utils.py',
+        'app/__init__.py',
+        'runserver.py',
+        'blueprints.py',
+        'requirements.txt',
+        'Dockerfile',
+        'config.py',
+        'dbs.py',
+    ]
 
     if platform == 'heroku':
         try:
@@ -149,7 +154,7 @@ def create_export_files(platform, parent_dir, dest_dir, app_name, deploy,
                 for line in lines:
                     line = line.replace(
                         'from admin.utils import set_jwt_secret_key', ''
-                        )
+                    )
                     line = line.replace(
                         'set_jwt_secret_key()', ''
                     )
@@ -189,6 +194,9 @@ def create_export_files(platform, parent_dir, dest_dir, app_name, deploy,
             d = dest_dir + '/exported_app/' + file
             os.makedirs(os.path.dirname(d), exist_ok=True)
             shutil.copy2(s, d)
+
+    create_docs(platform, parent_dir, dest_dir, app_name, deploy,
+                rds_engine, rds, user_credentials, config)
 
 
 def create_app_dir(
@@ -237,3 +245,42 @@ def create_app_dir(
         create_export_files(platform, parent_dir, None, app_name, False,
                             rds['Engine'].lower(), rds, user_credentials,
                             config)
+
+
+def write_to_deployments(app_name, platform):
+    old_entry = Deployments.query.filter_by(app_name=app_name).first()
+    if old_entry is None:
+        app_deployed = Deployments(
+            app_name=app_name,
+            platfrom=platform,
+            status='Not Fetched Yet',
+            exports=1
+        )
+    else:
+        app_deployed = Deployments(
+            app_name=app_name,
+            platfrom=platform,
+            status='Not Fetched Yet',
+            exports=old_entry.exports+1
+        )
+
+    db.session.add(app_deployed)
+    db.session.commit()
+    return app_deployed
+
+
+def create_docs(platform, parent_dir, dest_dir, app_name, deploy,
+                rds_engine, rds, user_credentials, config):
+
+    # create file with title
+    dest = create_docs_page(app_name, parent_dir, dest_dir)
+
+    # add stylesheet
+    create_stylesheet(dest)
+
+    # explain docs
+    add_body(app_name, dest, platform)
+
+    # add html doc to Flaskapp
+
+    # return

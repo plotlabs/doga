@@ -26,7 +26,8 @@ from admin.validators import (column_types, column_validation, nullable_check,
                               foreign_key_options)
 
 from admin.export.utils import *
-from admin.export.exportapp import create_app_dir, check_if_exist
+from admin.export.exportapp import (create_app_dir, check_if_exist,
+                                    write_to_deployments)
 
 from app.utils import AlchemyEncoder, verify_jwt
 from templates.models import metadata
@@ -1066,15 +1067,6 @@ class ExportApp(Resource):
                         "request": json_request
                         }, 400
 
-            app_deployed = Deployments(
-                app_name=app_name,
-                platfrom=platform,
-                status='Not Fetched Yet',
-                deployment_info="Not written"
-            )
-            db.session.add(app_deployed)
-            db.session.commit()
-
         elif platform == 'heroku':
 
             try:
@@ -1173,8 +1165,20 @@ class ExportApp(Resource):
         else:
             return {"result": "Platform " + platform + " unsupported."}, 400
 
+        if platform == 'local':
+            if path is None:
+                path = '/'.join(__file__.split('/')[:-2]) + '/exported_app/'
+
+            write_to_deployments(app_name, platform)
+            return {
+                    "result": "App exported & to " + platform + " at " + path
+                              + "."
+                }, 200
+
+        write_to_deployments(app_name, platform)
+
         return {
-            "result": "App exported & to " + platform + " at " + path + " ."
+            "result": "App exported & to " + platform + "."
         }, 200
 
 
@@ -1285,10 +1289,38 @@ class AdminDashboardStats(Resource):
                     app_info['jwt_info']['no_restricted_tables'] = \
                         len(restricted_tables)
 
+                app_info['tables'] = []
                 for _, table in tables[filter].items():
-                    app_info[table.name] = {'no_fields': len(table.columns)}
+                    table_d = {}
+                    table_d['table_name'] = table.name
+                    table_d['no_fields'] = len(table.columns)
+                    table_d['columns'] = table.columns.keys()
+                    app_info['tables'].append(table_d)
 
-                app_info['db_type'] = extract_database_name(filter)
+                deployment_info = Deployments.query.filter_by(app_name=filter
+                                                              ).first()
+
+                if deployment_info is not None:
+                    timestamp = '{DD}-{M}-{YY} {HH}:{MM}:{SS}'.format(
+                        DD=deployment_info.create_dt.day,
+                        M=deployment_info.create_dt.month,
+                        YY=deployment_info.create_dt.year,
+                        HH=deployment_info.create_dt.hour,
+                        MM=deployment_info.create_dt.minute,
+                        SS=deployment_info.create_dt.second)
+                    app_info['deployment_info'] = {
+                        "most_recent_deployment": timestamp,
+                        "platform": deployment_info.platfrom,
+                        "total_no_exports": deployment_info.exports
+                    }
+                else:
+                    app_info['deployment_info'] = {
+                        "most_recent_deployment": None,
+                        "platform": None,
+                        "total_no_exports": 0
+                    }
+
+                app_info['db_type'] = extract_engine_or_fail(filter)
                 app_info['number_of_tables'] = len(tables[filter])
                 app_info['type'] = app_type
                 return app_info
