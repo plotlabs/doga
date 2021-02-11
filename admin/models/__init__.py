@@ -34,6 +34,7 @@ class JWT(Base):
 
     database_name = Column(String(255), nullable=False, unique=False)
     table = Column(String(255), nullable=False, unique=False)
+    filter_keys = Column(String(255), nullable=False, unique=False)
     UniqueConstraint('database_name', 'table', name='uix_1')
 
     # confirm length for the filter key fields ( and find a better way
@@ -68,6 +69,7 @@ class Deployments(Base):
     platfrom = Column(String(255), nullable=False)
     status = Column(String(255), nullable=False)
     # ID of the things & other dicts
+    exports = Column(Integer, nullable=False)
     create_dt = Column(DateTime(), server_default=text('CURRENT_TIMESTAMP'))
 
 
