@@ -107,14 +107,17 @@ def add_body(app_name, dest, platform):
 
         if level == 'h1':
             if platform == 'local':
-                info.append('Availeble Endpoints for ' + app_type + ' API.')
+                info.append(app_name.title() + ': ' + app_type + ' API Docs')
         if level == 'h2':
             if app_type == 'JWT Authenticated':
                 base_table = jwt_configured.table
                 if restricted_tables is not None:
                     locked_tables = restricted_tables.restricted_tables \
                                    .split(',')
-                info.append('The app provides the user with a base table ' + \
+                info.append('The docs cover the endpoints available, ' +
+                            'table-wise as well as relationships if any were' +
+                            'defined.' +
+                            'The app provides the user with a base table ' +
                             base_table)
                 tables.remove(base_table)
 
@@ -154,9 +157,8 @@ def add_body(app_name, dest, platform):
         content[loc:loc] = info
         loc = loc + len(info)
 
-
         if para_text != '':
-            tag_text()
+            para_text = tag_text('p', para_text)
             loc = loc + 1
 
     htmlfile.seek(0)

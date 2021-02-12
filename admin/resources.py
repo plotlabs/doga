@@ -318,7 +318,7 @@ class ContentType(Resource):
                 }
 
                 restricted_tables = Restricted_by_JWT.query.filter_by(
-                                        connection_name=bind_key).first()
+                    connection_name=bind_key).first()
 
                 if restricted_tables is not None:
                     table_list[bind_key]['jwt_info']['restricted_tables'] = \
@@ -1171,9 +1171,9 @@ class ExportApp(Resource):
 
             write_to_deployments(app_name, platform)
             return {
-                    "result": "App exported & to " + platform + " at " + path
-                              + "."
-                }, 200
+                "result": "App exported & to " + platform + " at " + path
+                + "."
+            }, 200
 
         write_to_deployments(app_name, platform)
 
@@ -1260,8 +1260,8 @@ class AdminDashboardStats(Resource):
 
             tables = {table.info['bind_key']: {
                 table.name: table
-                    } for table in metadata.sorted_tables
-                }
+            } for table in metadata.sorted_tables
+            }
 
             if filter in tables.keys():
                 app_info = {}
@@ -1275,11 +1275,11 @@ class AdminDashboardStats(Resource):
                     app_info['jwt_info'] = {
                         'base_table': jwt_base.table,
                         'filter_keys': jwt_base.filter_keys.split(","),
-                        }
+                    }
                     app_type = 'JWT'
                 restricted_tables = Restricted_by_JWT.query.filter_by(
-                                        connection_name=filter
-                                        ).first()
+                    connection_name=filter
+                ).first()
 
                 if restricted_tables is not None:
                     restricted_tables = restricted_tables.\
@@ -1319,6 +1319,16 @@ class AdminDashboardStats(Resource):
                         "platform": None,
                         "total_no_exports": 0
                     }
+
+                relationship = Relationship.query.filter_by(app_name=filter).all()
+
+                if relationship is not None:
+                    r = {}
+                    for rel in relationship:
+                        r[rel.relationship] = rel
+                    app_info['relationship'] = [r for r in r.keys()]
+                else:
+                    app_info['relationship'] = None
 
                 app_info['db_type'] = extract_engine_or_fail(filter)
                 app_info['number_of_tables'] = len(tables[filter])
