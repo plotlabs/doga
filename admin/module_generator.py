@@ -1,6 +1,7 @@
 import os
 import shutil
 
+from sqlalchemy import or_, and_
 from sqlalchemy.exc import OperationalError, ProgrammingError
 
 from admin.version_models import *
@@ -8,6 +9,8 @@ from dbs import ALEMBIC_LIST, DB_DICT
 from admin.models import JWT, Restricted_by_JWT, Relationship
 from admin.utils import extract_database_name
 from admin.errors import *
+
+from app import db
 
 
 def create_dir(model_name):
@@ -56,36 +59,79 @@ def create_model(dir_path, data):
         try:
             relation = col['relationship']
             relation_type = relation['relationship_type']
+
             relations = ['one-one', 'many-one', 'many-many', 'one-many']
             if relation_type not in relations:
                 return {"result": "Relation type for column" +
                                   col["name"] +
                                   "must be of type " +
                                   ','.join(relations)}
+
             if relation_type in ['one-one', 'one-many']:
                 # TODO: what if user has their own foreign key too
                 # deal with a list of foreign keys
                 col["foreign_key"] = relation['related_table'].lower() + "." +\
                     relation['related_field'].lower()
+
             try:
-                relationships = Relationship.query.all()
-                if relationships is None:
-                    relation = Relationship(
-                            app_name=app_name,
-                            table1_column=relation['related_table'],
-                            relationship=relation['related_field'],
-                            table2_column=col["name"]
-                            )
-                    db.session.add(relation)
-                relationships = create_relationsips(app_name,
-                                                    relation_type,
-                                                    relation['related_table'],
-                                                    relation['related_field'],
-                                                    data['table_name'],
-                                                    col["name"],
-                                                    col['type'],
-                                                    relationships
-                                                    )
+                table1_column = data['table_name'] + ',' + col['name']
+                table2_column = relation['related_table'] + ',' + \
+                    relation['related_field']
+
+                relationships_t = Relationship.query.filter(
+                    and_(
+                        or_(
+                            and_(
+                                Relationship.table1_column == table1_column,
+                                Relationship.table2_column == table2_column,
+                            ),
+                            and_(
+                                Relationship.table1_column == table2_column,
+                                Relationship.table2_column == table1_column,
+                            ),
+                        ),
+                        Relationship.app_name == app_name
+                    )
+                ).all()
+                print(
+                    Relationship.query.filter(
+                        and_(
+                            Relationship.table1_column == table1_column,
+                            Relationship.app_name == app_name)))
+                print(relationships_t)
+                if relationships_t == []:
+                    relation_obj = Relationship(
+                        app_name=app_name,
+                        table1_column=relation['related_table'],
+                        relationship=relation['relationship_type'],
+                        table2_column=col["name"]
+                    )
+                    db.session.add(relation_obj)
+                    db.session.commit()
+                    relationships = create_relationsips(
+                        app_name,
+                        relation_type,
+                        relation['related_table'],
+                        relation['related_field'],
+                        data['table_name'],
+                        col["name"],
+                        col['type'],
+                        relationships,
+                        False)
+                else:
+                    # if exits check
+                    relationships = create_relationsips(
+                        app_name,
+                        relation_type,
+                        relation['related_table'],
+                        relation['related_field'],
+                        data['table_name'],
+                        col["name"],
+                        col['type'],
+                        relationships,
+                        True,
+                        **{'relation': relationships_t}
+                    )
 
             except RelatedContentNotFound as err:
                 pass
@@ -122,7 +168,7 @@ def create_model(dir_path, data):
                             col["default"]) + "'))\n"
                     else:
                         line = line + ", server_default='" + str(
-                            col["default"]) + "')\n"
+                            col["default"]) + "'))\n"
                 else:
                     line = line + ", server_default=text('" + str(
                         col["default"]) + "'))\n"
@@ -374,7 +420,7 @@ def validate_filter_keys_jwt(filter_keys, columns):
     for col in columns:
         if col["name"] in filter_keys:
             if str(col["unique"]).lower() == 'true' and \
-                 str(col["nullable"]).lower() == 'false':
+                    str(col["nullable"]).lower() == 'false':
                 return True
     return False
 
@@ -476,7 +522,8 @@ def add_jwt_list(connection_name, database_name, table_name):
 
 def create_relationsips(app_name, relation_type, related_table, related_field,
                         current_table, current_field, col_type,
-                        present_relationships=""):
+                        present_relationships="", related_before=False,
+                        **kwargs):
 
     directory = '/'.join(__file__.split('/')[:-2])
 
@@ -546,13 +593,17 @@ def create_relationsips(app_name, relation_type, related_table, related_field,
 
             for line in lines:
                 if related_field in line:
-                    line = ','.join(line.split(',').insert(2, " ForeignKey('" +
-                                                           current_key +
-                                                           "'" + ')\n'))
+                    f_key_ = " ForeignKey('" + current_key + "'" + ')'
+                    split_line = line.split(',')
+                    if f_key_ in split_line:
+                        pass
+                    else:
+                        split_line[1:1] = [f_key_]
+                        line = ','.join(split_line)
                 f.write(line)
             # create back_populates on the child
             present_relationships = present_relationships + '    ' + \
-                'relation_' + current_filed.lower() + ' = relationship("' + \
+                'relation_' + current_field.lower() + ' = relationship("' + \
                 related_table.title() + \
                 '", backref =' + '"' + \
                 current_table.lower() + '")\n'
