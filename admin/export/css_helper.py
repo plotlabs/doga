@@ -68,7 +68,7 @@ def css_generator(placeholder, text, color, alignment, **kwargs):
                 pass
 
 
-def tag_text(tag: str, text: str)-> str:
+def tag_text(tag: str, text: str) -> str:
     return '<' + tag + '>' + text + '</' + tag + '>\n'
 
 
@@ -100,7 +100,7 @@ def add_body(app_name, dest, platform):
             } for table in metadata.sorted_tables
         }
 
-    tables = tables[app_type]
+    tables = tables[app_name]
 
     for level in DOCS_THEME.keys():
         info = ['<' + level + '>']
@@ -125,8 +125,10 @@ def add_body(app_name, dest, platform):
                 info.append('The app provides public assess to the'
                             ' following tables :\n')
                 table_info = ''
-                for i in range(len(tables)):
-                    table_info += tag_text('li', tables[i] + '\n')
+
+                if len(tables) > 0:
+                    for i in range(len(tables)):
+                        table_info += tag_text('li', tables[i] + '\n')
                 table_info = tag_text('ol', table_info)
                 info.append(table_info)
             else:
@@ -157,9 +159,10 @@ def add_body(app_name, dest, platform):
         content[loc:loc] = info
         loc = loc + len(info)
 
-        if para_text != '':
-            para_text = tag_text('p', para_text)
-            loc = loc + 1
+        if level == 'h3':
+            if para_text != '':
+                para_text = tag_text('p', para_text)
+                loc = loc + 1
 
     htmlfile.seek(0)
     htmlfile.write(''.join(content))

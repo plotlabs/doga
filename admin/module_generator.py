@@ -147,7 +147,7 @@ def create_model(dir_path, data):
                 line = "    " + col["name"] + " = Column(" + col["type"] \
                     + ", ForeignKey('" + col["foreign_key"].lower() + "')" \
                     + ", nullable=" + str(col["nullable"]).title() \
-                    + ", unique=" + str(col["unique"]).title()
+                    + ", unique=" + str(col["unique"]).title() + ")\n"
         except KeyError as error:
             return {
                 "result": "Missing parameters for columns",
@@ -250,6 +250,7 @@ def create_resources(model_name, connection_name, dir_path, base_jwt,
                 line = line.replace("\nREPLACE_IF_JWT", '')
                 line = line.replace("REPLACE_IF_JWT", '')
             line = line.replace("modulename", model_name)
+            line = line.replace("module_endp_lower", model_name.split('.')[0])
             line = line.replace("module_endp", model_name.title().split('.')[0])  # noqa E401
             line = line.replace("modelname", model_name.title().split('.')[1])
             line = line.replace("bname", '"' + model_name.lower() + '"')

@@ -216,7 +216,7 @@ class ContentType(Resource):
                     continue
 
                 if table.name in ["jwt", "admin", "restricted_by_jwt",
-                                  "Deployments", "Relationships"] and\
+                                  "deployments", "relationships"] and\
                         table.info['bind_key'] == "default":
                     continue
 
@@ -809,11 +809,7 @@ class DatabaseInit(Resource):
                "does not exist" in str(err).lower():
                 try:
                     string = re.split(database.database_name, string)[0]
-                    engine = create_engine(string, connect_args={
-                        "check_same_thread": False
-                    },
-                        poolclass=StaticPool
-                    )
+                    engine = create_engine(string)
                     conn = engine.connect()
                     conn.execute("commit")
                     conn.execute("CREATE DATABASE " + database.database_name)
@@ -1258,14 +1254,16 @@ class AdminDashboardStats(Resource):
 
         elif section.lower() == "app":
 
-            tables = {table.info['bind_key']: {
-                table.name: table
-            } for table in metadata.sorted_tables
-            }
+            tables = {}
+            for table in metadata.sorted_tables:
+                bind_key = table.info['bind_key']
+                try:
+                    tables[bind_key].append(table)
+                except KeyError:
+                    tables[bind_key] = [table]
 
             if filter in tables.keys():
                 app_info = {}
-                one_table = random.choice(list(tables[filter].values()))
                 app_type = 'basic'
 
                 jwt_base = JWT.query.filter_by(
@@ -1290,7 +1288,7 @@ class AdminDashboardStats(Resource):
                         len(restricted_tables)
 
                 app_info['tables'] = []
-                for _, table in tables[filter].items():
+                for table in tables[filter]:
                     table_d = {}
                     table_d['table_name'] = table.name
                     table_d['no_fields'] = len(table.columns)
@@ -1323,12 +1321,17 @@ class AdminDashboardStats(Resource):
                 relationship = Relationship.query.filter_by(app_name=filter).all()
 
                 if relationship is not None:
-                    r = {}
+                    r = []
                     for rel in relationship:
-                        r[rel.relationship] = rel
-                    app_info['relationship'] = [r for r in r.keys()]
+                        relation = {}
+                        relation['relation_type'] = rel.relationship
+                        relation['relation_from'] = rel.table1_column.\
+                            split(',')
+                        relation['relation_to'] = rel.table2_column.split(',')
+                        r.append([relation])
+                    app_info['relationships'] = r
                 else:
-                    app_info['relationship'] = None
+                    app_info['relationships'] = None
 
                 app_info['db_type'] = extract_engine_or_fail(filter)
                 app_info['number_of_tables'] = len(tables[filter])

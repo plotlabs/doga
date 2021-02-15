@@ -61,7 +61,7 @@ class Deployments(Base):
     """ Defines a table Deployments to store the deployed apps and where they
     have been deployed
     """
-    __tablename__ = 'Deployments'
+    __tablename__ = 'deployments'
     __bind_key__ = 'default'
 
     id = Column(Integer, primary_key=True)
@@ -77,7 +77,7 @@ class Relationship(Base):
     """ Defines a table Relationships to store the deployed apps and where they
     have been deployed
     """
-    __tablename__ = 'Relationships'
+    __tablename__ = 'relationships'
     __bind_key__ = 'default'
 
     id = Column(Integer, primary_key=True)
@@ -85,3 +85,5 @@ class Relationship(Base):
     table1_column = Column(String(255), nullable=False)
     relationship = Column(String(255), nullable=False)
     table2_column = Column(String(255), nullable=False)
+    UniqueConstraint('id', 'table1_column', 'relationship', 'table2_column',
+                     name='uix_1')
