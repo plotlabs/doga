@@ -1318,17 +1318,22 @@ class AdminDashboardStats(Resource):
                         "total_no_exports": 0
                     }
 
-                relationship = Relationship.query.filter_by(app_name=filter).all()
+                relationship = Relationship.query.filter_by(app_name=filter).all()  # noqa 501
 
                 if relationship is not None:
                     r = []
                     for rel in relationship:
                         relation = {}
                         relation['relation_type'] = rel.relationship
-                        relation['relation_from'] = rel.table1_column.\
-                            split(',')
-                        relation['relation_to'] = rel.table2_column.split(',')
-                        r.append([relation])
+                        relation['relation_from'] = {
+                            "table_name": rel.table1_column.split(',')[0],
+                            "column_name": rel.table1_column.split(',')[1]
+                        }
+                        relation['relation_to'] = {
+                            "table_name": rel.table2_column.split(',')[0],
+                            "column_name": rel.table2_column.split(',')[1]
+                        }
+                        r.append(relation)
                     app_info['relationships'] = r
                 else:
                     app_info['relationships'] = None
