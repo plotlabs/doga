@@ -102,9 +102,9 @@ def create_model(dir_path, data):
                 if relationships_t == []:
                     relation_obj = Relationship(
                         app_name=app_name,
-                        table1_column=relation['related_table'],
+                        table1_column=table1_column,
                         relationship=relation['relationship_type'],
-                        table2_column=col["name"]
+                        table2_column=table2_column
                     )
                     db.session.add(relation_obj)
                     db.session.commit()
