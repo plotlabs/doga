@@ -481,8 +481,8 @@ do_install() {
 		*)
 			if [ -z "$lsb_dist" ]; then
 				if is_darwin; then
+					brew install --cask docker
 					echo
-					echo "ERROR: Unsupported operating system 'macOS'"
 					echo "Please get Docker Desktop from https://www.docker.com/products/docker-desktop"
 					echo
 					exit 1

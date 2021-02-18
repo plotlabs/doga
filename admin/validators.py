@@ -13,6 +13,7 @@ from dbs import DB_DICT
 
 from admin.module_generator import check_column
 from admin.utils import extract_database_name
+from admin.export.utils import extract_engine_or_fail
 
 from config import HOST, PORT
 
@@ -139,6 +140,20 @@ def column_validation(schema_list, connection_name, table_columns=None):
                 if column["default"] not in ['1', '0', 'true', 'false']:
                     valid = False
                     msg = "The default value entered for column {} is not of" \
+                          " type {}.".format(column["name"], column["type"])
+                    break
+
+            # engine specific issues:
+            engine = extract_engine_or_fail(connection_name)
+
+            if engine == 'mysql':
+                # MySQLdb._exceptions.OperationalError 1101
+                # BLOB, TEXT, GEOMETRY or JSON column can't have a default
+                if column['type'].upper() in ['BLOB', 'TEXT', 'GEOMETRY',
+                                              'JSON'] and \
+                        column['default'] is not None:
+                    valid = False
+                    msg = "Cannot set a default value for column {} of" \
                           " type {}.".format(column["name"], column["type"])
                     break
 

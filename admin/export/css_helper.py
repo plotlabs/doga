@@ -2,6 +2,8 @@ import os
 
 import shutil
 
+from collections import defaultdict
+
 from admin.models import JWT, Restricted_by_JWT, Relationship
 
 from templates.models import metadata
@@ -95,10 +97,9 @@ def add_body(app_name, dest, platform):
     if jwt_configured is not None:
         app_type = 'JWT Authenticated'
 
-    tables = {table.info['bind_key']: {
-        table.name: table
-            } for table in metadata.sorted_tables
-        }
+    tables = defaultdict(dict)
+    for table in metadata.sorted_tables:
+        tables[table.info['bind_key']][table.name] = table
 
     tables = tables[app_name]
 
@@ -126,9 +127,10 @@ def add_body(app_name, dest, platform):
                             ' following tables :\n')
                 table_info = ''
 
-                if len(tables) > 0:
-                    for i in range(len(tables)):
-                        table_info += tag_text('li', tables[i] + '\n')
+                if len(tables.keys()) > 0:
+                    print(tables)
+                    for i in tables.keys():
+                        table_info += tag_text('li', i + '\n')
                 table_info = tag_text('ol', table_info)
                 info.append(table_info)
             else:
@@ -148,8 +150,8 @@ def add_body(app_name, dest, platform):
                 filter_keys = table_obj.filter_keys.split(',')
                 for column in tables.columns:
                     pass
-
-            # document restricted tables
+            if app_type == 'Basic':
+                para_text = ''
             # doccument the rest of the tables
 
         else:
