@@ -1,3 +1,5 @@
+#!/bin/bash
+
 if ! command -v heroku >/dev/null 2>&1
 then
     curl https://cli-assets.heroku.com/install.sh | sh
@@ -6,7 +8,7 @@ fi
 
 if ! command -v docker >/dev/null 2>&1
 then
-    install docker | sh
+    sh admin/export/install_docker.sh
     exit
 fi
 

@@ -1,4 +1,5 @@
 import os
+import re
 import shutil
 
 from sqlalchemy import or_, and_
@@ -9,6 +10,7 @@ from dbs import ALEMBIC_LIST, DB_DICT
 from admin.models import JWT, Restricted_by_JWT, Relationship
 from admin.utils import extract_database_name
 from admin.errors import *
+from admin.export.utils import extract_engine_or_fail
 
 from app import db
 
@@ -38,6 +40,7 @@ def create_model(dir_path, data):
         conn_name = "default"
 
     app_name = extract_database_name(conn_name)
+    engine = extract_engine_or_fail(conn_name)
     relationships = ""
 
     o = open(dir_path + "/models.py", "a")
@@ -56,6 +59,11 @@ def create_model(dir_path, data):
     for col in data['columns']:
         if col["name"] == "id":
             pass
+
+        if col['type'].upper() in ['TEXT', 'BLOB', 'ENUM'] and \
+                engine in ['mysql']:
+            col = modify_related_type(app_name, col)
+
         try:
             relation = col['relationship']
             relation_type = relation['relationship_type']
@@ -93,12 +101,6 @@ def create_model(dir_path, data):
                         Relationship.app_name == app_name
                     )
                 ).all()
-                print(
-                    Relationship.query.filter(
-                        and_(
-                            Relationship.table1_column == table1_column,
-                            Relationship.app_name == app_name)))
-                print(relationships_t)
                 if relationships_t == []:
                     relation_obj = Relationship(
                         app_name=app_name,
@@ -545,17 +547,18 @@ def create_relationsips(app_name, relation_type, related_table, related_field,
             right_id = related_table + "." + related_field.lower()
             left_id = current_table.lower() + "." + current_field.lower()
 
-            assoc_string = '\n\nclass GeneratedAssociation' + class_name + \
-                '(Base):\n' + \
-                '    __tablename__ = "generatedAssociation' + \
-                class_name + \
-                '"\n' + \
-                '    __bind_key__ = "' + app_name + '"\n\n' + \
-                '    id = Column(Integer, primary_key=True)\n' + \
-                '    left_id = Column(Text, ForeignKey("' + \
-                right_id + '"))\n' + \
-                '    right_id = Column(Text, ForeignKey("' + \
-                left_id + '"))\n'
+            assoc_string = '\n\nclass GeneratedAssociation' + class_name +\
+                ':\n' + \
+                '\t__tablename__ =' + "'generatedAssociation" + class_name +\
+                "'\n" + \
+                '\t__bind__key = ' + "'" + app_name + "'\n\n" + \
+                "\tid = Column(Integer, primary_key=True)\n" + \
+                "\tleft_id = Column(" + col_type + ",ForeignKey('" + \
+                left_id + \
+                "'))\n" + \
+                "\tright_id = Column(" + col_type + ",ForeignKey('" + \
+                right_id +\
+                "'))\n"
 
             f = open(directory + '/app/' + app_name + '/' +
                      current_table.lower() +
@@ -593,7 +596,7 @@ def create_relationsips(app_name, relation_type, related_table, related_field,
             current_key = current_table.lower() + "." + current_field
 
             for line in lines:
-                if related_field in line:
+                if related_field + " =" in line:
                     f_key_ = " ForeignKey('" + current_key + "'" + ')'
                     split_line = line.split(',')
                     if f_key_ in split_line:
@@ -614,3 +617,43 @@ def create_relationsips(app_name, relation_type, related_table, related_field,
                                      " was not found.")
 
     return present_relationships
+
+
+def modify_related_type(app_name, col):
+
+    directory = '/'.join(__file__.split('/')[:-2])
+    found = False
+    try:
+        related_table, related_field = col['foreign_key'].split('.')
+        found = True
+    except ValueError:
+        pass
+
+    try:
+        related_table, related_field = col['relationship']['related_table'],\
+             col['relationship']['related_field']
+        found = True
+    except KeyError:
+        pass
+
+    if found:
+        col['length'] = 255
+        col['type'] = 'VARCHAR(' + str(col["length"]) + ')'
+
+        f = open(directory + '/app/' + app_name + '/' +
+                 related_table + '/models.py', 'r+')
+        lines = f.readlines()
+        f.seek(0)
+        for line in lines:
+            if related_field + " =" in line:
+                new_type = "VARCHAR(255)"
+                split_line = line.split(',')
+                if new_type in line:
+                    pass
+                else:
+                    update_type = split_line[0].split('(')[:]
+                    update_type.insert(1, new_type)
+                    split_line[0] = '('.join(update_type)
+                    line = ','.join(split_line)
+            f.write(line)
+    return col
