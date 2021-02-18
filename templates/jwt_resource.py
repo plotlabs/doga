@@ -296,7 +296,17 @@ class Register(Resource):
                     '"', '').title()}, 400
         except StatementError as e:
             return {"result": str(e.orig)}, 400
-        return {"result": 'Registered Successfully'}
+
+        expiry_time = datetime.timedelta(expiry_unit=expiry_value)
+        access_token = create_access_token(
+                        identity=filter_keys, expires_delta=expiry_time)
+        refresh_token = create_refresh_token(
+                        identity=filter_keys)
+
+        return {"result": "Registered & Logged in Successfully.",
+                          "id": model_obj.id,
+                          'access_token': access_token,
+                          'refresh_token': refresh_token}
 
 
 api_model.add_resource(Login, "/login")
