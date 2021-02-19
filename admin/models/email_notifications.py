@@ -135,19 +135,12 @@ class Email_Notify(Model):
     @to_emails.setter
     def to_emails(self, to_emails):
 
-        try:
+        rep = {':': ",", '{': '\n(', '}': ')'}
+        rep = dict((re.escape(k), v) for k, v in rep.items())
 
-            emails = "["
-            to_emails = ast.literal_eval(to_emails.replace("'", '"'))
-
-            for name, _id in to_emails.items():
-                emails = emails + "('" + name + "',  '" + _id + "')" + '\n'
-            emails = emails + "]"
-
-            self._to_emails = emails
-
-        except Exception as error:
-            self.errors['to_emails'] = "Please format name, email properly."
+        pattern = re.compile("|".join(rep.keys()))
+        to_emails = pattern.sub(lambda m: rep[re.escape(m.group(0))], to_emails)
+        self._to_emails = to_emails
 
     @property
     def template_key(self):
