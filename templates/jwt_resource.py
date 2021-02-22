@@ -297,16 +297,17 @@ class Register(Resource):
         except StatementError as e:
             return {"result": str(e.orig)}, 400
 
-        expiry_time = datetime.timedelta(expiry_unit=expiry_value)
+        filter_keys = {key: getattr(model_obj, key) for key in jwt_filter_keys}
+        expiry_time = datetime.timedelta(hours=4)
         access_token = create_access_token(
-                        identity=jwt_filter_keys, expires_delta=expiry_time)
+            identity=filter_keys, expires_delta=expiry_time)
         refresh_token = create_refresh_token(
-                        identity=jwt_filter_keys)
+            identity=filter_keys)
 
         return {"result": "Registered & Logged in Successfully.",
-                          "id": model_obj.id,
-                          'access_token': access_token,
-                          'refresh_token': refresh_token}
+                "id": model_obj.id,
+                'access_token': access_token,
+                'refresh_token': refresh_token}
 
 
 api_model.add_resource(Login, "/login")

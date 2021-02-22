@@ -1350,11 +1350,16 @@ class AdminDashboardStats(Resource):
                 }, 400
 
             else:
-                parent_dir = os.sep.join(__file__.split(os.sep)[:-2])
-                remove = {'__init__.py', 'blueprints.py', 'utils.py',
-                          '__pycache__'}
-                result = set(os.listdir(parent_dir + '/app/')) - remove
-            return {"result": list(result)}, 200
+                tables = {}
+                for table in metadata.sorted_tables:
+                    bind_key = table.info['bind_key']
+                    try:
+                        tables[bind_key].append(table)
+                    except KeyError:
+                        tables[bind_key] = [table]
+                tables = set(tables.keys())
+                tables.remove('default')
+                return {"number_of_apps": len(tables)}, 200
 
         else:
             return {
