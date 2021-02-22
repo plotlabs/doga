@@ -170,7 +170,7 @@ def create_model(dir_path, data):
                             col["default"]) + "'))\n"
                     else:
                         line = line + ", server_default='" + str(
-                            col["default"]) + "'))\n"
+                            col["default"]) + "')\n"
                 else:
                     line = line + ", server_default=text('" + str(
                         col["default"]) + "'))\n"
