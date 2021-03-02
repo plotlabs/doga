@@ -13,6 +13,10 @@ DATABASE_CONNECT_OPTIONS = {}
 HOST = '0.0.0.0'
 PORT = 8080
 
+# Set Host and Port for Notification Server
+NOTIF_HOST = '0.0.0.0'
+NOTIF_PORT = 8008
+
 PROPAGATE_EXCEPTIONS = True
 
 CSRF_ENABLED = True
