@@ -20,6 +20,23 @@ class Admin(Base):
     password = Column(String(255))
     create_dt = Column(DateTime(), server_default=text('CURRENT_TIMESTAMP'))
 
+    def get_unread_notifs(self, reverse=False):
+        """Get unread notifications for this user
+        """
+        notifs = []
+        unread_notifs = Notifications.query.filter_by(user=self.id, has_read=False)
+        for notif in unread_notifs:
+            notifs.append({
+                'title': notif.foramt_notification(),
+                'received_at': humanize.naturaltime(datetime.now() - notif.received_at),
+                'mark_read': setattr(notif, 'mark_read', True)
+            })
+
+        if reverse:
+            return list(reversed(notifs))
+        else:
+            return notifs
+
 
 class JWT(Base):
     """ Defines a table jwt stored in /tmp/test.db to store the table that is
@@ -87,3 +104,22 @@ class Relationship(Base):
     table2_column = Column(String(255), nullable=False)
     UniqueConstraint('id', 'table1_column', 'relationship', 'table2_column',
                      name='uix_1')
+
+
+class Notifications(Base):
+    """ Defines a table Notifications to store the info regarding apps and
+    any new events that need to be passes to the user
+    """
+    __tablename__ = 'notifications'
+    __bind_key__ = 'default'
+
+    id = Column(Integer, primary_key=True)
+    app_name = Column(String(255))
+    user = Column(Integer, nullable=False)
+    received_at = Column(DateTime(), server_default=text('CURRENT_TIMESTAMP'))
+    action_status = Column(String(255), nullable=False)
+    completed_action = Column(String(255), nullable=False)
+    mark_read = Column(Boolean, server_default=text('False'))
+
+    def foramt_notification(self):
+        return f'[{self.id}]: {self.action_status} {self.completed_action}'
