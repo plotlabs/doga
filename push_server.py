@@ -17,10 +17,11 @@ from dbs import DB_DICT
 app = Flask(__name__, static_url_path='/static')
 async_mode = "eventlet"
 
+app.config['SQLALCHEMY_BINDS'] = DB_DICT
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
 db = SQLAlchemy(app)
 
-SQLALCHEMY_BINDS = DB_DICT
-app.config.from_object(__name__)
 socketio = SocketIO(app, async_mode=async_mode, cors_allowed_origins='*')
 
 

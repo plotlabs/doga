@@ -13,7 +13,7 @@ from passlib.handlers.sha2_crypt import sha512_crypt
 
 from admin.module_generator import *
 
-from admin.models import Admin, Deployments
+from admin.models import Admin, Deployments, Notifications
 from admin.models.admin_model import Admin as AdminObject
 from admin.models.table_model import Table as TableModel
 from admin.models.database_model import Database as DatabaseObject
@@ -155,7 +155,6 @@ class Login(Resource):
                         identity=filter_keys, expires_delta=expiry_time)
                     refresh_token = create_refresh_token(
                         identity=filter_keys)
-
                     return {"result": "Successfully logged in", "email":
                             admin.email,
                             "name": admin.name,
@@ -216,7 +215,8 @@ class ContentType(Resource):
                     continue
 
                 if table.name in ["jwt", "admin", "restricted_by_jwt",
-                                  "deployments", "relationships"] and\
+                                  "deployments", "relationships",
+                                  "notifications"] and\
                         table.info['bind_key'] == "default":
                     continue
 
@@ -325,7 +325,7 @@ class ContentType(Resource):
                         restricted_tables.restricted_tables.split(",")
 
         return jsonify(table_list)
-        # return {"result": table_list}
+        #return {"result": table_list}
 
     @jwt_required
     def post(self):
@@ -341,7 +341,6 @@ class ContentType(Resource):
         if not verify_jwt(get_jwt_identity(), Admin):
             return {"result": "JWT authorization invalid, user does not"
                     " exist."}
-
         data = request.get_json()
         # sample data
         # data = {
