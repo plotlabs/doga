@@ -25,23 +25,29 @@ db = SQLAlchemy(app)
 socketio = SocketIO(app, async_mode=async_mode, cors_allowed_origins='*')
 
 
+def ack():
+    print('message was received!')
+
+
+@socketio.on('connect')
+def conn_event():
+    send('ack', callback=ack)
+
+
 @socketio.on('message')
 def handleNotidications(admin_id):
     notifs_to_send = Notifications.query.filter_by(user=admin_id)
-    notifs = []
-    if notifs is not None:
+    if notifs_to_send is not None:
+        print(notifs_to_send)
         for notification in notifs_to_send:
-            print(here)
-            notifs = notifs.append(notification.foramt_notification())
-            notification.mark_read(True)
-        send(notifs)
-    send(['No Notifications'])
-    db.session.commit()
+            send(notification.create_dict())
+    else:
+        send("")
 
 
 @socketio.on('disconnect')
 def disconnect(sid):
-    print('disconnect ', sid)
+    print('disconnect ', sid, callback=ack)
 
 
 if __name__ == '__main__':
