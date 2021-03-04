@@ -126,7 +126,7 @@ class AdminApi(Resource):
             password_hash = ALGORITHM.hash(admin.password)
             admin = Admin(email=admin.email.lower(),
                           password=password_hash, name=admin.name,
-                          create_dt=datetime.datetime.utcnow())
+                          create_dt=dt.now())
             db.session.add(admin)
             db.session.commit()
             set_jwt_secret_key()
