@@ -383,7 +383,7 @@ class ContentType(Resource):
         required_keys = {"table_name", "app_name", "columns"}
 
         notification = Notifications(user=admin_jwt['email'],
-                                     app_name=data['connection_name'],
+                                     app_name=data['app_name'],
                                      action_status='INITIATED',
                                      message='Request Processing'
                                      )
@@ -492,7 +492,7 @@ class ContentType(Resource):
         move_migration_files()
         notification.action_status = 'SUCCESS'
         notification.message = 'Resources Created Successfully'
-        notification.completed_action_at = datetime.now()
+        notification.completed_action_at = dt.now()
         db.session.add(notification)
         db.session.commit()
         return {"result": "Successfully created module."}, 200
