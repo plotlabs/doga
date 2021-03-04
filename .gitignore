@@ -79,3 +79,7 @@ vendor
 
 #all db files
 *.db
+
+#Exported apps
+Exports/
+exported_app/*

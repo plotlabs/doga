@@ -24,11 +24,13 @@ class Admin(Base):
         """Get unread notifications for this user
         """
         notifs = []
-        unread_notifs = Notifications.query.filter_by(user=self.id, has_read=False)
+        unread_notifs = Notifications.query.filter_by(user=self.id,
+                                                      has_read=False)
         for notif in unread_notifs:
             notifs.append({
                 'title': notif.foramt_notification(),
-                'received_at': humanize.naturaltime(datetime.now() - notif.received_at),
+                'received_at': humanize.naturaltime(datetime.now() -
+                                                    notif.received_at),
                 'mark_read': setattr(notif, 'mark_read', True)
             })
 
@@ -115,11 +117,26 @@ class Notifications(Base):
 
     id = Column(Integer, primary_key=True)
     app_name = Column(String(255))
-    user = Column(Integer, nullable=False)
+    user = Column(String(255), nullable=False)
     received_at = Column(DateTime(), server_default=text('CURRENT_TIMESTAMP'))
     action_status = Column(String(255), nullable=False)
-    completed_action = Column(String(255), nullable=False)
+    message = Column(String(255), nullable=False)
+    completed_action_at = Column(DateTime(), nullable=True)
     mark_read = Column(Boolean, server_default=text('False'))
 
     def foramt_notification(self):
-        return f'[{self.id}]: {self.action_status} {self.completed_action}'
+        return f'[{self.id}][{self.received_at}]: {self.action_status}\
+                 {self.completed_action_at}'
+
+    def mark_read(self):
+        self.mark_read = True
+
+    def create_dict(self):
+        return {'id': self.id,
+                'app_name': self.app_name,
+                'user': self.user,
+                'received_at': self.received_at.strftime("%m/%d/%Y, %H:%M:%S"),
+                'action_status': self.action_status,
+                'message': self.message,
+                'completed_action_at': self.completed_action_at.strftime("%m/%d/%Y, %H:%M:%S"),
+                }

@@ -34,6 +34,8 @@ from templates.models import metadata
 
 from dbs import DB_DICT
 
+from datetime import datetime as dt
+
 ALGORITHM = sha512_crypt
 
 mod_admin = Blueprint("admin", __name__)
@@ -325,7 +327,7 @@ class ContentType(Resource):
                         restricted_tables.restricted_tables.split(",")
 
         return jsonify(table_list)
-        #return {"result": table_list}
+        # return {"result": table_list}
 
     @jwt_required
     def post(self):
@@ -338,7 +340,8 @@ class ContentType(Resource):
             integer response code
 
         """
-        if not verify_jwt(get_jwt_identity(), Admin):
+        admin_jwt = get_jwt_identity()
+        if not verify_jwt(admin_jwt, Admin):
             return {"result": "JWT authorization invalid, user does not"
                     " exist."}
         data = request.get_json()
@@ -379,8 +382,18 @@ class ContentType(Resource):
 
         required_keys = {"table_name", "app_name", "columns"}
 
+        notification = Notifications(user=admin_jwt['email'],
+                                     app_name=data['connection_name'],
+                                     action_status='INITIATED',
+                                     message='Request Processing'
+                                     )
+
         missed_keys = required_keys.difference(data)
         if len(missed_keys) != 0:
+            notification.action_status = 'ERROR'
+            notification.completed_action_at = dt.now()
+            db.session.add(notification)
+            db.session.commit()
             return {
                 "result": "Values for fields cannot be null.",
                 "required values": list(missed_keys)
@@ -477,6 +490,11 @@ class ContentType(Resource):
         append_blueprint(database_name + "." + Table.table_name)
         remove_alembic_versions()
         move_migration_files()
+        notification.action_status = 'SUCCESS'
+        notification.message = 'Resources Created Successfully'
+        notification.completed_action_at = datetime.now()
+        db.session.add(notification)
+        db.session.commit()
         return {"result": "Successfully created module."}, 200
 
     @jwt_required

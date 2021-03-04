@@ -195,8 +195,8 @@ def create_export_files(platform, parent_dir, dest_dir, app_name, deploy,
             os.makedirs(os.path.dirname(d), exist_ok=True)
             shutil.copy2(s, d)
 
-    create_docs(platform, parent_dir, dest_dir, app_name, deploy,
-                rds_engine, rds, user_credentials, config)
+    # create_docs(platform, parent_dir, dest_dir, app_name, deploy,
+    #             rds_engine, rds, user_credentials, config)
 
 
 def create_app_dir(
