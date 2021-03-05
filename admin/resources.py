@@ -411,6 +411,8 @@ class ContentType(Resource):
         restrict_by_jwt = data.get("restrict_by_jwt", False)
 
         if check_table(Table.table_name):
+            db.session.add(notification)
+            db.session.commit()
             return {"result": "Module with this name is already present."}, 400
         if Table.table_name in ["admin", "jwt", "restricted_by_jwt"] and \
                 Table.connection_name == "default":

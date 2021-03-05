@@ -138,5 +138,6 @@ class Notifications(Base):
                 'received_at': self.received_at.strftime("%m/%d/%Y, %H:%M:%S"),
                 'action_status': self.action_status,
                 'message': self.message,
-                'completed_action_at': self.completed_action_at.strftime("%m/%d/%Y, %H:%M:%S"),
+                'completed_action_at': self.completed_action_at.
+                strftime("%m/%d/%Y, %H:%M:%S"),
                 }
