@@ -26,8 +26,7 @@ class ListAllNotifs(Resource):
             return {"result": "JWT authorization invalid, user does not"
                     " exist."}, 401
 
-        notifications = Notifications.query.filter_by(user=admin['email'],
-                                                      mark_read="False")
+        notifications = Notifications.query.filter_by(user=admin['email'])
         if notifications != []:
             obj = []
             for notif in notifications:
@@ -54,7 +53,7 @@ class MarkRead(Resource):
             notif = int(section)
             notification = Notifications.query.filter_by(user=admin['email'],
                                                          id=notif)
-            notification.mark_read()
+            notification.mark_read = True
             db.session.add(notification)
             db.session.commit()
             return {"response": "Marked " + str(notif) + " read"}, 200
@@ -64,7 +63,7 @@ class MarkRead(Resource):
                 notifications = Notifications.query.filter_by(
                                                         user=admin['email'])
                 for notif in notifications:
-                    notif.mark_read()
+                    notif.mark_read = True
                     db.session.add(notif)
                     db.session.commit()
                 return {"response": "Marked All Read"}, 200

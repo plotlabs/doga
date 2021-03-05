@@ -128,9 +128,6 @@ class Notifications(Base):
         return f'[{self.id}][{self.received_at}]: {self.action_status}\
                  {self.completed_action_at}'
 
-    def mark_read(self):
-        self.mark_read = True
-
     def create_dict(self):
         return {'id': self.id,
                 'app_name': self.app_name,
@@ -140,4 +137,5 @@ class Notifications(Base):
                 'message': self.message,
                 'completed_action_at': self.completed_action_at.
                 strftime("%m/%d/%Y, %H:%M:%S"),
+                "mark_read": self.mark_read
                 }
