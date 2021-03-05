@@ -548,7 +548,7 @@ class ContentType(Resource):
 
         if base_jwt and restrict_by_jwt:
             return {"result:" "Module cannot be both base_jwt and"
-                    " restricted_by_jwt."}
+                    " restricted_by_jwt."}, 400
 
         if not check_table(Table.table_name, Table.connection_name):
             return {
@@ -642,14 +642,14 @@ class ContentType(Resource):
 
         remove_alembic_versions()
         move_migration_files()
-        return {"result": "Successfully edited model."}
+        return {"result": "Successfully edited model."}, 200
 
     @jwt_required
     def delete(self, db_name, content_type):
         """Delete a content type"""
         if not verify_jwt(get_jwt_identity(), Admin):
             return {"result": "JWT authorization invalid, user does not"
-                    " exist."}
+                    " exist."}, 401
         tables_list = []
         for table in metadata.sorted_tables:
             f = (table.__dict__['foreign_keys'])
@@ -687,7 +687,7 @@ class ContentType(Resource):
                     f.write(line)
         remove_alembic_versions()
         move_migration_files()
-        return {"result": "Successfully deleted module."}
+        return {"result": "Successfully deleted module."}, 200
 
 
 class ColumnRelations(Resource):
@@ -767,7 +767,7 @@ class DatabaseInit(Resource):
                 "password": password
             })
 
-        return connection_list
+        return connection_list, 200
 
     @jwt_required
     def post(self):

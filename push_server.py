@@ -12,6 +12,8 @@ from flask_sqlalchemy import SQLAlchemy
 from admin.models import Notifications, Admin
 from config import NOTIF_HOST, NOTIF_PORT
 
+from threading import Thread, Event
+
 from dbs import DB_DICT
 
 app = Flask(__name__, static_url_path='/static')
@@ -25,6 +27,21 @@ db = SQLAlchemy(app)
 socketio = SocketIO(app, async_mode=async_mode, cors_allowed_origins='*')
 
 
+thread = Thread()
+thread_stop_event = Event()
+
+
+def NotificationThread(admin_id):
+    print("looking for admin notifs ...")
+    while not thread_stop_event.is_set():
+        notifs_to_send = Notifications.query.filter_by(user=admin_id,
+                                                       mark_read=False)
+        if notifs_to_send is not None:
+            for notification in notifs_to_send:
+                socket.emit('message', notification.create_dict())
+                socketio.sleep(2)
+
+
 def ack():
     print('message was received!')
 
@@ -36,18 +53,16 @@ def conn_event():
 
 @socketio.on('message')
 def handleNotidications(admin_id):
-    notifs_to_send = Notifications.query.filter_by(user=admin_id)
-    if notifs_to_send is not None:
-        print(notifs_to_send)
-        for notification in notifs_to_send:
-            send(notification.create_dict())
-    else:
-        send("")
+    global thread
+
+    if not thread.is_alive():
+        print('Starting a Thread')
+        thread = socketio.start_background_task(NotificationThread(admin_id))
 
 
 @socketio.on('disconnect')
-def disconnect(sid):
-    print('disconnect ', sid, callback=ack)
+def test_disconnect():
+    print('Client disconnected')
 
 
 if __name__ == '__main__':
