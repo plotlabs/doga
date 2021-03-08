@@ -3,10 +3,6 @@ import jwt
 
 from config import JWT_SECRET_KEY
 
-@sio.event
-def connect():
-    print('connection established')
-
 
 def triggerSocketioNotif(admin_id, token):
     sio = socketio.Client()
