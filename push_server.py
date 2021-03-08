@@ -4,15 +4,16 @@ eventlet.monkey_patch()  # noqa E402
 
 from flask import Flask, send_from_directory, jsonify, request
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from flask_socketio import SocketIO, send, emit
+from flask_socketio import SocketIO, send, emit, join_room
 from flask_cors import CORS, cross_origin
 
 from flask_sqlalchemy import SQLAlchemy
 
 from admin.models import Notifications, Admin
-from config import NOTIF_HOST, NOTIF_PORT
+from config import NOTIF_HOST, NOTIF_PORT, JWT_SECRET_KEY
 
 from threading import Thread, Event
+import jwt
 
 from dbs import DB_DICT
 
@@ -27,43 +28,38 @@ db = SQLAlchemy(app)
 socketio = SocketIO(app, async_mode=async_mode, cors_allowed_origins='*')
 
 
-thread = Thread()
-thread_stop_event = Event()
-
-
-def NotificationThread(admin_id):
-    print("looking for admin notifs ...")
-    while not thread_stop_event.is_set():
-        notifs_to_send = Notifications.query.filter_by(user=admin_id,
-                                                       mark_read=False)
-        if notifs_to_send is not None:
-            for notification in notifs_to_send:
-                socket.emit('message', notification.create_dict())
-                socketio.sleep(2)
-
-
 def ack():
     print('message was received!')
 
 
 @socketio.on('connect')
 def conn_event():
-    send('ack', callback=ack)
+    token = request.headers.get('Authorization')
+    print('token', token)
+    if token is None:
+        disconnect()
+    try:
+        admin = jwt.decode(token, JWT_SECRET_KEY)['email']
+        join_room(admin)
+    except Exception as error:
+        disconnect()
 
 
 @socketio.on('message')
-def handleNotidications(admin_id):
-    global thread
-
-    if not thread.is_alive():
-        print('Starting a Thread')
-        thread = socketio.start_background_task(NotificationThread(admin_id))
+def handleNotidications(admin_id, methods=['POST']):
+    notifs_to_send = Notifications.query.filter_by(user=admin_id)
+    if notifs_to_send is not None:
+        print(notifs_to_send)
+        for notification in notifs_to_send:
+            emit('broadcast message', notification.create_dict(),
+                 room=admin_id)
 
 
 @socketio.on('disconnect')
-def test_disconnect():
+def disconnect():
     print('Client disconnected')
 
 
 if __name__ == '__main__':
+    app.config['JWT_SECRET_KEY'] = JWT_SECRET_KEY
     socketio.run(app, host=NOTIF_HOST, port=NOTIF_PORT, debug=True)
