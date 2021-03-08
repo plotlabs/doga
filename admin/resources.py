@@ -29,6 +29,8 @@ from admin.export.utils import *
 from admin.export.exportapp import (create_app_dir, check_if_exist,
                                     write_to_deployments)
 
+from admin.resource_helper import triggerSocketioNotif
+
 from app.utils import AlchemyEncoder, verify_jwt
 from templates.models import metadata
 
@@ -394,6 +396,7 @@ class ContentType(Resource):
             notification.completed_action_at = dt.now()
             db.session.add(notification)
             db.session.commit()
+            triggerSocketioNotif(admin_jwt['email'], "")
             return {
                 "result": "Values for fields cannot be null.",
                 "required values": list(missed_keys)
@@ -497,6 +500,7 @@ class ContentType(Resource):
         notification.completed_action_at = dt.now()
         db.session.add(notification)
         db.session.commit()
+        triggerSocketioNotif(admin_jwt['email'], "")
         return {"result": "Successfully created module."}, 200
 
     @jwt_required
