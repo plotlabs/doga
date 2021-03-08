@@ -35,18 +35,23 @@ def ack():
 @socketio.on('connect')
 def conn_event():
     token = request.args.get('Authorization')
+
+    if token is None:
+        token = request.headers.get('Authorization')
     if token is None:
         disconnect()
     else:
         try:
             admin = jwt.decode(token, JWT_SECRET_KEY, algorithm='HS256')
+            print(admin)
             join_room(admin['identity']['email'])
         except Exception as error:
             disconnect()
 
 
 @socketio.on('message')
-def handleNotidications(admin_id, methods=['POST']):
+def handleNotidications(admin_id):
+    print(admin_id)
     notifs_to_send = Notifications.query.filter_by(user=admin_id)
     if notifs_to_send is not None:
         for notification in notifs_to_send:

@@ -9,7 +9,7 @@ def triggerSocketioNotif(admin_id, token):
 
     token = jwt.encode({'identity': {"email": admin_id}}, JWT_SECRET_KEY,
                        algorithm='HS256')
-    sio.connect('http://localhost:8008/', args={
+    sio.connect('http://localhost:8008/', headers={
                 "Authorization": token})
     sio.wait()
     sio.emit('message', {'admin_id': admin_id})
