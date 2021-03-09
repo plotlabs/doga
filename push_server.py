@@ -14,6 +14,7 @@ from config import NOTIF_HOST, NOTIF_PORT, JWT_SECRET_KEY
 
 from threading import Thread, Event
 import jwt
+import json
 
 from dbs import DB_DICT
 
@@ -43,21 +44,32 @@ def conn_event():
     else:
         try:
             admin = jwt.decode(token, JWT_SECRET_KEY, algorithm='HS256')
-            print(admin)
             join_room(admin['identity']['email'])
         except Exception as error:
             disconnect()
 
 
 @socketio.on('message')
-def handleNotidications(admin_id):
-    print(admin_id)
-    notifs_to_send = Notifications.query.filter_by(user=admin_id)
-    if notifs_to_send is not None:
-        for notification in notifs_to_send:
-            print(notification.create_dict())
-            emit('broadcast message', notification.create_dict(),
-                 room=admin_id)
+def handleNotidications(data):
+    print(data)
+    for notification in data['notif']:
+        socketio.emit('broadcast message', notification,
+                      room=data['admin_id'])
+
+
+@app.route('/relayMessage', methods=['POST'])
+def relayMessage():
+    data = json.loads(request.get_json())
+    message = data['notif']
+    token = request.headers.get('Authorization')
+    admin = jwt.decode(token, JWT_SECRET_KEY, algorithm='HS256')
+
+    if token is None:
+        return {"result": "Invalid admin"}, 500
+
+    handleNotidications({"notif": message, "admin_id": admin['email']})
+
+    return {'result': "Successfully created notification"}, 200
 
 
 @socketio.on('disconnect')
@@ -67,4 +79,4 @@ def disconnect():
 
 if __name__ == '__main__':
     app.config['JWT_SECRET_KEY'] = JWT_SECRET_KEY
-    socketio.run(app, host=NOTIF_HOST, port=NOTIF_PORT, debug=False)
+    socketio.run(app, host=NOTIF_HOST, port=NOTIF_PORT, debug=True)
