@@ -396,7 +396,7 @@ class ContentType(Resource):
             notification.completed_action_at = dt.now()
             db.session.add(notification)
             db.session.commit()
-            triggerSocketioNotif(admin_jwt['email'], "")
+            triggerSocketioNotif(admin_jwt['email'], "", notification.create_dict())
             return {
                 "result": "Values for fields cannot be null.",
                 "required values": list(missed_keys)
@@ -500,7 +500,7 @@ class ContentType(Resource):
         notification.completed_action_at = dt.now()
         db.session.add(notification)
         db.session.commit()
-        triggerSocketioNotif(admin_jwt['email'], "")
+        triggerSocketioNotif(admin_jwt['email'], "", notification.create_dict())
         return {"result": "Successfully created module."}, 200
 
     @jwt_required
