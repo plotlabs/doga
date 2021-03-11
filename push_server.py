@@ -52,9 +52,8 @@ def conn_event():
 @socketio.on('message')
 def handleNotidications(data):
     print(data)
-    for notification in data['notif']:
-        socketio.emit('broadcast message', notification,
-                      room=data['admin_id'])
+    socketio.emit('broadcast message', data['notif'],
+                  room=data['admin_id'])
 
 
 @app.route('/relayMessage', methods=['POST'])
