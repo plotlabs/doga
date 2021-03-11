@@ -128,7 +128,6 @@ def add_body(app_name, dest, platform):
                 table_info = ''
 
                 if len(tables.keys()) > 0:
-                    print(tables)
                     for i in tables.keys():
                         table_info += tag_text('li', i + '\n')
                 table_info = tag_text('ol', table_info)
@@ -142,7 +141,7 @@ def add_body(app_name, dest, platform):
                             base_table)
                 table_obj = tables[base_table]
                 para_text = 'Table ' + table_obj.name + \
-                            ' is the batose table' + \
+                            ' is the base table' + \
                             ' that will be used track the registered users' + \
                             ' the following API endpoints have been ' + \
                             'configured:\n'
@@ -151,11 +150,13 @@ def add_body(app_name, dest, platform):
                 for column in tables.columns:
                     pass
             if app_type == 'Basic':
-                para_text = ''
+                para_text = 'This app gives unrestricted access to access' + \
+                            ' edit, populate and remove values from the ' + \
+                            'connected tables.\n'
             # doccument the rest of the tables
 
         else:
-            pass
+            info.append('<br>' + level)
 
         info.append('</' + level + '>\n')
         content[loc:loc] = info
@@ -164,6 +165,7 @@ def add_body(app_name, dest, platform):
         if level == 'h3':
             if para_text != '':
                 para_text = tag_text('p', para_text)
+                content[loc:loc] = para_text
                 loc = loc + 1
 
     htmlfile.seek(0)
