@@ -133,7 +133,7 @@ def add_body(app_name, dest, platform):
                 table_info = tag_text('ol', table_info)
                 info.append(table_info)
             else:
-                tag_text('mark', 'No Public Tables')
+                table_info = tag_text('mark', 'No Public Tables')
         if level == 'h3':
             # document base JWT
             if app_type == 'JWT Authenticated':
@@ -147,26 +147,35 @@ def add_body(app_name, dest, platform):
                             'configured:\n'
 
                 filter_keys = table_obj.filter_keys.split(',')
-                for column in tables.columns:
-                    pass
-            if app_type == 'Basic':
+            elif app_type == 'Basic':
+                info.append("Endpoints generated with the app are:")
                 para_text = 'This app gives unrestricted access to access' + \
                             ' edit, populate and remove values from the ' + \
                             'connected tables.\n'
-            # doccument the rest of the tables
 
-        else:
-            info.append('<br>' + level)
+            if para_text != '':
+                para_text = tag_text('p', para_text)
+                content[loc:loc] = [para_text]
+                loc = loc + 1
+
+        if level == 'body':
+            for table, table_info in tables.items():
+                info.append(tag_text('p', '<br>' + app_name + '/' + table_info.name))
+                obj = '<br>{'
+                for column in table_info.columns:
+                    obj += column.name + " :" + str(column.type)
+                obj += '}\n'
+                info.append(obj)
+                get_info = tag_text('mark_get', '<br>GET ' + app_name + '/' + table_info.name)
+                put_info = tag_text('mark_post', '<br>PUT ' + app_name + '/' + table_info.name)
+                post_info = tag_text('mark_put', '<br>POST ' +app_name + '/' + table_info.name)
+                delete_info = tag_text('mark_delete', '<br>DELETE ' + app_name + '/' + table_info.name + '/{' + table_info.name +  '_id' + '}')
+                info.append('\n')
+                info.extend([get_info, put_info, post_info, delete_info])
 
         info.append('</' + level + '>\n')
         content[loc:loc] = info
         loc = loc + len(info)
-
-        if level == 'h3':
-            if para_text != '':
-                para_text = tag_text('p', para_text)
-                content[loc:loc] = para_text
-                loc = loc + 1
 
     htmlfile.seek(0)
     htmlfile.write(''.join(content))
