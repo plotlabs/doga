@@ -14,45 +14,71 @@ DOCS_THEME = {
         'font-family': 'serif',
         'color': '#4b1b4b',
         'text-align': 'center',
-        'font-size': '50px'
+        'font-size': '50px',
     },
     'h2': {
         'font-family': 'serif',
         'color': '#08001a',
         'text-align': 'justify',
-        'font-size': '25px'
+        'font-size': '25px',
+        'margin-left': '60px'
+
     },
     'h3': {
         'font-family': 'serif',
         'color': '#4b1b4b',
         'text-align': 'left',
-        'font-size': '30px'
+        'font-size': '30px',
+        'margin-left': '60px'
+
     },
     'mark_get': {
         'background-color': '#a6f0c6',
+        'font-size': '22px',
+        'margin-left': '60px'
+
     },
     'mark_post': {
         'background-color': '#f9f871',
+        'font-size': '22px',
+        'margin-left': '60px'
+
     },
     'mark_put': {
         'background-color': '#64dfdf',
+        'font-size': '22px',
+        'margin-left': '60px'
+
     },
     'mark_delete': {
         'background-color': '#eb596e',
+        'font-size': '22px',
+        'margin-left': '60px'
+
     },
     'subheading': {
         'font-family': 'cursive',
         'color': '#a278b5',
         'text-align': 'left',
-        'font-size': '28px'
+        'font-size': '28px',
+        'margin-left': '30px'
+
     },
     'p': {
         'font-family': 'verdana',
         'text-align': 'justify',
-        'font-size': '20px'
+        'font-size': '20px',
+        'margin-left': '60px'
+
     },
     'body': {
-        'background-color': '#ebc7eb'
+        'background-color': '#fffff4',
+        'margin-left': '60px'
+
+    },
+    'tab': {
+        'display': 'inline-block',
+        'margin-left': '40px'
     }
 }
 
@@ -88,11 +114,11 @@ def add_body(app_name, dest, platform):
             tables.append(name)
 
     jwt_configured = JWT.query.filter_by(
-                                        connection_name=app_name
-                                        ).first()
+        connection_name=app_name
+    ).first()
     restricted_tables = Restricted_by_JWT.query.filter_by(
-                                        connection_name=app_name
-                                        ).first()
+        connection_name=app_name
+    ).first()
 
     if jwt_configured is not None:
         app_type = 'JWT Authenticated'
@@ -114,7 +140,7 @@ def add_body(app_name, dest, platform):
                 base_table = jwt_configured.table
                 if restricted_tables is not None:
                     locked_tables = restricted_tables.restricted_tables \
-                                   .split(',')
+                        .split(',')
                 info.append('The docs cover the endpoints available, ' +
                             'table-wise as well as relationships if any were' +
                             'defined.' +
@@ -160,16 +186,58 @@ def add_body(app_name, dest, platform):
 
         if level == 'body':
             for table, table_info in tables.items():
-                info.append(tag_text('p', '<br>' + app_name + '/' + table_info.name))
-                obj = '<br>{'
+                info.append(
+                    tag_text(
+                        'h2',
+                        tag_text(
+                            'br',
+                            app_name +
+                            '/' +
+                            table_info.name)))
+                obj = '<br>The objects referenced at this endpoint have the'\
+                      'following structure:'\
+                      '</br>\n<br><tab>{</br>'
                 for column in table_info.columns:
-                    obj += column.name + " :" + str(column.type)
-                obj += '}\n'
+                    obj += '<br><tab>' + column.name + \
+                        " :" + str(column.type) + '</tab></br>'
+                obj += '<br>}</br></tab>\n'
                 info.append(obj)
-                get_info = tag_text('mark_get', '<br>GET ' + app_name + '/' + table_info.name)
-                put_info = tag_text('mark_post', '<br>PUT ' + app_name + '/' + table_info.name)
-                post_info = tag_text('mark_put', '<br>POST ' +app_name + '/' + table_info.name)
-                delete_info = tag_text('mark_delete', '<br>DELETE ' + app_name + '/' + table_info.name + '/{' + table_info.name +  '_id' + '}')
+                get_info = tag_text(
+                    'mark_get',
+                    tag_text(
+                        'br',
+                        'GET ' +
+                        app_name +
+                        '/' +
+                        table_info.name))
+                put_info = tag_text(
+                    'mark_post',
+                    tag_text(
+                        'br',
+                        'PUT ' +
+                        app_name +
+                        '/' +
+                        table_info.name))
+                post_info = tag_text(
+                    'mark_put',
+                    tag_text(
+                        'br',
+                        'POST ' +
+                        app_name +
+                        '/' +
+                        table_info.name))
+                delete_info = tag_text(
+                    'mark_delete',
+                    tag_text(
+                        'br',
+                        'DELETE ' +
+                        app_name +
+                        '/' +
+                        table_info.name +
+                        '/{' +
+                        table_info.name +
+                        '_id' +
+                        '}'))
                 info.append('\n')
                 info.extend([get_info, put_info, post_info, delete_info])
 
