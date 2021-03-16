@@ -109,6 +109,9 @@ def add_body(app_name, dest, platform):
     loc = content.index('</body>\n')
     tables = []
 
+    if '//' in folder:
+        folder = '/'.join(dest.split('/')[:-1])
+
     for name in os.listdir(folder):
         if os.path.isdir(os.path.join(folder, name)):
             tables.append(name)
