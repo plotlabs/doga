@@ -166,6 +166,7 @@ class ListDocs(Resource):
 
                     del tables[table]
                     rest_tables.append({
+                        "table_name": table.name,
                         "table_object": table_object,
                         "end_points": [
                             {
@@ -269,6 +270,7 @@ class ListDocs(Resource):
                                     "prop_default": column.default
                                     })
             ur_tables.append({
+                "table_name": table_name,
                 "table_object": table_object,
                 "end_points": [
                     {

@@ -1,4 +1,5 @@
 import os
+from collections import defaultdict
 from requests import get
 import random
 import shutil
@@ -10,8 +11,6 @@ from botocore.exceptions import (BotoCoreError, ClientError,
                                  ParamValidationError)
 
 import paramiko
-
-import pandas as pd
 
 from admin.aws_config import *
 from admin.export.errors import *
@@ -243,6 +242,14 @@ def validate_ec2_instance_id(user_credentials, aws_config, image_id):
     print(platform)
     return platform
     """
+    # Connect to EC2
+    ec2 = boto3.resource('ec2')
+
+    # Get information for all running instances
+    running_instances = ec2.instances.filter(Filters=[{
+        'Name': 'instance-state-name',
+        'Values': ['running']}])
+
     return "ubuntu"
 
 
@@ -420,10 +427,6 @@ def create_ec2(user_credentials, aws_config, rds_port, **kwargs):
     if len(missed_keys) != 0:
         raise KeyError(list(missed_keys))
 
-    platform = validate_ec2_instance_id(user_credentials,
-                                        aws_config,
-                                        kwargs['ImageId'])
-
     ec2 = boto3.resource(
         'ec2',
         aws_access_key_id=user_credentials['aws_access_key'],
@@ -491,6 +494,10 @@ def create_ec2(user_credentials, aws_config, rds_port, **kwargs):
             "config": aws_config
         }
         )
+
+    platform = validate_ec2_instance_id(user_credentials,
+                                        aws_config,
+                                        kwargs['ImageId'])
 
     return key_name, sg_name, ec2, vpc_sg, platform
 
