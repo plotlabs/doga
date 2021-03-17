@@ -86,7 +86,7 @@ class ListDocs(Resource):
                          ],
                          },
                         {"request_type": "POST",
-                         "request_body": "table_object",
+                         "request_body": obj,
                          "end_point": app_name + '/' + base_table.name + '/login',
                          "response_body": [{"code": 200,
                                             "body": {"result": "string",

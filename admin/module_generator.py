@@ -11,7 +11,6 @@ from admin.models import JWT, Restricted_by_JWT, Relationship
 from admin.utils import extract_database_name
 from admin.errors import *
 from admin.export.utils import extract_engine_or_fail
-from admin.export.css_helper import *
 
 from app import db
 
@@ -263,16 +262,6 @@ def create_resources(model_name, connection_name, dir_path, base_jwt,
             o.write(line)
 
     o.close()
-    d = '/'.join(__file__.split('/')[:-2]) + '/app/' + model_name.replace('.' ,'/') + '/docs.html'
-    os.makedirs(os.path.dirname(d), exist_ok=True)
-
-    shutil.copy('/'.join(__file__.split('/')[:-2]) + '/templates/export/docs.html', d)
-
-    # add stylesheet
-    create_stylesheet(d)
-
-    # explain docs
-    add_body('/'.join(__file__.split('/')[:-2]), d, platform=None)
 
 
 def append_blueprint(model_name):

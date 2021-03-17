@@ -6,7 +6,6 @@ from admin.export.utils import *
 from admin.export.errors import DogaHerokuDeploymentError, DogaAppNotFound
 
 from admin.models import JWT, Deployments
-from admin.export.css_helper import *
 
 from config import PORT
 
@@ -195,9 +194,6 @@ def create_export_files(platform, parent_dir, dest_dir, app_name, deploy,
             os.makedirs(os.path.dirname(d), exist_ok=True)
             shutil.copy2(s, d)
 
-    create_docs(platform, parent_dir, dest_dir, app_name, deploy,
-                rds_engine, rds, user_credentials, config)
-
 
 def create_app_dir(
         app_name,
@@ -272,15 +268,353 @@ def write_to_deployments(app_name, platform):
 def create_docs(platform, parent_dir, dest_dir, app_name, deploy,
                 rds_engine, rds, user_credentials, config):
 
-    # create file with title
-    dest = create_docs_page(app_name, parent_dir, dest_dir)
+    app_type = 'Basic'
 
-    # add stylesheet
-    create_stylesheet(dest)
+    jwt_configured = JWT.query.filter_by(
+        connection_name=app_name
+    ).first()
 
-    # explain docs
-    add_body(app_name, dest, platform)
+    restricted_tables = Restricted_by_JWT.query.filter_by(
+        connection_name=app_name
+    ).first()
 
-    # add html doc to Flaskapp
+    if jwt_configured is not None:
+        app_type = 'JWT Authenticated'
 
-    # return
+    tables = defaultdict(dict)
+    for table in metadata.sorted_tables:
+        tables[table.info['bind_key']][table.name] = table
+
+    tables = tables[app_name]
+
+    result = {}
+    result["app_name"] = app_name
+    result["app_type"] = app_type
+    result['unrestricted_tables'] = []
+    result['locked_tables'] = []
+    result['base_table'] = []
+
+    if app_type == 'JWT Authenticated':
+        base_table = tables[jwt_configured.table]
+        obj = []
+        for column in base_table.columns:
+            obj.append({
+                "prop_name": column.name,
+                "prop_type": str(column.type),
+                "prop_default": str(column.default)
+            })
+        result['base_table'] = [
+            {
+                "name": base_table.name,
+                "table_object": obj,
+                "end_points": [
+                    {"request_type": "POST",
+                        "request_body": obj,
+                        "end_point": app_name + '/' +
+                        base_table.name +
+                        '/register',
+                        "response_body": [
+                            {"code": 200,
+                            "body": {"result": "string",
+                                    "id": "integer",
+                                    "access_token": "string",
+                                    "refresh_token": "string"}
+                            },
+                            {"code": 400,
+                            "body": {"result": "Missing Field."}},
+                            {"code": 500,
+                            "body": {"result": "Server Error."}},
+                        ],
+                        },
+                    {"request_type": "POST",
+                        "request_body": obj,
+                        "end_point": app_name + '/' + base_table.name + '/login',
+                        "response_body": [{"code": 200,
+                                        "body": {"result": "string",
+                                                    "id": "integer",
+                                                    "access_token": "string",
+                                                    "refresh_token": "string"}},
+                                        {"code": 400,
+                                        "body": {"result": "Missing Field."
+                                                    }},
+                                        {"code": 500,
+                                        "body": {"result": "Server Error."
+                                                    }},
+                                        ],
+                        },
+                    {"request_type": "GET",
+                        "request_body": None,
+                        "end_point": app_name + '/' + base_table.name + '/<id>',
+                        "params": {"name": "id",
+                                "type": "Integer"},
+                        "response_body": [{"code": 200,
+                                        "body": [obj]},
+                                        {"code": 400,
+                                        "body": {"result": "Missing Field."
+                                                    }},
+                                        {"code": 500,
+                                        "body": {"result": "Server Error."
+                                                    }},
+                                        ],
+                        },
+                    {"request_type": "PUT",
+                        "request_body": obj,
+                        "end_point": app_name + '/' + base_table.name + '/<id>',
+                        "params": {"name": "id",
+                                "type": "Integer"},
+                        "response_body": [{"code": 200,
+                                        "body": "Successfully updated row."
+                                        },
+                                        {"code": 400,
+                                        "body": {"result": "Missing Field."
+                                                    }},
+                                        {"code": 500,
+                                        "body": {"result": "Server Error."
+                                                    }},
+                                        ],
+                        },
+                    {"request_type": "DELETE",
+                        "request_body": None,
+                        "end_point": app_name + '/' + base_table.name + '/<id>',
+                        "params": {"name": "id",
+                                "type": "Integer"},
+                        "response_body": [{"code": 200,
+                                        "body": "Successfully updated row."
+                                        },
+                                        {"code": 400,
+                                        "body": {"result": "Missing Field."
+                                                    }},
+                                        {"code": 500,
+                                        "body": {"result": "Server Error."
+                                                    }},
+                                        ],
+                        }]}]
+        del tables[base_table.name]
+
+        rest_tables = []
+        if restricted_tables is not None:
+            locked_tables = restricted_tables.restricted_tables.split(
+                    ',')
+            for table in locked_tables:
+                locked_table = tables[table]
+                table_object = []
+                for column in locked_table.columns:
+                    table_object.append({
+                        "prop_name": column.name,
+                        "prop_type": str(column.type),
+                        "prop_default": column.default
+                    })
+
+                del tables[table]
+                rest_tables.append({
+                    "table_name": table,
+                    "table_object": table_object,
+                    "end_points": [
+                        {
+                            "request_type": "GET",
+                            "request_body": table_object,
+                            "end_point": app_name + '/' + table,
+                            "response_body": [
+                                {
+                                            "code": 200,
+                                            "body": [table_object]
+                                },
+                                {
+                                    "code": 400,
+                                    "body": {
+                                        "result": "Missing Field."
+                                    }
+                                },
+                                {
+                                    "code": 500,
+                                    "body": {
+                                        "result": "Server Error."
+                                    }
+                                }],
+                        },
+                        {
+                            "request_type": "POST",
+                            "request_body": table_object,
+                            "end_point": app_name + '/' + table,
+                            "response_body": [
+                                {
+                                            "code": 200,
+                                            "body": table_object
+                                },
+                                {
+                                    "code": 400,
+                                    "body": {
+                                        "result": "Error"
+                                    }
+                                },
+                                {
+                                    "code": 500,
+                                    "body": {
+                                        "result": "Server Error."
+                                    }
+                                }],
+                        },
+                        {
+                            "request_type": "PUT",
+                            "request_body": table_object,
+                            "end_point": app_name + '/' + table,
+                            "response_body": [
+                                {
+                                            "code": 200,
+                                            "body": table_object
+                                },
+                                {
+                                    "code": 400,
+                                    "body": {
+                                        "result": "Error"
+                                    }
+                                },
+                                {
+                                    "code": 500,
+                                    "body": {
+                                        "result": "Server Error."
+                                    }
+                                }],
+                        },
+                        {
+                            "request_type": "DELETE",
+                            "request_body": table_object,
+                            "end_point": app_name + '/' + table + '/<id>',
+                            "response_body": [
+                                {
+                                            "code": 200,
+                                            "body": "Successfully Deleted row."
+                                },
+                                {
+                                    "code": 400,
+                                    "body": {
+                                        "result": "Error."
+                                    }
+                                },
+                                {
+                                    "code": 500,
+                                    "body": {
+                                        "result": "Server Error."
+                                    }
+                                }],
+                        },
+                    ]})
+        result['locked_tables'].append(rest_tables)
+
+    ur_tables = []
+    for table_name, info in tables.items():
+        table_object = []
+        for column in info.columns:
+            table_object.append({
+                                "prop_name": column.name,
+                                "prop_type": str(column.type),
+                                "prop_default": column.default
+                                })
+        ur_tables.append({
+            "table_name": table_name,
+            "table_object": table_object,
+            "end_points": [
+                {
+                    "request_type": "GET",
+                    "request_body": table_object,
+                    "end_point": app_name + '/' + table_name,
+                    "response_body": [
+                                    {
+                                        "code": 200,
+                                        "body": [table_object]
+                                    },
+                        {
+                                        "code": 400,
+                                        "body": {
+                                            "result": "Missing Field."
+                                        }
+                                    },
+                        {
+                                        "code": 500,
+                                        "body": {
+                                            "result": "Server Error."
+                                        }
+                                    }],
+                },
+                {
+                    "request_type": "POST",
+                    "request_body": table_object,
+                    "end_point": app_name + '/' + table_name,
+                    "response_body": [
+                                    {
+                                        "code": 200,
+                                        "body": table_object
+                                    },
+                        {
+                                        "code": 400,
+                                        "body": {
+                                            "result": "Error"
+                                        }
+                                    },
+                        {
+                                        "code": 500,
+                                        "body": {
+                                            "result": "Server Error."
+                                        }
+                                    }],
+                },
+                {
+                    "request_type": "PUT",
+                    "request_body": table_object,
+                    "end_point": app_name + '/' + table_name,
+                    "response_body": [
+                                    {
+                                        "code": 200,
+                                        "body": table_object
+                                    },
+                        {
+                                        "code": 400,
+                                        "body": {
+                                            "result": "Error"
+                                        }
+                                    },
+                        {
+                                        "code": 500,
+                                        "body": {
+                                            "result": "Server Error."
+                                        }
+                                    }],
+                },
+                {
+                    "request_type": "DELETE",
+                    "request_body": table_object,
+                    "end_point": app_name + '/' + table_name + '/<id>',
+                    "response_body": [
+                                    {
+                                        "code": 200,
+                                        "body": "Successfully Deleted row"
+                                    },
+                        {
+                                        "code": 400,
+                                        "body": {
+                                            "result": "Error."
+                                        }
+                                    },
+                        {
+                                        "code": 500,
+                                        "body": {
+                                            "result": "Server Error."
+                                        }
+                                    }],
+                },
+            ]})
+    result['unrestricted_tables'].append(ur_tables)
+
+    if result['base_table'] != []:
+        result['Authorization'] = {
+            "in": "header",
+            "type": "jwt",
+            "name": "Authorization",
+            "value": "Bearer {{jwt}}",
+            "on": ["base_table", "restricted_tables"]
+        }
+    else:
+        result['Authorization'] = None
+
+    d = dest_dir + '/exported_app/app/api_docs.md'
+    os.makedirs(os.path.dirname(d), exist_ok=True)
