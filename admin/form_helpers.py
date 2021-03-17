@@ -1,3 +1,4 @@
+import json
 from flask import Blueprint, request, jsonify
 from flask_restful import Api, Resource
 from flask_jwt_extended import jwt_required, get_jwt_identity
@@ -6,6 +7,7 @@ from app.utils import verify_jwt
 import boto3
 from botocore.config import Config
 from boto3.session import Session
+from botocore.exceptions import ClientError
 
 from admin.models import Admin
 from admin.utils import *
@@ -156,4 +158,40 @@ class AWSFormHelper(Resource):
         }
 
 
+class AWSEC2info(Resource):
+    @jwt_required
+    def get(self):
+        user_credentials = request.get_json()
+        required_params = ["aws_access_key", "aws_secret_key", "region_name"]
+        if user_credentials is None:
+            return {"result": "Error user_credentials cannot none",
+                    "missing_parameters": required_params}, 400
+
+        if set(required_params) - set(user_credentials) != set():
+            return {"result": "Missing parameters",
+                    "missing_parameters": list(set(required_params) - set(user_credentials))}, 400
+
+        try:
+            ec2_client = boto3.client('ec2',
+                                      aws_access_key_id=user_credentials['aws_access_key'],  # noqa 401
+                                      aws_secret_access_key=user_credentials['aws_secret_key'],  # noqa 401
+                                      region_name=user_credentials['region_name'],
+                                      config=Config())
+        except ClientError as e:
+            raise EC2CreationError("Error connecting to EC2 with given kwags ",
+                               str(e))
+
+        images = ec2_client.describe_images()
+        print(images)
+        image_dict = images['Images']
+        image_frame = pd.DataFrame.from_dict(image_dict).dropna(axis=1)
+
+        platform = 'other'
+        platforms = ['amazon linux', 'centos', 'debian', 'fedora', 'ubuntu']
+
+        print(platform)
+        return json.loads()
+
+
+api_utils.add_resource(AWSEC2info, '/aws/ec2')
 api_utils.add_resource(AWSFormHelper, '/aws/form/<string:section>')

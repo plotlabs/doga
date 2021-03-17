@@ -1000,6 +1000,15 @@ class ExportApp(Resource):
             }, 500
 
         if platform == 'aws':
+            admin_jwt = get_jwt_identity()
+            notification = Notifications(user=admin_jwt['email'],
+                                     app_name=json_request['app_name'],
+                                     action_status='INITIATED',
+                                     message='AWS Export'
+                                     )
+            db.session.add(notification)
+            db.session.commit()
+            triggerSocketioNotif(admin_jwt['email'], "", notification.create_dict())
             try:
                 user_credentials = create_user_credentials(
                     **json_request['user_credentials'])
@@ -1012,6 +1021,12 @@ class ExportApp(Resource):
                     "required fields": missing_keys,
                     "request": json_request
                 }, 500
+                notification.action_status = 'ERROR'
+                notification.completed_action_at = dt.now()
+                db.session.add(notification)
+                db.session.commit()
+                triggerSocketioNotif(admin_jwt['email'], "", notification.create_dict())
+
             try:
                 config = create_aws_config(**json_request['config'])
             except ValueError as error:
@@ -1020,6 +1035,12 @@ class ExportApp(Resource):
                     "error": str(error),
                     "request": request.get_json()
                 }, 400
+                notification.action_status = 'ERROR'
+                notification.completed_action_at = dt.now()
+                db.session.add(notification)
+                db.session.commit()
+                triggerSocketioNotif(admin_jwt['email'], "", notification.create_dict())
+
             except KeyError as error:
                 missing_keys['config'] = str(error)
 
@@ -1037,6 +1058,13 @@ class ExportApp(Resource):
                     "error": str(error),
                     "request": json_request
                 }, 400
+                notification.action_status = 'ERROR'
+                notification.message = str(error)
+                notification.completed_action_at = dt.now()
+                db.session.add(notification)
+                db.session.commit()
+                triggerSocketioNotif(admin_jwt['email'], "", notification.create_dict())
+
 
             try:
                 key_pair, sg_name, ec2, vpc_sg, platform = create_ec2(
@@ -1055,6 +1083,12 @@ class ExportApp(Resource):
                     "error": str(error),
                     "request": json_request
                 }, 400
+                notification.action_status = 'ERROR'
+                notification.message = str(error)
+                notification.completed_action_at = dt.now()
+                db.session.add(notification)
+                db.session.commit()
+                triggerSocketioNotif(admin_jwt['email'], "", notification.create_dict())
 
             if len(missing_keys) != 0:
                 return {
@@ -1074,6 +1108,7 @@ class ExportApp(Resource):
                         }, 400
             ec2 = deploy_to_aws(user_credentials, config, ec2, key_pair,
                                 platform)
+            print("deployed to aws")
             try:
                 response = connect_rds_to_ec2(
                     rds, ec2, user_credentials, config, sg_name, vpc_sg)
