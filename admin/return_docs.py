@@ -166,7 +166,7 @@ class ListDocs(Resource):
 
                     del tables[table]
                     rest_tables.append({
-                        "table_name": table.name,
+                        "table_name": table,
                         "table_object": table_object,
                         "end_points": [
                             {
@@ -363,6 +363,17 @@ class ListDocs(Resource):
                     },
                 ]})
         result['unrestricted_tables'].append(ur_tables)
+
+        if result['base_table'] != []:
+            result['Authorization'] = {
+                "in": "header",
+                "type": "jwt",
+                "name": "Authorization",
+                "value": "Bearer {{jwt}}",
+                "on": ["base_table", "restricted_tables"]
+            }
+        else:
+            result['Authorization'] = None
         return result
 
 
