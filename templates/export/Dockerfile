@@ -7,6 +7,5 @@ WORKDIR /tmp
 RUN pip install -U pip
 RUN pip install -r  requirements.txt
 EXPOSE PORT
-RUN ls -l -a
 ENTRYPOINT ["python"]
 CMD ["runserver.py"]

@@ -116,7 +116,8 @@ def create_dbs_file(
     port = str(rds_instance['Endpoint']['Port'])
 
     url = engine + '://' + username + ':' + password + \
-        '@' + server + ':' + port + '/' + app_name + '.db'
+        '@' + server + ':' + port + '/' + app_name
+    # + '.db'  aws doesn't need this
 
     content = 'DB_DICT = { "' + app_name + '": "' + url + '"}'
 
@@ -584,10 +585,8 @@ def deploy_to_aws(user_credentials, aws_config, ec2, key_name=KEY_NAME,
     #                        Parameters={'commands': commands},
     #                        InstanceIds=[ec2.id])
 
-    stdin, stdout, stderr = client.exec_command(
-            'curl -sSL https://get.docker.com/ | sh'
-        )
-
+    sleep(5)
+    client.exec_command('curl -sSL https://get.docker.com/ | sh')
     client.close()
 
     return ec2
