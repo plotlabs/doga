@@ -154,6 +154,12 @@ def create_export_files(platform, parent_dir, dest_dir, app_name, deploy,
                     line = line.replace(
                         'from admin.utils import set_jwt_secret_key', ''
                     )
+                    line.replace(
+                        'from admin.request_utils import AfterResponse', ''
+                    )
+                    line = line.replace(
+                        'AfterResponse(app)', ''
+                    )
                     line = line.replace(
                         'set_jwt_secret_key()', ''
                     )
