@@ -4,6 +4,8 @@ from requests import get
 import random
 import shutil
 import string
+import subprocess
+from time import sleep
 
 import boto3
 from botocore.config import Config
@@ -107,12 +109,6 @@ def create_dbs_file(
 
     to_write = open(destination, 'a+')
 
-    connection = ""
-    for connection, string_ in DB_DICT.items():
-        for app_name in string_:
-            # connection_string = string
-            break
-
     engine = rds_instance['Engine']
     username = rds_instance['MasterUsername']
     password = rds_instance['MasterUserPassword']
@@ -122,7 +118,7 @@ def create_dbs_file(
     url = engine + '://' + username + ':' + password + \
         '@' + server + ':' + port + '/' + app_name + '.db'
 
-    content = 'DB_DICT = { "' + connection + '": "' + url + '"}'
+    content = 'DB_DICT = { "' + app_name + '": "' + url + '"}'
 
     to_write.write(content)
     to_write.close()
@@ -243,12 +239,12 @@ def validate_ec2_instance_id(user_credentials, aws_config, image_id):
     return platform
     """
     # Connect to EC2
-    ec2 = boto3.resource('ec2')
+    #ec2 = boto3.resource('ec2')
 
     # Get information for all running instances
-    running_instances = ec2.instances.filter(Filters=[{
-        'Name': 'instance-state-name',
-        'Values': ['running']}])
+    #running_instances = ec2.instances.filter(Filters=[{
+    #    'Name': 'instance-state-name',
+    #    'Values': ['running']}])
 
     return "ubuntu"
 
@@ -475,9 +471,6 @@ def create_ec2(user_credentials, aws_config, rds_port, **kwargs):
         MaxCount=kwargs['MaxCount'],
         MinCount=kwargs['MinCount'],
         Monitoring=kwargs['Monitoring'],
-        IamInstanceProfile={
-            'Name': 'AmazonSSMRoleForInstancesQuickSetup'
-        },
         KeyName=key_name,
         SecurityGroupIds=[group_id, ],
     )
@@ -504,10 +497,10 @@ def create_ec2(user_credentials, aws_config, rds_port, **kwargs):
 
 def deploy_to_aws(user_credentials, aws_config, ec2, key_name=KEY_NAME,
                   platform='ubuntu'):
-
+    print('505')
     while ec2.state['Name'] != 'running':
         ec2.load()
-
+    print('508')
     try:
         ec2_client = boto3.client('ec2',
                                   aws_access_key_id=user_credentials['aws_access_key'],  # noqa 401
@@ -515,13 +508,6 @@ def deploy_to_aws(user_credentials, aws_config, ec2, key_name=KEY_NAME,
                                   region_name=aws_config.region_name,
                                   config=aws_config
                                 )
-
-        ssm_client = boto3.client('ssm',
-                              aws_access_key_id=user_credentials['aws_access_key'],  # noqa 401
-                              aws_secret_access_key=user_credentials['aws_secret_key'],  # noqa 401
-                              region_name=aws_config.region_name,
-                              config=aws_config
-                             )
 
     except ClientError as e:
         raise EC2CreationError("Error connecting to EC2 with given key word"
@@ -532,22 +518,24 @@ def deploy_to_aws(user_credentials, aws_config, ec2, key_name=KEY_NAME,
             ec2.instance_id,
         ]
     )
-
+    print('533')
     waiter = ec2_client.get_waiter('instance_running')
     waiter.wait(InstanceIds=[ec2.instance_id])
 
-    associated_instances = []
 
-    while ec2.instance_id not in associated_instances:
-        for i in ssm_client.describe_instance_information()[
-                'InstanceInformationList']:
-            associated_instances.append(i["InstanceId"])
+    # associated_instances = []
+
+    # while ec2.instance_id not in associated_instances:
+    #     for i in ssm_client.describe_instance_information()[
+    #             'InstanceInformationList']:
+    #         associated_instances.append(i["InstanceId"])
 
     this_folder = os.sep.join(__file__.split(os.sep)[:-3])
     app_folder = os.sep.join(__file__.split(os.sep)[:-3]) + '/exported_app/*'
 
     # from:
     # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/managing-users.html
+    print('549')
 
     platforms = {
                  'amazon linux': 'ec2-user',
@@ -563,22 +551,14 @@ def deploy_to_aws(user_credentials, aws_config, ec2, key_name=KEY_NAME,
     key = paramiko.RSAKey.from_private_key_file(key_name + '.pem')
     client = paramiko.SSHClient()
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-
+    print(ec2.public_dns_name)
     # Connect/ssh to an instance
-    try:
-        client.connect(
+    client.connect(
             hostname=ec2.public_dns_name,
-            username="ubuntu",
+            username=user,
             pkey=key)
 
-        client.exec_command(
-            'mkdir -p $HOME/exported_app')
-
-        # close the client connection once the job is done
-        client.close()
-
-    except Exception as e:
-        print(e)
+    client.exec_command('mkdir -p $HOME/exported_app')
 
     os.system('scp -o UserKnownHostsFile=/dev/null -o '
               'StrictHostKeyChecking=no -r -i ' + this_folder +
@@ -586,19 +566,35 @@ def deploy_to_aws(user_credentials, aws_config, ec2, key_name=KEY_NAME,
               + app_folder + ' ' + user + '@' + ec2.public_dns_name +
               ':exported_app/')
 
-    # run
-    load_docker_commands = open('admin/export/install_docker.sh', 'r').read()
-    commands = [load_docker_commands]
+    proc = subprocess.Popen(['scp -o', 'UserKnownHostsFile=/dev/null', '-o ',
+                      'StrictHostKeyChecking=no', '-r', '-i', this_folder +
+                      '/' + key_name + '.pem' + app_folder + ' ' + user + '@' +
+                       ec2.public_dns_name + ':exported_app/' ],
+                       stdout=subprocess.PIPE,
+                       shell=True)
 
-    ssm_client.send_command(DocumentName="AWS-RunShellScript",
-                            Parameters={'commands': commands},
-                            InstanceIds=[ec2.id])
+    out, err = proc.communicate()
+    print("program output:", out)
+
+    # run
+    # load_docker_commands = open('admin/export/install_docker.sh', 'r').read()
+    # commands = [load_docker_commands]
+
+    # ssm_client.send_command(DocumentName="AWS-RunShellScript",
+    #                        Parameters={'commands': commands},
+    #                        InstanceIds=[ec2.id])
+
+    stdin, stdout, stderr = client.exec_command(
+            'curl -sSL https://get.docker.com/ | sh'
+        )
+
+    client.close()
 
     return ec2
 
 
 def connect_rds_to_ec2(rds, ec2, user_credentials, config, sg_name,
-                       vpc_sg) -> bool:
+                       vpc_sg, platform, key_name=KEY_NAME) -> bool:
 
     # update security group
     try:
@@ -616,7 +612,7 @@ def connect_rds_to_ec2(rds, ec2, user_credentials, config, sg_name,
             ],
             ApplyImmediately=True,
         )
-
+        print('618')
         rds_client.reboot_db_instance(
             DBInstanceIdentifier=rds['DBInstanceIdentifier']
         )
@@ -628,12 +624,22 @@ def connect_rds_to_ec2(rds, ec2, user_credentials, config, sg_name,
     except ClientError as e:
         raise DogaEC2toRDSconnectionError(str(e))
 
-    ssm_client = boto3.client('ssm',
-                              aws_access_key_id=user_credentials['aws_access_key'],  # noqa 401
-                              aws_secret_access_key=user_credentials['aws_secret_key'],  # noqa 401
-                              region_name=config.region_name,
-                              config=config
-                             )
+    platforms = {
+                 'amazon linux': 'ec2-user',
+                 'centos': 'centos',
+                 'debian': 'admin',
+                 'fedora': 'fedora',
+                 'ubuntu': 'ubuntu',
+                 'other': 'root'
+                 }
+
+    user = platforms[platform]
+
+    print('649')
+
+    key = paramiko.RSAKey.from_private_key_file(key_name + '.pem')
+    client = paramiko.SSHClient()
+    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
     load_app_commands = open('admin/export/create_and_startapp.sh', 'r'
                              ).read()
@@ -642,17 +648,22 @@ def connect_rds_to_ec2(rds, ec2, user_credentials, config, sg_name,
         line = line.replace("PORT", str(PORT))
 
     commands = [load_app_commands]
-    response = ssm_client.send_command(DocumentName="AWS-RunShellScript",
-                                       Parameters={'commands': commands},
-                                       InstanceIds=[ec2.instance_id])
 
-    command_id = response['Command']['CommandId']
-    output = ssm_client.get_command_invocation(
-        CommandId=command_id,
-        InstanceId=ec2.instance_id,
-    )
+    print('660')
 
-    if b'success' in output:
-        return True
+    try:
+        client.connect(
+            hostname=ec2.public_dns_name,
+            username=user,
+            pkey=key
+            )
 
-    return False
+        client.exec_command(load_app_commands)
+        print('sleeping')
+        sleep(100)
+        stdin, stdout, stderr = client.exec_command(commands)
+    except Exception as error:
+        return False
+
+    return True
+

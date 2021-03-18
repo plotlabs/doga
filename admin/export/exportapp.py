@@ -211,7 +211,6 @@ def create_app_dir(
         os.system("rm -rf " + export_dir)
 
     os.mkdir(export_dir)
-
     if platform == 'heroku':
         deploy = kwargs.get('deploy_db', True)
         try:

@@ -1065,9 +1065,18 @@ class ExportApp(Resource):
                 db.session.commit()
                 triggerSocketioNotif(admin_jwt['email'], "", notification.create_dict())
 
+            notification = Notifications(user=admin_jwt['email'],
+                                     app_name=json_request['app_name'],
+                                     action_status='PROCESSING',
+                                     message='RDS Created Successfully',
+                                     completed_action_at=dt.now()
+                                     )
+            db.session.add(notification)
+            db.session.commit()
+            triggerSocketioNotif(admin_jwt['email'], "", notification.create_dict())
 
             try:
-                key_pair, sg_name, ec2, vpc_sg, platform = create_ec2(
+                key_pair, sg_name, ec2, vpc_sg, ec2_platform = create_ec2(
                                                             user_credentials,
                                                             config,
                                                             rds['Endpoint']['Port'],  # noqa 401
@@ -1090,6 +1099,16 @@ class ExportApp(Resource):
                 db.session.commit()
                 triggerSocketioNotif(admin_jwt['email'], "", notification.create_dict())
 
+            notification = Notifications(user=admin_jwt['email'],
+                                     app_name=json_request['app_name'],
+                                     action_status='PROCESSING',
+                                     message='EC2 Created Successfully',
+                                     completed_action_at=dt.now()
+                                     )
+            db.session.add(notification)
+            db.session.commit()
+            triggerSocketioNotif(admin_jwt['email'], "", notification.create_dict())
+
             if len(missing_keys) != 0:
                 return {
                     "result": "Please Provide the following details: ",
@@ -1098,6 +1117,7 @@ class ExportApp(Resource):
                 }, 400
 
             try:
+                rds['MasterUserPassword'] = json_request['rds_config']['MasterUserPassword']
                 create_app_dir(app_name, rds, user_credentials, config,
                                platform)
             except DogaDirectoryCreationError as error:
@@ -1107,11 +1127,11 @@ class ExportApp(Resource):
                         "request": json_request,
                         }, 400
             ec2 = deploy_to_aws(user_credentials, config, ec2, key_pair,
-                                platform)
+                                ec2_platform)
             print("deployed to aws")
             try:
                 response = connect_rds_to_ec2(
-                    rds, ec2, user_credentials, config, sg_name, vpc_sg)
+                    rds, ec2, user_credentials, config, sg_name, vpc_sg, ec2_platform, key_pair)
 
             except DogaEC2toRDSconnectionError as error:
                 return {"result": "Could not create a connection between "
