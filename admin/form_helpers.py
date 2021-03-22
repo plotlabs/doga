@@ -11,11 +11,24 @@ from botocore.exceptions import ClientError
 
 from admin.models import Admin
 from admin.utils import *
+from admin.default_values import DEFAULT_PORTS
 
 
 utils = Blueprint("utils", __name__)
 api_utils = Api()
 api_utils.init_app(utils)
+
+
+class DBDefaults(Resource):
+    """
+    Return default host and port for all doga databases
+    """
+    def get(self):
+        DEFAULT_HOST = {}
+        for key, value in DEFAULT_PORTS.items():
+            DEFAULT_HOST[key] = 'localhost'
+
+        return {"host": DEFAULT_HOST, "port": DEFAULT_PORTS}
 
 
 class AWSFormHelper(Resource):
@@ -159,7 +172,8 @@ class AWSFormHelper(Resource):
         try:
             return {section: response[section]}, 200
         except KeyError:
-            return {'error': 'The section ' + section + ' does not exist.'}, 400
+            return {'error': 'The section ' +
+                    section + ' does not exist.'}, 400
 
 
 # TODO: fix this
@@ -173,18 +187,18 @@ class AWSEC2info(Resource):
                     "missing_parameters": required_params}, 400
 
         if set(required_params) - set(user_credentials) != set():
-            return {"result": "Missing parameters",
-                    "missing_parameters": list(set(required_params) - set(user_credentials))}, 400
+            return {"result": "Missing parameters", "missing_parameters": list(
+                set(required_params) - set(user_credentials))}, 400
 
         try:
             ec2_client = boto3.client('ec2',
                                       aws_access_key_id=user_credentials['aws_access_key'],  # noqa 401
                                       aws_secret_access_key=user_credentials['aws_secret_key'],  # noqa 401
-                                      region_name=user_credentials['region_name'],
+                                      region_name=user_credentials['region_name'],  # noqa 401
                                       config=Config())
         except ClientError as e:
             raise EC2CreationError("Error connecting to EC2 with given kwags ",
-                               str(e))
+                                   str(e))
 
         images = ec2_client.describe_images()
         print(images)
@@ -200,3 +214,4 @@ class AWSEC2info(Resource):
 
 # api_utils.add_resource(AWSEC2info, '/aws/ec2')
 api_utils.add_resource(AWSFormHelper, '/aws/form/<string:section>')
+api_utils.add_resource(DBDefaults, '/defaults/db')
