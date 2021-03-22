@@ -1,6 +1,8 @@
+from datetime import datetime as dt
 import json
 import re
 import subprocess
+from threading import Thread
 
 from typing import Dict, Tuple
 
@@ -18,7 +20,7 @@ from admin.models.admin_model import Admin as AdminObject
 from admin.models.table_model import Table as TableModel
 from admin.models.database_model import Database as DatabaseObject
 from admin.models.email_notifications import Email_Notify
-from admin.models.sms_notificataions import Sms_Notify
+from admin.models.sms_notifications import Sms_Notify
 
 
 from admin.utils import *
@@ -29,14 +31,13 @@ from admin.export.utils import *
 from admin.export.exportapp import (create_app_dir, check_if_exist,
                                     write_to_deployments)
 
-from admin.resource_helper import triggerSocketioNotif
+from admin.resource_helper import *
 
 from app.utils import AlchemyEncoder, verify_jwt
 from templates.models import metadata
 
 from dbs import DB_DICT
 
-from datetime import datetime as dt
 
 ALGORITHM = sha512_crypt
 
@@ -408,7 +409,7 @@ class ContentType(Resource):
         except ValueError as err:
             return {"result": "Error: " + "".join(err.args)}, 400
 
-        database_name = extract_database_name(data["connection_name"])
+        # database_name = extract_database_name(data["connection_name"])
 
         base_jwt = data.get("base_jwt", False)
         restrict_by_jwt = data.get("restrict_by_jwt", False)
@@ -442,7 +443,7 @@ class ContentType(Resource):
 
         if base_jwt is True:
 
-            if check_jwt_present(Table.connection_name, database_name):
+            if check_jwt_present(Table.connection_name):
                 return {"result": "Only one table is allowed to set jwt per"
                                   "database connection."}, 400
 
@@ -465,43 +466,16 @@ class ContentType(Resource):
             if valid is False:
                 return {"result": msg}, 400
 
-            set_jwt_flag(Table.connection_name, database_name, Table.table_name,  # noqa 501
+            set_jwt_flag(Table.connection_name, Table.table_name,  # noqa 501
                          ",".join(data["filter_keys"]))
             set_jwt_secret_key()
 
-        if restrict_by_jwt and check_jwt_present(Table.connection_name, database_name) is None:  # noqa 501, 701
+        if restrict_by_jwt and check_jwt_present(Table.connection_name) is None:  # noqa 501, 701
             return {"result": "JWT is not configured."}, 400
 
-        dir_path = create_dir(database_name + "/" + Table.table_name)
-
-        isExisting = os.path.isfile(dir_path)
-
-        if isExisting:
-            return {"result": "Content must be unique for databases with the"
-                    " same name."}
-
-        if restrict_by_jwt:
-            add_jwt_list(Table.connection_name, database_name,
-                         Table.table_name)
-
-        create_model(dir_path, data)
-        create_resources(database_name + "." + Table.table_name,
-                         Table.connection_name,
-                         dir_path,
-                         base_jwt,
-                         data.get("expiry", {}),
-                         restrict_by_jwt,
-                         data.get("filter_keys", []))
-        append_blueprint(database_name + "." + Table.table_name)
-        remove_alembic_versions()
-        move_migration_files()
-        notification.action_status = 'SUCCESS'
-        notification.message = 'Resources Created Successfully'
-        notification.completed_action_at = dt.now()
-        db.session.add(notification)
-        db.session.commit()
-        triggerSocketioNotif(admin_jwt['email'], "", notification.create_dict())
+        Thread(target=create_contet_thread(data, admin_jwt, Table, base_jwt, restrict_by_jwt, notification)).start()
         return {"result": "Successfully created module."}, 200
+
 
     @jwt_required
     def put(self):
@@ -627,11 +601,11 @@ class ContentType(Resource):
                 return {"result": msg}, 400
 
             delete_jwt(Table.connection_name)
-            set_jwt_flag(Table.connection_name, database_name, Table.table_name,  # noqa 501
+            set_jwt_flag(Table.connection_name, Table.table_name,  # noqa 501
                          ",".join(data["filter_keys"]))
             set_jwt_secret_key()
 
-        if restrict_by_jwt and check_jwt_present(Table.connection_name, database_name) is None:  # noqa 501, 701
+        if restrict_by_jwt and check_jwt_present(Table.connection_name) is None:  # noqa 501, 701
             return {"result": "JWT is not configured."}, 400
 
         dir_path = 'app/' + database_name + "/" + Table.table_name
