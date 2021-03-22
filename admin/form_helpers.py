@@ -71,8 +71,6 @@ class AWSFormHelper(Resource):
         #       mode
         #       This indicates the retry handler you would like to use
         retries['mode'] = 'standard'
-        s = Session()
-        aws_region_names = s.get_available_regions('ssm')
 
         """
         Relational Data Service (RDS) configuration
@@ -148,16 +146,23 @@ class AWSFormHelper(Resource):
                 },
             }]
 
-        return {
+        response = {
             "config": {
                 "region_name": aws_region_names,
-                "retries": retries
+                "retries": retries,
+                "signature_version": signature_version,
             },
             "rds_config": rds_config,
-            "ec2_config": ec2_config
+            "ec2_config": ec2_config,
         }
 
+        try:
+            return {section: response[section]}, 200
+        except KeyError:
+            return {'error': 'The section ' + section + ' does not exist.'}, 400
 
+
+# TODO: fix this
 class AWSEC2info(Resource):
     @jwt_required
     def get(self):
@@ -193,5 +198,5 @@ class AWSEC2info(Resource):
         return json.loads()
 
 
-api_utils.add_resource(AWSEC2info, '/aws/ec2')
+# api_utils.add_resource(AWSEC2info, '/aws/ec2')
 api_utils.add_resource(AWSFormHelper, '/aws/form/<string:section>')
