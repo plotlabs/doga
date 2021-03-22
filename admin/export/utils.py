@@ -203,7 +203,6 @@ def create_aws_config(**kwargs):
 
 
 def validate_ec2_instance_id(user_credentials, aws_config, image_id):
-
     """
     try:
         ec2_client = boto3.client('ec2',
@@ -243,7 +242,7 @@ def validate_ec2_instance_id(user_credentials, aws_config, image_id):
     #ec2 = boto3.resource('ec2')
 
     # Get information for all running instances
-    #running_instances = ec2.instances.filter(Filters=[{
+    # running_instances = ec2.instances.filter(Filters=[{
     #    'Name': 'instance-state-name',
     #    'Values': ['running']}])
 
@@ -309,23 +308,23 @@ def create_security_group(ec2_client, ec2, db_port, group_id='sg_id',
     )
 
     ec2_client.authorize_security_group_ingress(
-            GroupId=vpc_sg.id,
-            IpPermissions=[
-                {'IpProtocol': sg_defaults["SG_IP_PROTOCOL"],
-                 'FromPort': sg_defaults["SG_FROM_PORT"],
-                 'ToPort': sg_defaults["SG_TO_PORT"],
-                 'IpRanges': [{'CidrIp': sg_defaults["SG_IP"]}]},
-                {'IpProtocol': 'tcp',
-                 'FromPort': 80,
-                 'ToPort': 80,
-                 'IpRanges': [{'CidrIp': '0.0.0.0/0'}]},
-                {'IpProtocol': 'tcp',
-                 'FromPort': db_port,
-                 'ToPort': db_port,
-                 'IpRanges': [{'CidrIp': '0.0.0.0/0'}]
-                 # ec2.public_ip_address + '/32'}]
-                 }
-            ]
+        GroupId=vpc_sg.id,
+        IpPermissions=[
+            {'IpProtocol': sg_defaults["SG_IP_PROTOCOL"],
+             'FromPort': sg_defaults["SG_FROM_PORT"],
+             'ToPort': sg_defaults["SG_TO_PORT"],
+             'IpRanges': [{'CidrIp': sg_defaults["SG_IP"]}]},
+            {'IpProtocol': 'tcp',
+             'FromPort': 80,
+             'ToPort': 80,
+             'IpRanges': [{'CidrIp': '0.0.0.0/0'}]},
+            {'IpProtocol': 'tcp',
+             'FromPort': db_port,
+             'ToPort': db_port,
+             'IpRanges': [{'CidrIp': '0.0.0.0/0'}]
+             # ec2.public_ip_address + '/32'}]
+             }
+        ]
     )
 
     return ec2, vpc_sg
@@ -487,7 +486,7 @@ def create_ec2(user_credentials, aws_config, rds_port, **kwargs):
             "region_name": aws_config.region_name,
             "config": aws_config
         }
-        )
+    )
 
     platform = validate_ec2_instance_id(user_credentials,
                                         aws_config,
@@ -523,7 +522,6 @@ def deploy_to_aws(user_credentials, aws_config, ec2, key_name=KEY_NAME,
     waiter = ec2_client.get_waiter('instance_running')
     waiter.wait(InstanceIds=[ec2.instance_id])
 
-
     # associated_instances = []
 
     # while ec2.instance_id not in associated_instances:
@@ -539,13 +537,13 @@ def deploy_to_aws(user_credentials, aws_config, ec2, key_name=KEY_NAME,
     print('549')
 
     platforms = {
-                 'amazon linux': 'ec2-user',
-                 'centos': 'centos',
-                 'debian': 'admin',
-                 'fedora': 'fedora',
-                 'ubuntu': 'ubuntu',
-                 'other': 'root'
-                 }
+        'amazon linux': 'ec2-user',
+        'centos': 'centos',
+        'debian': 'admin',
+        'fedora': 'fedora',
+        'ubuntu': 'ubuntu',
+        'other': 'root'
+    }
 
     user = platforms[platform]
 
@@ -555,9 +553,9 @@ def deploy_to_aws(user_credentials, aws_config, ec2, key_name=KEY_NAME,
     print(ec2.public_dns_name)
     # Connect/ssh to an instance
     client.connect(
-            hostname=ec2.public_dns_name,
-            username=user,
-            pkey=key)
+        hostname=ec2.public_dns_name,
+        username=user,
+        pkey=key)
 
     client.exec_command('mkdir -p $HOME/exported_app')
 
@@ -567,12 +565,26 @@ def deploy_to_aws(user_credentials, aws_config, ec2, key_name=KEY_NAME,
               + app_folder + ' ' + user + '@' + ec2.public_dns_name +
               ':exported_app/')
 
-    proc = subprocess.Popen(['scp -o', 'UserKnownHostsFile=/dev/null', '-o ',
-                      'StrictHostKeyChecking=no', '-r', '-i', this_folder +
-                      '/' + key_name + '.pem' + app_folder + ' ' + user + '@' +
-                       ec2.public_dns_name + ':exported_app/' ],
-                       stdout=subprocess.PIPE,
-                       shell=True)
+    proc = subprocess.Popen(
+        [
+            'scp -o',
+            'UserKnownHostsFile=/dev/null',
+            '-o ',
+            'StrictHostKeyChecking=no',
+            '-r',
+            '-i',
+            this_folder +
+            '/' +
+            key_name +
+            '.pem' +
+            app_folder +
+            ' ' +
+            user +
+            '@' +
+            ec2.public_dns_name +
+            ':exported_app/'],
+        stdout=subprocess.PIPE,
+        shell=True)
 
     out, err = proc.communicate()
     print("program output:", out)
@@ -624,13 +636,13 @@ def connect_rds_to_ec2(rds, ec2, user_credentials, config, sg_name,
         raise DogaEC2toRDSconnectionError(str(e))
 
     platforms = {
-                 'amazon linux': 'ec2-user',
-                 'centos': 'centos',
-                 'debian': 'admin',
-                 'fedora': 'fedora',
-                 'ubuntu': 'ubuntu',
-                 'other': 'root'
-                 }
+        'amazon linux': 'ec2-user',
+        'centos': 'centos',
+        'debian': 'admin',
+        'fedora': 'fedora',
+        'ubuntu': 'ubuntu',
+        'other': 'root'
+    }
 
     user = platforms[platform]
 
@@ -655,7 +667,7 @@ def connect_rds_to_ec2(rds, ec2, user_credentials, config, sg_name,
             hostname=ec2.public_dns_name,
             username=user,
             pkey=key
-            )
+        )
 
         client.exec_command(load_app_commands)
         print('sleeping')
@@ -665,4 +677,3 @@ def connect_rds_to_ec2(rds, ec2, user_credentials, config, sg_name,
         return False
 
     return True
-
