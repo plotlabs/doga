@@ -50,8 +50,6 @@ class JWT(Base):
     id = Column(Integer, primary_key=True)
     jwt_flag = Column(Boolean, nullable=False, unique=False)
     connection_name = Column(String(255), nullable=False, unique=True)
-
-    database_name = Column(String(255), nullable=False, unique=False)
     table = Column(String(255), nullable=False, unique=False)
     filter_keys = Column(String(255), nullable=False, unique=False)
     UniqueConstraint('database_name', 'table', name='uix_1')

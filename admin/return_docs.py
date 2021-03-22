@@ -264,10 +264,15 @@ class ListDocs(Resource):
         for table_name, info in tables.items():
             table_object = []
             for column in info.columns:
+                default = str(column.default)
+                if column.default is not None:
+                    default = default[
+                                default.find("(") + 1:default.find(")")
+                                ].replace("'", "")
                 table_object.append({
                                     "prop_name": column.name,
                                     "prop_type": str(column.type),
-                                    "prop_default": column.default
+                                    "prop_default": default
                                     })
             ur_tables.append({
                 "table_name": table_name,

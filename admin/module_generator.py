@@ -401,10 +401,10 @@ def add_new_db(conn_name):
     move_migration_files()
 
 
-def check_jwt_present(connection_name, database_name):
+def check_jwt_present(connection_name):
     # check if JWT is already linked to the given database and connection
     jwt_obj = JWT.query.filter_by(
-        connection_name=connection_name, database_name=database_name).first()
+        connection_name=connection_name).first()
     return jwt_obj
 
 
@@ -459,13 +459,12 @@ def set_expiry(expiry):
         return {"result": "Key error", "error": str(e)}, 500
 
 
-def set_jwt_flag(connection_name, database_name, table_name, filter_keys):
+def set_jwt_flag(connection_name, table_name, filter_keys):
     """Function to add the base_jwt for a connection to JWT table in default db
     """
     try:
         jwt_obj = JWT(jwt_flag=True,
                       connection_name=connection_name,
-                      database_name=database_name,
                       table=table_name,
                       filter_keys=filter_keys)
         db.session.add(jwt_obj)
@@ -492,7 +491,7 @@ def delete_restricted_by_jwt(connection_name):
         return {"result": e}, 500
 
 
-def add_jwt_list(connection_name, database_name, table_name):
+def add_jwt_list(connection_name, table_name):
     """Function to add the restricted by JWT content(table) to the
     restrict_by_JWT table in the dafault connection
     """
@@ -501,7 +500,6 @@ def add_jwt_list(connection_name, database_name, table_name):
     if restricted_tables is None:
         try:
             restricted_jwt = Restricted_by_JWT(connection_name=connection_name,
-                                               db_name=database_name,
                                                restricted_tables=table_name)
             db.session.add(restricted_jwt)
             db.session.commit()
