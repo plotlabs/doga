@@ -397,7 +397,8 @@ class ContentType(Resource):
             notification.completed_action_at = dt.now()
             db.session.add(notification)
             db.session.commit()
-            triggerSocketioNotif(admin_jwt['email'], "", notification.create_dict())
+            triggerSocketioNotif(
+                admin_jwt['email'], "", notification.create_dict())
             return {
                 "result": "Values for fields cannot be null.",
                 "required values": list(missed_keys)
@@ -473,9 +474,15 @@ class ContentType(Resource):
         if restrict_by_jwt and check_jwt_present(Table.connection_name) is None:  # noqa 501, 701
             return {"result": "JWT is not configured."}, 400
 
-        Thread(target=create_contet_thread(data, admin_jwt, Table, base_jwt, restrict_by_jwt, notification)).start()
+        Thread(
+            target=create_contet_thread(
+                data,
+                admin_jwt,
+                Table,
+                base_jwt,
+                restrict_by_jwt,
+                notification)).start()
         return {"result": "Successfully created module."}, 200
-
 
     @jwt_required
     def put(self):
@@ -976,20 +983,38 @@ class ExportApp(Resource):
         if platform == 'aws':
             admin_jwt = get_jwt_identity()
             notification = Notifications(user=admin_jwt['email'],
-                                     app_name=json_request['app_name'],
-                                     action_status='INITIATED',
-                                     message='AWS Export'
-                                     )
+                                         app_name=json_request['app_name'],
+                                         action_status='INITIATED',
+                                         message='AWS Export'
+                                         )
             db.session.add(notification)
             db.session.commit()
-            triggerSocketioNotif(admin_jwt['email'], "", notification.create_dict())
+            triggerSocketioNotif(
+                admin_jwt['email'], "", notification.create_dict())
             try:
                 user_credentials = create_user_credentials(
                     **json_request['user_credentials'])
+                missing_keys['user_credentials'] = []
             except KeyError as error:
                 missing_keys['user_credentials'] = list(error.args)[0]
 
-            if len(missing_keys) != 0:
+            required_rds_keys = {'MasterUsername', 'MasterUserPassword',
+                                 'DBInstanceIdentifier', 'MaxAllocatedStorage',
+                                 'AllocatedStorage'}
+            required_ec2_keys = {
+                'BlockDeviceMappings',
+                'ImageId',
+                'InstanceType'}
+
+            missing_keys['ec2_config'] = list(
+                required_ec2_keys.difference(
+                    json_request['ec2_config'].keys()))
+            missing_keys['rds_config'] = list(
+                required_rds_keys.difference(
+                    json_request['rds_config'].keys()))
+
+            if missing_keys['user_credentials'] != [] or missing_keys['ec2_config'] != [
+            ] or missing_keys['rds_config'] != []:
                 return {
                     "result": "Please Provide the following details: ",
                     "required fields": missing_keys,
@@ -997,9 +1022,11 @@ class ExportApp(Resource):
                 }, 500
                 notification.action_status = 'ERROR'
                 notification.completed_action_at = dt.now()
+                notification.message = 'Cannot process export missing parameters: ' + missing_keys
                 db.session.add(notification)
                 db.session.commit()
-                triggerSocketioNotif(admin_jwt['email'], "", notification.create_dict())
+                triggerSocketioNotif(
+                    admin_jwt['email'], "", notification.create_dict())
 
             try:
                 config = create_aws_config(**json_request['config'])
@@ -1011,110 +1038,20 @@ class ExportApp(Resource):
                 }, 400
                 notification.action_status = 'ERROR'
                 notification.completed_action_at = dt.now()
-                db.session.add(notification)
-                db.session.commit()
-                triggerSocketioNotif(admin_jwt['email'], "", notification.create_dict())
-
-            except KeyError as error:
-                missing_keys['config'] = str(error)
-
-            try:
-                rds = create_rds(user_credentials,
-                                 config,
-                                 app_name,
-                                 **json_request['rds_config']
-                                 )
-            except KeyError as error:
-                missing_keys['rds_config'] = list(error.args)[0]
-            except RDSCreationError as error:
-                return {
-                    "result": "Error creating RDS",
-                    "error": str(error),
-                    "request": json_request
-                }, 400
-                notification.action_status = 'ERROR'
                 notification.message = str(error)
-                notification.completed_action_at = dt.now()
                 db.session.add(notification)
                 db.session.commit()
-                triggerSocketioNotif(admin_jwt['email'], "", notification.create_dict())
+                triggerSocketioNotif(
+                    admin_jwt['email'], "", notification.create_dict())
 
-            notification = Notifications(user=admin_jwt['email'],
-                                     app_name=json_request['app_name'],
-                                     action_status='PROCESSING',
-                                     message='RDS Created Successfully',
-                                     completed_action_at=dt.now()
-                                     )
-            db.session.add(notification)
-            db.session.commit()
-            triggerSocketioNotif(admin_jwt['email'], "", notification.create_dict())
+            Thread(target=create_aws_deployment_thread(
+                user_credentials, config, app_name, json_request, notification,
+                admin_jwt
+            )).start()
 
-            try:
-                key_pair, sg_name, ec2, vpc_sg, ec2_platform = create_ec2(
-                                                            user_credentials,
-                                                            config,
-                                                            rds['Endpoint']['Port'],  # noqa 401
-                                                            **json_request[
-                                                             'ec2_config'
-                                                            ])
-            except KeyError as error:
-                missing_keys['ec2_config'] = list(error.args)[0]
-
-            except EC2CreationError as error:
-                return {
-                    "result": "Error creating EC2",
-                    "error": str(error),
-                    "request": json_request
-                }, 400
-                notification.action_status = 'ERROR'
-                notification.message = str(error)
-                notification.completed_action_at = dt.now()
-                db.session.add(notification)
-                db.session.commit()
-                triggerSocketioNotif(admin_jwt['email'], "", notification.create_dict())
-
-            notification = Notifications(user=admin_jwt['email'],
-                                     app_name=json_request['app_name'],
-                                     action_status='PROCESSING',
-                                     message='EC2 Created Successfully',
-                                     completed_action_at=dt.now()
-                                     )
-            db.session.add(notification)
-            db.session.commit()
-            triggerSocketioNotif(admin_jwt['email'], "", notification.create_dict())
-
-            if len(missing_keys) != 0:
-                return {
-                    "result": "Please Provide the following details: ",
-                    "required fields": missing_keys,
-                    "request": json_request
-                }, 400
-
-            try:
-                rds['MasterUserPassword'] = json_request['rds_config']['MasterUserPassword']
-                create_app_dir(app_name, rds, user_credentials, config,
-                               platform)
-            except DogaDirectoryCreationError as error:
-                return {"result": "Could not create files for the exported"
-                        " app.",
-                        "error": str(error),
-                        "request": json_request,
-                        }, 400
-            ec2 = deploy_to_aws(user_credentials, config, ec2, key_pair,
-                                ec2_platform)
-            print("deployed to aws")
-            try:
-                response = connect_rds_to_ec2(
-                    rds, ec2, user_credentials, config, sg_name, vpc_sg, ec2_platform, key_pair)
-
-            except DogaEC2toRDSconnectionError as error:
-                return {"result": "Could not create a connection between "
-                        "EC2" + ec2.id + " and " +
-                        rds['DBInstanceIdentifier'],
-                        "error": str(error),
-                        "request": json_request
-                        }, 400
-
+            return {
+                "result": "Registered export request to " + platform + "."
+            }, 200
         elif platform == 'heroku':
 
             try:
@@ -1210,9 +1147,6 @@ class ExportApp(Resource):
                            **{'path': path}
                            )
 
-        else:
-            return {"result": "Platform " + platform + " unsupported."}, 400
-
         if platform == 'local':
             if path is None:
                 path = '/'.join(__file__.split('/')[:-2]) + '/exported_app/'
@@ -1226,7 +1160,7 @@ class ExportApp(Resource):
         write_to_deployments(app_name, platform)
 
         return {
-            "result": "App exported & to " + platform + "."
+            "result": "Registered export request to " + platform + "."
         }, 200
 
 
