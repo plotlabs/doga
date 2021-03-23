@@ -9,6 +9,8 @@ from datetime import datetime as dt
 from admin.module_generator import *
 from admin.models import Notifications
 from admin.export.errors import *
+from admin.export.exportapp import (create_app_dir, check_if_exist,
+                                    write_to_deployments)
 from admin.export.utils import *
 
 from config import NOTIF_HOST, NOTIF_PORT, JWT_SECRET_KEY
@@ -70,7 +72,8 @@ def create_aws_deployment_thread(
         app_name,
         json_request,
         notification,
-        admin_jwt):
+        admin_jwt,
+        platform='aws'):
 
     while True:
         try:
