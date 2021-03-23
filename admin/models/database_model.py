@@ -130,8 +130,8 @@ class Database(Model):
         if connection_name in DB_DICT:
             raise ValueError("Connection with name: {} is already present. Use"
                              " a different name.".format(connection_name))
-        if not re.match("^[a-z0-9_]+$", connection_name):
-            raise ValueError("Connection with name: {} cannot be create. Use"
+        if not re.match("^([a-z]+[0-9_]*)*$", connection_name):
+            raise ValueError("Connection with name: {} cannot be created. Use"
                              "lowercase alphabet, numbers and '-' only")
 
         self._connection_name = connection_name

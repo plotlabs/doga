@@ -569,15 +569,14 @@ def create_relationsips(app_name, relation_type, related_table, related_field,
                      '/models.py', "r+")
             f.seek(0)
             contents = f.readlines()
-            contents[-1] = present_relationships + '    ' + \
-                'relation_' + related_field + ' = relationship("' + \
-                related_table.title() + \
-                '" ,secondary="' + \
-                current_table.lower() + \
-                '" , backref="' + \
-                current_table.lower() + \
-                '")\n'
-
+            contents.append(present_relationships + '    ' + \
+                    'relation_' + related_field + ' = relationship("' + \
+                    related_table.title() + \
+                    '" ,secondary="' + \
+                    current_table.lower() + \
+                    '" , backref="' + \
+                    current_table.lower() + \
+                    '")\n')
             f.seek(0)
             f.write(''.join(contents))
 
@@ -654,4 +653,8 @@ def modify_related_type(app_name, col):
                     split_line[0] = '('.join(update_type)
                     line = ','.join(split_line)
             f.write(line)
+
+    if col['type'] == 'VARCHAR':
+        col['length'] = 255
+        col['type'] = 'VARCHAR(' + str(col["length"]) + ')'
     return col
