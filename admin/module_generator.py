@@ -207,7 +207,7 @@ def create_resources(model_name, connection_name, dir_path, base_jwt,
                 base_jwt = JWT.query.filter_by(
                     connection_name=connection_name).first()
                 base_table = base_jwt.table
-                db_name = base_jwt.database_name
+                db_name = base_jwt.connection_name
 
                 # fix import statements
 
