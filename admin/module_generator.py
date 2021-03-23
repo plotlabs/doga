@@ -60,7 +60,7 @@ def create_model(dir_path, data):
         if col["name"] == "id":
             pass
 
-        if col['type'].upper() in ['TEXT', 'BLOB', 'ENUM'] and \
+        if col['type'].upper() in ['TEXT', 'BLOB', 'ENUM', 'VARCHAR'] and \
                 engine in ['mysql']:
             col = modify_related_type(app_name, col)
 
