@@ -1050,7 +1050,8 @@ class ExportApp(Resource):
                 "app_name": app_name,
                 "json_request": json_request,
                 "notification": notification,
-                "admin_jwt": admin_jwt
+                "admin_jwt": admin_jwt,
+                "platform": platform,
                 }).start()
             return {
                 "result": "Registered export request to " + platform + "."
