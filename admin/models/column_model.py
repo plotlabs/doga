@@ -142,6 +142,9 @@ class Column(Model):
         if name is not None and len(name) < 1:
             raise ValueError("Invalid value for column `name`, length must be "
                              "greater than or equal to `6`.")
+        if not re.match("^[a-z0-9_]+$", table_name):
+            raise ValueError("Invalid value for `table_name`m mist contain"
+                             " only alphabets, numbers and -")
 
         self._name = name.lower()
 

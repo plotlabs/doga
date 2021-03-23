@@ -81,6 +81,9 @@ class Table(Model):
         if table_name is not None and table_name.isspace() is True:
             raise ValueError("Invalid value for `table_name`, must contain "
                              "characters")
+        if not re.match("^[a-z0-9_]+$", table_name):
+            raise ValueError("Invalid value for `table_name`m mist contain"
+                             " only alphabets, numbers and -")
 
         self._table_name = table_name.lower()
 

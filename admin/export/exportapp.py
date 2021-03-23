@@ -46,7 +46,7 @@ def create_export_files(platform, parent_dir, dest_dir, app_name, deploy,
 
     # check if app has JWT hare if not remove JWT from runserver
     is_jwt = True
-    is_jwt = JWT.query.filter_by(database_name=app_name).first()
+    is_jwt = JWT.query.filter_by(connection_name=app_name).first()
 
     if is_jwt is None:
         is_jwt is False

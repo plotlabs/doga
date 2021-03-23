@@ -548,7 +548,6 @@ class ContentType(Resource):
 
         # check if the table that will be edited is the JWT restricted table
         isJWT = JWT.query.filter_by(connection_name=Table.connection_name,
-                                    database_name=database_name,
                                     table=Table.table_name).first()
 
         if isJWT is None and base_jwt is True:
@@ -786,7 +785,7 @@ class DatabaseInit(Resource):
                 "required values": list(missed_keys)
             }, 500
 
-        json_request['connection_name'] = json_request['database_name'].lower()
+        json_request['connection_name'] = json_request['database_name']
 
         try:
             database = DatabaseObject.from_dict(json_request)
