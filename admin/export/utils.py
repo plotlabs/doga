@@ -547,7 +547,7 @@ def deploy_to_aws(user_credentials, aws_config, ec2, key_name=KEY_NAME,
 
     user = platforms[platform]
 
-    key = paramiko.RSAKey.from_private_key_file(key_name + '.pem')
+    key = paramiko.RSAKey.from_private_key_file(this_folder + '/' + key_name + '.pem')
     client = paramiko.SSHClient()
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     print(ec2.public_dns_name)
@@ -555,7 +555,9 @@ def deploy_to_aws(user_credentials, aws_config, ec2, key_name=KEY_NAME,
     client.connect(
         hostname=ec2.public_dns_name,
         username=user,
-        pkey=key)
+        pkey=key,
+        allow_agent=False,
+        look_for_keys=False)
 
     client.exec_command('mkdir -p $HOME/exported_app')
 

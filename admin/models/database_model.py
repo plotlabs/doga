@@ -3,6 +3,8 @@ from datetime import date, datetime
 
 from typing import List, Dict
 
+import re
+
 from admin import utils
 from admin.models.base_model_ import Model
 
@@ -112,7 +114,7 @@ class Database(Model):
         :return: The connection_name of this Database.
         :rtype: str
         """
-        return self._connection_name.lower()
+        return self._connection_name
 
     @connection_name.setter
     def connection_name(self, connection_name: str):
@@ -128,6 +130,9 @@ class Database(Model):
         if connection_name in DB_DICT:
             raise ValueError("Connection with name: {} is already present. Use"
                              " a different name.".format(connection_name))
+        if not re.match("^[a-z0-9_]+$", connection_name):
+            raise ValueError("Connection with name: {} cannot be create. Use"
+                             "lowercase alphabet, numbers and '-' only")
 
         self._connection_name = connection_name
 
