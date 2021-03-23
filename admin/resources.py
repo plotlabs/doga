@@ -1044,11 +1044,14 @@ class ExportApp(Resource):
                 triggerSocketioNotif(
                     admin_jwt['email'], "", notification.create_dict())
 
-            Thread(target=create_aws_deployment_thread(
-                user_credentials, config, app_name, json_request, notification,
-                admin_jwt
-            )).start()
-
+            Thread(target=create_aws_deployment_thread, kwargs={
+                "user_credentials": user_credentials,
+                "config": config,
+                "app_name": app_name,
+                "json_request": json_request,
+                "notification": notification,
+                "admin_jwt": admin_jwt
+                }).start()
             return {
                 "result": "Registered export request to " + platform + "."
             }, 200
