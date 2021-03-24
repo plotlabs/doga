@@ -246,18 +246,18 @@ class ContentType(Resource):
                         foreign_key = foreign_key[
                             foreign_key.find("(") + 1:foreign_key.find(")")
                         ].replace("'", "")
-
                     try:
                         default = int(str(default))
                     except ValueError:
                         pass
-
+                    if column_type == 'BOOLEAN':
+                        default = str(default)
                     col = {
                         "name": column.name,
                         "type": column_type,
                         "nullable": str(bool(column.nullable)).lower(),
                         "unique": str(bool(column.unique)).lower(),
-                        "default": default,
+                        "default": str(default),
                         "foreign_key": foreign_key
                     }
                     column_list.append(col)
@@ -942,8 +942,16 @@ class ColumnType(Resource):
 
     def get(self):
         """Get a list of all valid column types available."""
+
+        available_types = column_types()
+
+        for i in ['INT', 'INTEGER', 'ARRAY', 'BOOLEAN', 'TEXT',
+                  'REAL', 'NUMERIC', 'DATETIME', 'TIME', 'DATE',
+                  'BIGINT', 'SMALLINT', 'SmallInteger']:
+            available_types.remove(i)
+
         return {
-            "result": column_types()
+            "result": available_types
         }, 200
 
 

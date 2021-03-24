@@ -142,38 +142,61 @@ def create_model(dir_path, data):
             relation_type = None
 
         try:
-            line = "    " + col["name"] + " = Column(" + col["type"] \
-                   + ", nullable=" + str(col["nullable"]).title() \
-                   + ", unique=" + str(col["unique"]).title()
-            if col["foreign_key"] != "":
+            if col["type"].upper() == "ENUM":
+                try:
+                    line = "    " + col["name"] + " = Column(Enum(" + \
+                        str(col["enum"]).strip('[').rstrip(
+                        ']') + ')' + ", nullable=" + \
+                        str(col["nullable"]).title() + ", unique=" + \
+                        str(col["unique"]).title() + ')'
+                except KeyError:
+                    return {
+                        "result": "The ENUM column must have enumerated values."}, 400
+                except ValueError:
+                    return {"result": "Incorrect format for ENUM value."}, 400
+                col["default"] = ""
+            else:
                 line = "    " + col["name"] + " = Column(" + col["type"] \
-                    + ", ForeignKey('" + col["foreign_key"].lower() + "')" \
-                    + ", nullable=" + str(col["nullable"]).title() \
-                    + ", unique=" + str(col["unique"]).title() + ")\n"
+                       + ", nullable=" + str(col["nullable"]).title() \
+                       + ", unique=" + str(col["unique"]).title()
+                if col["foreign_key"] != "":
+                    line = "    " + col["name"] + " = Column(" + col["type"] \
+                        + ", ForeignKey('" + col["foreign_key"].lower() + "')" \
+                        + ", nullable=" + str(col["nullable"]).title() \
+                        + ", unique=" + str(col["unique"]).title() + ")\n"
+
+                if col["default"] == "":
+                    line = line + ")\n"
+                else:
+                    if col["foreign_key"] == "":
+                        if isinstance(col["default"], str):
+                            if col["default"].lower() == "current":
+                                col["default"] = "CURRENT_TIMESTAMP"
+                                line = line + ", server_default=text('" + str(
+                                    col["default"]) + "'))\n"
+                            elif col["type"].upper() == "BOOLEAN":
+                                line = line + ", server_default=text('" + str(
+                                    col["default"]) + "'))\n"
+                            else:
+                                line = line + ", server_default='" + str(
+                                    col["default"]) + "')\n"
+                        elif isinstance(col["default"], list):
+                            if col['type'].upper() == 'ARRAY':
+                                try:
+                                    line = line + ", server_default=" + \
+                                        str(col["default"]) + "')\n"
+                                except ValueError:
+                                    return {
+                                        "result": "Incorrect format for Array value."}, 400
+                        else:
+                            line = line + ", server_default=text('" + str(
+                                col["default"]) + "'))\n"
         except KeyError as error:
             return {
                 "result": "Missing parameters for columns",
                 "parameters": error.args
             }, 500
 
-        if col["default"] == "":
-            line = line + ")\n"
-        else:
-            if col["foreign_key"] == "":
-                if isinstance(col["default"], str):
-                    if col["default"].lower() == "current":
-                        col["default"] = "CURRENT_TIMESTAMP"
-                        line = line + ", server_default=text('" + str(
-                            col["default"]) + "'))\n"
-                    elif col["type"].upper() == "BOOLEAN":
-                        line = line + ", server_default=text('" + str(
-                            col["default"]) + "'))\n"
-                    else:
-                        line = line + ", server_default='" + str(
-                            col["default"]) + "')\n"
-                else:
-                    line = line + ", server_default=text('" + str(
-                        col["default"]) + "'))\n"
         o.write(line)
     o.write(relationships)
     o.close()
@@ -569,14 +592,14 @@ def create_relationsips(app_name, relation_type, related_table, related_field,
                      '/models.py', "r+")
             f.seek(0)
             contents = f.readlines()
-            contents.append(present_relationships + '    ' + \
-                    'relation_' + related_field + ' = relationship("' + \
-                    related_table.title() + \
-                    '" ,secondary="' + \
-                    current_table.lower() + \
-                    '" , backref="' + \
-                    current_table.lower() + \
-                    '")\n')
+            contents.append(present_relationships + '    ' +
+                            'relation_' + related_field + ' = relationship("' +
+                            related_table.title() +
+                            '" ,secondary="' +
+                            current_table.lower() +
+                            '" , backref="' +
+                            current_table.lower() +
+                            '")\n')
             f.seek(0)
             f.write(''.join(contents))
 
@@ -628,7 +651,7 @@ def modify_related_type(app_name, col):
 
     try:
         related_table, related_field = col['relationship']['related_table'],\
-             col['relationship']['related_field']
+            col['relationship']['related_field']
         found = True
     except KeyError:
         pass
