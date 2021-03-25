@@ -37,6 +37,7 @@ def create_random_string(length: int) -> str:
 
 
 def get_current_ip() -> str:
+
     ip = get('https://api.ipify.org').text
     return ip
 
@@ -268,6 +269,9 @@ def create_security_group(ec2_client, ec2, db_port, group_id='sg_id',
     waiter = ec2_client.get_waiter('instance_running')
     waiter.wait(InstanceIds=[ec2.instance_id])
     ec2.reload()
+
+    if 'Not Connected ' in sg_defaults['SG_IP']:
+        raise EC2CreationError('DOGA cannot connect to the internet.')
 
     ec2_client.authorize_security_group_ingress(
         GroupId=group_id,

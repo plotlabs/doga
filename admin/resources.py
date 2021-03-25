@@ -11,6 +11,8 @@ from flask_restful import Api, Resource
 from flask_jwt_extended import (jwt_required, create_access_token,
                                 create_refresh_token, get_jwt_identity)
 
+from sqlalchemy.exc import UnsupportedCompilationError
+
 from passlib.handlers.sha2_crypt import sha512_crypt
 
 from admin.module_generator import *
@@ -240,7 +242,13 @@ class ContentType(Resource):
                     default = str(column.default)
                     if column.server_default is not None:
                         default = column.server_default.arg
-                    column_type = str(column.type)
+                    try:
+                        column_type = str(column.type)
+                    except UnsupportedCompilationError as error:
+                        if 'JSON' in ''.join(error.args).upper():
+                            column_type = 'JSON'
+                        else:
+                            raise ValueError('Cannot infer column type.')
                     foreign_key = str(column.foreign_keys)
                     if foreign_key != set():
                         foreign_key = foreign_key[
@@ -286,7 +294,13 @@ class ContentType(Resource):
                             default = default[
                                 default.find("(") + 1:default.find(")")
                             ].replace("'", "")
-                        column_type = str(column.type)
+                        try:
+                            column_type = str(column.type)
+                        except UnsupportedCompilationError as error:
+                            if 'JSON' in ''.join(error.args).upper():
+                                column_type = 'JSON'
+                            else:
+                                raise ValueError('Cannot infer column type.')
                         foreign_key = str(column.foreign_keys)
                         if column.foreign_keys != "":
                             foreign_key = foreign_key[
@@ -329,6 +343,7 @@ class ContentType(Resource):
                     table_list[bind_key]['jwt_info']['restricted_tables'] = \
                         restricted_tables.restricted_tables.split(",")
 
+        print(table_list)
         return jsonify(table_list)
         # return {"result": table_list}
 
