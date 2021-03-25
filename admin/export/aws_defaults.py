@@ -1,8 +1,12 @@
 from requests import get
+from requests.exceptions import ConnectionError
 
 
 def get_current_ip() -> str:
-    ip = get('https://api.ipify.org').text
+    try:
+        ip = get('https://api.ipify.org').text
+    except ConnectionError:
+        ip = "Not Connected to internet."
     return ip
 
 
