@@ -195,7 +195,6 @@ def foreign_key_options(app_name, type):
                         result[table.name].append(column.name)
                     except KeyError:
                         result[table.name] = [column.name]
-                print(result)
     if result != {}:
         return result
     raise ValueError
