@@ -155,6 +155,18 @@ def create_model(dir_path, data):
                 except ValueError:
                     return {"result": "Incorrect format for ENUM value."}, 400
                 col["default"] = ""
+            elif col["type"].upper() == "JSON":
+                try:
+                    line = "    " + col["name"] + " = Column(JSON" + \
+                        ", nullable=" + str(col["nullable"]).title() + \
+                        ", unique=" + str(col["unique"]).title() + \
+                        ", default=" + str(col["default"]) + ')'
+                except KeyError:
+                    return {
+                        "result": "The ENUM column must have enumerated values."}, 400
+                except ValueError:
+                    return {"result": "Incorrect format for ENUM value."}, 400
+                col["default"] = ""
             else:
                 line = "    " + col["name"] + " = Column(" + col["type"] \
                        + ", nullable=" + str(col["nullable"]).title() \
