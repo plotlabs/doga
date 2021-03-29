@@ -430,7 +430,7 @@ class ContentType(Resource):
         base_jwt = data.get("base_jwt", False)
         restrict_by_jwt = data.get("restrict_by_jwt", False)
 
-        if check_table(Table.table_name):
+        if check_table(Table.table_name, Table.connection_name):
             db.session.add(notification)
             db.session.commit()
             return {"result": "Module with this name is already present."}, 400
@@ -597,8 +597,7 @@ class ContentType(Resource):
                               "new datetime column should be nullable."}, 400
 
         if restrict_by_jwt:
-            add_jwt_list(Table.connection_name, database_name,
-                         Table.table_name)
+            add_jwt_list(Table.connection_name, Table.table_name)
 
         if base_jwt:
 
