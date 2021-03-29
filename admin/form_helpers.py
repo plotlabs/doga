@@ -36,7 +36,7 @@ class AWSFormHelper(Resource):
     Endpoint to provide default values and info regarding the aws exports
     """
     @jwt_required
-    def get(self, section=None):
+    def post(self, section=None):
 
         if not verify_jwt(get_jwt_identity(), Admin):
             return {"result": "JWT authorization invalid, user does not"
@@ -179,7 +179,7 @@ class AWSFormHelper(Resource):
 # TODO: fix this
 class AWSEC2info(Resource):
     @jwt_required
-    def get(self):
+    def post(self):
         user_credentials = request.get_json()
         required_params = ["aws_access_key", "aws_secret_key", "region_name"]
         if user_credentials is None:
