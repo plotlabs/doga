@@ -538,21 +538,23 @@ def add_jwt_list(connection_name, table_name):
             db.session.add(restricted_jwt)
             db.session.commit()
         except Exception as error:
+            print(error)
             return {"result": error}, 500
 
     # if the table was already in the database
-    try:
-        if table_name in restricted_tables.restricted_tables:
-            return
-
-        restricted_tables.restricted_tables = restricted_tables.restricted_tables + "," + table_name  # noqa E401
+    else:
         try:
-            db.session.commit()
-        except Exception as error:
-            return {"result": error}
+            if table_name in restricted_tables.restricted_tables:
+                return
 
-    except AttributeError:
-        pass
+            restricted_tables.restricted_tables = restricted_tables.restricted_tables + "," + table_name  # noqa E401
+            try:
+                db.session.commit()
+            except Exception as error:
+                return {"result": error}
+
+        except AttributeError:
+            pass
 
 
 def create_relationsips(app_name, relation_type, related_table, related_field,
