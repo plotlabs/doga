@@ -175,8 +175,7 @@ def create_model(dir_path, data):
                     line = "    " + col["name"] + " = Column(" + col["type"] \
                         + ", ForeignKey('" + col["foreign_key"].lower() + "')" \
                         + ", nullable=" + str(col["nullable"]).title() \
-                        + ", unique=" + str(col["unique"]).title() + ")\n"
-
+                        + ", unique=" + str(col["unique"]).title()
                 if col["default"] == "":
                     line = line + ")\n"
                 else:
