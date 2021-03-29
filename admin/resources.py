@@ -343,7 +343,10 @@ class ContentType(Resource):
                     table_list[bind_key]['jwt_info']['restricted_tables'] = \
                         restricted_tables.restricted_tables.split(",")
 
-        print(table_list)
+        empty_apps = set(DB_DICT.keys()) - set(table_list.keys())
+        if empty_apps != {}:
+            for app in list(empty_apps):
+                table_list[app] = []
         return jsonify(table_list)
         # return {"result": table_list}
 
