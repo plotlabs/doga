@@ -344,9 +344,10 @@ class ContentType(Resource):
                         restricted_tables.restricted_tables.split(",")
 
         empty_apps = set(DB_DICT.keys()) - set(table_list.keys())
+        empty_apps = empty_apps - {'default'}
         if empty_apps != {}:
             for app in list(empty_apps):
-                table_list[app] = []
+                table_list[app] = {}
         return jsonify(table_list)
         # return {"result": table_list}
 
