@@ -134,7 +134,6 @@ class AdminApi(Resource):
                           create_dt=dt.now())
             db.session.add(admin)
             db.session.commit()
-            set_jwt_secret_key()
             return {"result": "Admin created successfully.",
                     "id": admin.id, "email": admin.email}, 200
 
@@ -488,7 +487,6 @@ class ContentType(Resource):
 
             set_jwt_flag(Table.connection_name, Table.table_name,  # noqa 501
                          ",".join(data["filter_keys"]))
-            set_jwt_secret_key()
 
         if restrict_by_jwt and check_jwt_present(Table.connection_name) is None:  # noqa 501, 701
             return {"result": "JWT is not configured."}, 400
@@ -627,7 +625,6 @@ class ContentType(Resource):
             delete_jwt(Table.connection_name)
             set_jwt_flag(Table.connection_name, Table.table_name,  # noqa 501
                          ",".join(data["filter_keys"]))
-            set_jwt_secret_key()
 
         if restrict_by_jwt and check_jwt_present(Table.connection_name) is None:  # noqa 501, 701
             return {"result": "JWT is not configured."}, 400
