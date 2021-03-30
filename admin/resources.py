@@ -962,7 +962,7 @@ class ColumnType(Resource):
         available_types = column_types()
         for i in ['INT', 'INTEGER', 'ARRAY', 'BOOLEAN', 'TEXT', 'CLOB',
                   'TIMESTAMP', 'Interval', 'CHAR', 'NCHAR', 'NVARCHAR',
-                  'Concatenable',
+                  'Concatenable', 'BINARY',
                   'REAL', 'NUMERIC', 'DATETIME', 'TIME', 'DATE',
                   'BIGINT', 'SMALLINT', 'SmallInteger']:
             available_types.remove(i)

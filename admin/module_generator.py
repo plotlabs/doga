@@ -151,9 +151,7 @@ def create_model(dir_path, data):
                             enums.append(i['value'])
                     except KeyError:
                         enums = col["enum"]
-                    engine_specific = ""
-                    if 'postgres' in engine:
-                        engine_specific = ", name='" + col[name].lower() + "s'"
+                    engine_specific = ", name='" + col["name"].lower() + "s'"
                     if col["default"] != "":
                         line = "    " + col["name"] + " = Column(Enum(" + \
                             str(enums).strip('[').rstrip(
@@ -194,31 +192,34 @@ def create_model(dir_path, data):
                         + ", ForeignKey('" + col["foreign_key"].lower() + "')" \
                         + ", nullable=" + str(col["nullable"]).title() \
                         + ", unique=" + str(col["unique"]).title()
-                if col["default"] == "":
-                    line = line + ")\n"
-                else:
-                    if col["foreign_key"] == "":
-                        if isinstance(col["default"], str):
-                            if col["default"].lower() == "current":
-                                col["default"] = "CURRENT_TIMESTAMP"
-                                line = line + ", server_default=text('" + str(
-                                    col["default"]) + "'))\n"
-                            elif col["type"].upper() == "BOOLEAN":
-                                line = line + ", server_default=text('" + str(
-                                    col["default"]) + "'))\n"
-                            else:
-                                line = line + ", server_default='" + str(
-                                    col["default"]) + "')\n"
-                        elif isinstance(col["default"], list):
-                            if col['type'].upper() == 'ARRAY':
-                                try:
-                                    line = line + ", server_default=" + \
-                                        str(col["default"]) + "')\n"
-                                except ValueError:
-                                    return {
-                                        "result": "Incorrect format for Array value."}, 400
-                        else:
-                            line = line + ", server_default=text('" + str(
+
+            if col["default"] == "":
+                line = line + ")\n"
+            elif col["type"].upper() in ['ENUM', 'JSON']:
+                pass
+            else:
+                done = False
+                if isinstance(col["default"], str):
+                    if col["default"].lower() == "current":
+                        col["default"] = "CURRENT_TIMESTAMP"
+                        line = line + ", server_default=text('" + str(
+                                   col["default"]) + "'))\n"
+                    done = True
+                if col["type"].upper() == "BOOLEAN":
+                    line = line + ", server_default=text('" + str(
+                               col["default"]) + "'))\n"
+                    done = True
+                if isinstance(col["default"], list):
+                    if col['type'].upper() == 'ARRAY':
+                        try:
+                            line = line + ", server_default=" + \
+                                    str(col["default"]) + "')\n"
+                        except ValueError:
+                            return {"result": "Incorrect format for "
+                                              "Array value."}, 400
+                        done = True
+                if done is False:
+                    line = line + ", server_default=text('" + str(
                                 col["default"]) + "'))\n"
         except KeyError as error:
             return {
@@ -699,7 +700,7 @@ def modify_related_type(app_name, col):
             if related_field + " =" in line:
                 new_type = "VARCHAR(255)"
                 split_line = line.split(',')
-                if new_type in line:
+                if 'VARCHAR' in line:
                     pass
                 else:
                     update_type = split_line[0].split('(')[:]
