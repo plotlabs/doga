@@ -433,7 +433,7 @@ class ContentType(Resource):
         base_jwt = data.get("base_jwt", False)
         restrict_by_jwt = data.get("restrict_by_jwt", False)
 
-        if check_table(Table.table_name, Table.connection_name):
+        if check_table(Table.table_name):
             db.session.add(notification)
             db.session.commit()
             return {"result": "Module with this name is already present."}, 400
@@ -1149,7 +1149,7 @@ class ExportApp(Resource):
                 return {
                     "result": "Please Provide the following details: ",
                     "required fields": missing_keys,
-                    "request": json_requ
+                    "request": json_request
                 }, 400
 
             try:
