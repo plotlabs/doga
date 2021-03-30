@@ -144,11 +144,29 @@ def create_model(dir_path, data):
         try:
             if col["type"].upper() == "ENUM":
                 try:
-                    line = "    " + col["name"] + " = Column(Enum(" + \
-                        str(col["enum"]).strip('[').rstrip(
-                        ']') + ')' + ", nullable=" + \
-                        str(col["nullable"]).title() + ", unique=" + \
-                        str(col["unique"]).title() + ')'
+                    # TODO: fix needed from fronted to avoid this
+                    enums = []
+                    try:
+                        for i in col["enum"]:
+                            enums.append(i['value'])
+                    except KeyError:
+                        enums = col["enum"]
+                    engine_specific = ""
+                    if 'postgres' in engine:
+                        engine_specific = ", name='" + col[name].lower() + "s'"
+                    if col["default"] != "":
+                        line = "    " + col["name"] + " = Column(Enum(" + \
+                            str(enums).strip('[').rstrip(
+                            ']') + engine_specific + ')' + ", nullable=" + \
+                            str(col["nullable"]).title() + ", unique=" + \
+                            str(col["unique"]).title() + ", default='" +\
+                            col["default"] + "')\n"
+                    else:
+                        line = "    " + col["name"] + " = Column(Enum(" + \
+                            str(enums).strip('[').rstrip(
+                            ']') + engine_specific + ')' + ", nullable=" + \
+                            str(col["nullable"]).title() + ", unique=" + \
+                            str(col["unique"]).title() + ")\n"
                 except KeyError:
                     return {
                         "result": "The ENUM column must have enumerated values."}, 400

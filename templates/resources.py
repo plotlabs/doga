@@ -110,9 +110,9 @@ class Apis(Resource):
                         model_endp = str(f).split("'")[1].split('.')[0]
                         foreign_obj = requests.get(
                                 'http://{}:{}/'.format(HOST, PORT)
-                                + module_endp
+                                + 'module_endp_lower'
                                 + '/' + model_endp
-                                + '/' + str(data[col.name]))
+                                )
                         result = json.loads(foreign_obj.content)["result"]
 
                         if foreign_obj.status_code != 200:
@@ -120,6 +120,22 @@ class Apis(Resource):
                                 "result": "Foreign object does not exist."
                             }
                         if len(result) == 0:
+                            return {"result": "Foreign Key constraint "
+                                                "failed for column "
+                                                "{}".format(col.name)}, 400
+                        exists = False
+                        try:
+                            for entries in result:
+                                if entries[str(f).split("'")[1].split('.')[1]] == data[col.name]:
+                                    exists = True
+                                    break
+                        except Exception as e:
+                            return {"result": "Foreign Key constraint "
+                                              "failed for column "
+                                              "{}".format(col.name),
+                                              "error": str(e)}, 400
+
+                        if exists is False:
                             return {"result": "Foreign Key constraint "
                                               "failed for column "
                                               "{}".format(col.name)}, 400
@@ -217,8 +233,23 @@ class Apis(Resource):
                                 return {
                                     "result": "Foreign object does not exist."
                                 }
-
                             if len(result) == 0:
+                                return {"result": "Foreign Key constraint "
+                                                "failed for column "
+                                                "{}".format(col.name)}, 400
+                            exists = False
+                            try:
+                                for entries in result:
+                                    if entries[str(f).split("'")[1].split('.')[1]] == data[col.name]:
+                                        exists = True
+                                        break
+                            except Exception as e:
+                                return {"result": "Foreign Key constraint "
+                                                  "failed for column "
+                                                  "{}".format(col.name),
+                                        "error": str(e)}, 400
+
+                            if exists is False:
                                 return {"result": "Foreign Key constraint "
                                                   "failed for column "
                                                   "{}".format(col.name)}, 400

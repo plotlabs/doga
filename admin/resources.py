@@ -447,6 +447,7 @@ class ContentType(Resource):
             valid, msg = column_validation(data["columns"],
                                            Table.connection_name)
         except KeyError as err:
+            print(err)
             return {
                 "result": "Error, column is missing required property.",
                 "property": err.args
@@ -959,8 +960,9 @@ class ColumnType(Resource):
         """Get a list of all valid column types available."""
 
         available_types = column_types()
-
-        for i in ['INT', 'INTEGER', 'ARRAY', 'BOOLEAN', 'TEXT',
+        for i in ['INT', 'INTEGER', 'ARRAY', 'BOOLEAN', 'TEXT', 'CLOB',
+                  'TIMESTAMP', 'Interval', 'CHAR', 'NCHAR', 'NVARCHAR',
+                  'Concatenable',
                   'REAL', 'NUMERIC', 'DATETIME', 'TIME', 'DATE',
                   'BIGINT', 'SMALLINT', 'SmallInteger']:
             available_types.remove(i)
