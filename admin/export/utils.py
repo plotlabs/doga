@@ -572,6 +572,7 @@ def deploy_to_aws(user_credentials, aws_config, ec2, key_name=KEY_NAME,
               + app_folder + ' ' + user + '@' + ec2.public_dns_name +
               ':exported_app/')
 
+    print("here")
     proc = subprocess.Popen(
         [
             'scp',
@@ -598,6 +599,7 @@ def deploy_to_aws(user_credentials, aws_config, ec2, key_name=KEY_NAME,
     print("program output:", out)
 
     client.exec_command('curl -sSL https://get.docker.com/ | sh')
+    sleep(10)
     client.close()
 
     return ec2
@@ -668,9 +670,6 @@ def connect_rds_to_ec2(rds, ec2, user_credentials, config, sg_name,
             pkey=key
         )
 
-        client.exec_command(load_app_commands)
-        print('sleeping')
-        sleep(100)
         stdin, stdout, stderr = client.exec_command(commands)
     except Exception as error:
         return False
