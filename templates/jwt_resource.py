@@ -116,8 +116,7 @@ class Apis(Resource):
                             foreign_obj = requests.get(
                                 'http://{}:{}/'.format(HOST, PORT)
                                 + 'module_endp_lower'
-                                + '/' + model_endp
-                                + '/' + str(data[col.name]))
+                                + '/' + model_endp)
                             result = json.loads(foreign_obj.content)[
                                 "result"]
 
@@ -125,10 +124,27 @@ class Apis(Resource):
                                 return {
                                     "result": "Foreign object does not exist."
                                 }
-                            if len(result) == 0:
-                                return {"result": "Foreign Key constraint "
-                                                  "failed for column "
-                                                  "{}".format(col.name)}, 400
+                        if len(result) == 0:
+                            return {"result": "Foreign Key constraint "
+                                    "failed for column "
+                                    "{}".format(col.name)}, 400
+                        exists = False
+                        try:
+                            for entries in result:
+                                if entries[str(f).split("'")[1].split('.')[
+                                        1]] == data[col.name]:
+                                    exists = True
+                                    break
+                        except Exception as e:
+                            return {"result": "Foreign Key constraint "
+                                    "failed for column "
+                                    "{}".format(col.name),
+                                    "error": str(e)}, 400
+
+                        if exists is False:
+                            return {"result": "Foreign Key constraint "
+                                    "failed for column "
+                                    "{}".format(col.name)}, 400
 
             for key, value in data.items():
                 setattr(model_obj, key, value)
@@ -218,16 +234,16 @@ class Register(Resource):
                                 data[col.name], "%Y-%m-%d")
                         except ValueError:
                             return {
-                                "result": "The format entered for column {} is "
-                                          "not correct. Correct format should"
-                                          " be of type: YYYY-MM-DD.".format(
-                                              col.name)}, 400
+                                "result": "The format entered for column {}"
+                                " is not correct. Correct format should be"
+                                " of type: YYYY-MM-DD.".format(
+                                    col.name)}, 400
                         except TypeError:
                             return {
-                                "result": "The format entered for column {} is "
-                                          "not correct. Correct format should"
-                                          " be of type: YYYY-MM-DD.".format(
-                                              col.name)}, 400
+                                "result": "The format entered for column {} "
+                                "is not correct. Correct format should be "
+                                "of type: YYYY-MM-DD.".format(
+                                    col.name)}, 400
                         except KeyError:
                             pass
 
@@ -237,16 +253,17 @@ class Register(Resource):
                                 data[col.name], "%Y-%m-%d %H:%M:%S")
                         except ValueError:
                             return {
-                                "result": "The format entered for column {} is "
-                                          "not correct. Correct format should"
-                                          " be of type: YYYY-MM-DD H:M:S.".format(
-                                              col.name)}, 400
+                                "result": "The format entered for column {} "
+                                "is not correct. Correct format "
+                                "should be of type: YYYY-MM-DD H:M:S.".format(
+                                    col.name)}, 400
                         except TypeError:
                             return {
-                                "result": "The format entered for column {} is "
-                                          "not correct. Correct format should"
-                                          " be of type: YYYY-MM-DD H:M:S.".format(
-                                              col.name)}, 400
+                                "result": "The format entered for column {} "
+                                          "is not correct. Correct format "
+                                          "should be of type: "
+                                          "YYYY-MM-DD H:M:S.".format(
+                                           col.name)}, 400
                         except KeyError:
                             pass
 
@@ -256,9 +273,11 @@ class Register(Resource):
                                                    'SMALLINTEGER', 'DECIMAL',
                                                    'REAL']:
                         if isinstance(data[col.name], str):
-                            return {"result": "The value entered for column {} "
-                                              "is string and not of type {}"
-                                              "".format(col.name, col.type)}, 400
+                            return {
+                                "result": "The value entered for column {} "
+                                "is string and not of type {}"
+                                "".format(
+                                    col.name, col.type)}, 400
                 except UnsupportedCompilationError as error:
                     if 'JSON' in str(error).upper():
                         pass
@@ -272,10 +291,9 @@ class Register(Resource):
                     for f in col.foreign_keys:
                         model_endp = str(f).split("'")[1].split('.')[0]
                         foreign_obj = requests.get(
-                                'http://{}:{}/'.format(HOST, PORT)
-                                + 'module_endp_lower'
-                                + '/' + model_endp.title()
-                                + '/' + str(data[col.name]))
+                            'http://{}:{}/'.format(HOST, PORT)
+                            + 'module_endp_lower'
+                            + '/' + model_endp)
 
                         if foreign_obj.status_code != 200:
                             return {
@@ -285,6 +303,23 @@ class Register(Resource):
                         result = json.loads(foreign_obj.content)["result"]
 
                         if len(result) == 0:
+                            return {"result": "Foreign Key constraint "
+                                    "failed for column "
+                                    "{}".format(col.name)}, 400
+                        exists = False
+                        try:
+                            for entries in result:
+                                if entries[str(f).split("'")[1].split('.')[
+                                        1]] == data[col.name]:
+                                    exists = True
+                                    break
+                        except Exception as e:
+                            return {"result": "Foreign Key constraint "
+                                              "failed for column "
+                                              "{}".format(col.name),
+                                              "error": str(e)}, 400
+
+                        if exists is False:
                             return {"result": "Foreign Key constraint "
                                               "failed for column "
                                               "{}".format(col.name)}, 400

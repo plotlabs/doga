@@ -240,7 +240,7 @@ def validate_ec2_instance_id(user_credentials, aws_config, image_id):
     return platform
     """
     # Connect to EC2
-    #ec2 = boto3.resource('ec2')
+    # ec2 = boto3.resource('ec2')
 
     # Get information for all running instances
     # running_instances = ec2.instances.filter(Filters=[{
@@ -551,7 +551,8 @@ def deploy_to_aws(user_credentials, aws_config, ec2, key_name=KEY_NAME,
 
     user = platforms[platform]
 
-    key = paramiko.RSAKey.from_private_key_file(this_folder + '/' + key_name + '.pem')
+    key = paramiko.RSAKey.from_private_key_file(this_folder + '/' +
+                                                key_name + '.pem')
     client = paramiko.SSHClient()
     client.load_system_host_keys()
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -595,14 +596,6 @@ def deploy_to_aws(user_credentials, aws_config, ec2, key_name=KEY_NAME,
 
     out, err = proc.communicate()
     print("program output:", out)
-
-    # run
-    # load_docker_commands = open('admin/export/install_docker.sh', 'r').read()
-    # commands = [load_docker_commands]
-
-    # ssm_client.send_command(DocumentName="AWS-RunShellScript",
-    #                        Parameters={'commands': commands},
-    #                        InstanceIds=[ec2.id])
 
     client.exec_command('curl -sSL https://get.docker.com/ | sh')
     client.close()
