@@ -70,7 +70,6 @@ class Restricted_by_JWT(Base):
 
     id = Column(Integer, primary_key=True)
     connection_name = Column(String(255), ForeignKey('jwt.connection_name'))
-    db_name = Column(String(255), nullable=False)
     restricted_tables = Column(String(1000))
 
 

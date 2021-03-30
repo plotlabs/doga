@@ -1149,7 +1149,7 @@ class ExportApp(Resource):
                 return {
                     "result": "Please Provide the following details: ",
                     "required fields": missing_keys,
-                    "request": json_request
+                    "request": json_requ
                 }, 400
 
             try:

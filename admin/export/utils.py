@@ -553,12 +553,15 @@ def deploy_to_aws(user_credentials, aws_config, ec2, key_name=KEY_NAME,
 
     key = paramiko.RSAKey.from_private_key_file(this_folder + '/' + key_name + '.pem')
     client = paramiko.SSHClient()
+    client.load_system_host_keys()
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     # Connect/ssh to an instance
     client.connect(
         hostname=ec2.public_dns_name,
         username=user,
-        pkey=key)
+        pkey=key,
+        allow_agent=False,
+        look_for_keys=False)
 
     client.exec_command('mkdir -p $HOME/exported_app')
 
@@ -567,10 +570,11 @@ def deploy_to_aws(user_credentials, aws_config, ec2, key_name=KEY_NAME,
               '/' + key_name + '.pem '
               + app_folder + ' ' + user + '@' + ec2.public_dns_name +
               ':exported_app/')
-    """
+
     proc = subprocess.Popen(
         [
-            'scp -o',
+            'scp',
+            ' -o',
             'UserKnownHostsFile=/dev/null',
             '-o ',
             'StrictHostKeyChecking=no',
@@ -591,7 +595,7 @@ def deploy_to_aws(user_credentials, aws_config, ec2, key_name=KEY_NAME,
 
     out, err = proc.communicate()
     print("program output:", out)
-    """
+
     # run
     # load_docker_commands = open('admin/export/install_docker.sh', 'r').read()
     # commands = [load_docker_commands]
