@@ -142,6 +142,8 @@ def create_model(dir_path, data):
             relation_type = None
 
         try:
+            if col["type"].upper() == 'BINARY':
+                col["default"] = ""
             if col["type"].upper() == "ENUM":
                 try:
                     # TODO: fix needed from fronted to avoid this
@@ -202,7 +204,7 @@ def create_model(dir_path, data):
                         col["default"] = "CURRENT_TIMESTAMP"
                         line = line + ", server_default=text('" + str(
                                    col["default"]) + "'))\n"
-                    done = True
+                        done = True
                 if col["type"].upper() == "BOOLEAN":
                     line = line + ", server_default=text('" + str(
                                col["default"]) + "'))\n"
