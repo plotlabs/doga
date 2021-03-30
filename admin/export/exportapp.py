@@ -224,7 +224,8 @@ def create_app_dir(
         except DogaAppNotFound:
             return
 
-        if db_engine != 'postgres' and deploy is True:
+        if 'postgres' not in db_engine and deploy is True:
+            print(db_engine)
             raise DogaHerokuDeploymentError("Only a managed postgres db can"
                                             " be provisioned")
 
