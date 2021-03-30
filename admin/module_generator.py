@@ -193,10 +193,8 @@ def create_model(dir_path, data):
                         + ", nullable=" + str(col["nullable"]).title() \
                         + ", unique=" + str(col["unique"]).title()
 
-            if col["default"] == "":
+            if col["default"] == "" and col["type"].upper() not in ['ENUM', 'JSON']:
                 line = line + ")\n"
-            elif col["type"].upper() in ['ENUM', 'JSON']:
-                pass
             else:
                 done = False
                 if isinstance(col["default"], str):
