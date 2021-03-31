@@ -197,6 +197,8 @@ def create_model(dir_path, data):
 
             if col["default"] == "" and col["type"].upper() not in ['ENUM', 'JSON']:
                 line = line + ")\n"
+            elif col["type"].upper() in ['ENUM', 'JSON']:
+                pass
             else:
                 done = False
                 if isinstance(col["default"], str):
@@ -204,6 +206,10 @@ def create_model(dir_path, data):
                         col["default"] = "CURRENT_TIMESTAMP"
                         line = line + ", server_default=text('" + str(
                                    col["default"]) + "'))\n"
+                        done = True
+                    if 'VARCHAR' in col["type"].upper():
+                        line = line + ", default='" + str(col["default"]) + \
+                                "')\n"
                         done = True
                 if col["type"].upper() == "BOOLEAN":
                     line = line + ", server_default=text('" + str(

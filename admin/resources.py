@@ -259,12 +259,18 @@ class ContentType(Resource):
                         pass
                     if column_type == 'BOOLEAN':
                         default = str(default)
+
+                    if 'ColumnDefault' in str(default):
+                        default = default[
+                                default.find("(") + 1:default.find(")")
+                            ].replace("'", "")
+
                     col = {
                         "name": column.name,
                         "type": column_type,
                         "nullable": str(bool(column.nullable)).lower(),
                         "unique": str(bool(column.unique)).lower(),
-                        "default": str(default),
+                        "default": default,
                         "foreign_key": foreign_key
                     }
                     column_list.append(col)
@@ -962,7 +968,7 @@ class ColumnType(Resource):
         available_types = column_types()
         for i in ['INT', 'INTEGER', 'ARRAY', 'BOOLEAN', 'TEXT', 'CLOB',
                   'TIMESTAMP', 'Interval', 'CHAR', 'NCHAR', 'NVARCHAR',
-                  'Concatenable', 'BINARY',
+                  'Concatenable', 'BINARY', 'FLOAT', 'BLOB',
                   'REAL', 'NUMERIC', 'DATETIME', 'TIME', 'DATE',
                   'BIGINT', 'SMALLINT', 'SmallInteger']:
             available_types.remove(i)
