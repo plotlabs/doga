@@ -250,6 +250,7 @@ def create_app_dir(
 
 def write_to_deployments(app_name, platform):
     old_entry = Deployments.query.filter_by(app_name=app_name).first()
+    print(old_entry.exports)
     if old_entry is None:
         app_deployed = Deployments(
             app_name=app_name,
@@ -257,17 +258,11 @@ def write_to_deployments(app_name, platform):
             status='Not Fetched Yet',
             exports=1
         )
+        db.session.add(app_deployed)
     else:
-        app_deployed = Deployments(
-            app_name=app_name,
-            platfrom=platform,
-            status='Not Fetched Yet',
-            exports=old_entry.exports+1
-        )
+        old_entry.exports = old_entry.exports + 1
 
-    db.session.add(app_deployed)
     db.session.commit()
-    return app_deployed
 
 
 def create_docs(platform, parent_dir, dest_dir, app_name, deploy,

@@ -532,7 +532,7 @@ def deploy_to_aws(user_credentials, aws_config, ec2, key_name=KEY_NAME,
     #     for i in ssm_client.describe_instance_information()[
     #             'InstanceInformationList']:
     #         associated_instances.append(i["InstanceId"])
-
+    sleep(22)
     this_folder = os.sep.join(__file__.split(os.sep)[:-3])
     app_folder = os.sep.join(__file__.split(os.sep)[:-3]) + '/exported_app/*'
 
@@ -561,10 +561,11 @@ def deploy_to_aws(user_credentials, aws_config, ec2, key_name=KEY_NAME,
         hostname=ec2.public_dns_name,
         username=user,
         pkey=key,
-        allow_agent=False,
-        look_for_keys=False)
+    )
 
-    client.exec_command('mkdir -p $HOME/exported_app')
+    stdin_, stdout_, stderr_ = client.exec_command(
+                                                'mkdir -p $HOME/exported_app')
+    stdout_.channel.recv_exit_status()
 
     os.system('scp -o UserKnownHostsFile=/dev/null -o '
               'StrictHostKeyChecking=no -r -i ' + this_folder +
@@ -572,12 +573,10 @@ def deploy_to_aws(user_credentials, aws_config, ec2, key_name=KEY_NAME,
               + app_folder + ' ' + user + '@' + ec2.public_dns_name +
               ':exported_app/')
 
-    print("here")
-    proc = subprocess.Popen(
+    print("576")
+    """    proc = subprocess.Popen(
         [
-            'scp',
-            ' -o',
-            'UserKnownHostsFile=/dev/null',
+            'scp -o UserKnownHostsFile=/dev/null',
             '-o ',
             'StrictHostKeyChecking=no',
             '-r',
@@ -597,9 +596,9 @@ def deploy_to_aws(user_credentials, aws_config, ec2, key_name=KEY_NAME,
 
     out, err = proc.communicate()
     print("program output:", out)
-
-    client.exec_command('curl -sSL https://get.docker.com/ | sh')
-    sleep(10)
+    """
+    stdin_, stdout_, stderr_  = client.exec_command('curl -sSL https://get.docker.com/ | sh')
+    stdout_.channel.recv_exit_status()
     client.close()
 
     return ec2
@@ -656,13 +655,13 @@ def connect_rds_to_ec2(rds, ec2, user_credentials, config, sg_name,
     load_app_commands = open('admin/export/create_and_startapp.sh', 'r'
                              ).read()
 
-    for line in load_app_commands:
-        line = line.replace("PORT", str(PORT))
+    # for line in load_app_commands:
+    #    line = line.replace("PORT", str(PORT))
 
-    commands = [load_app_commands]
+    # commands = [load_app_commands]
 
     print('660')
-
+    sleep(10)
     try:
         client.connect(
             hostname=ec2.public_dns_name,
@@ -670,7 +669,9 @@ def connect_rds_to_ec2(rds, ec2, user_credentials, config, sg_name,
             pkey=key
         )
 
-        stdin, stdout, stderr = client.exec_command(commands)
+        stdin, stdout, stderr = client.exec_command(load_app_commands)
+        stdout_.channel.recv_exit_status()
+        print(stdout_)
     except Exception as error:
         return False
 

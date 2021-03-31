@@ -191,6 +191,8 @@ def create_aws_deployment_thread(
                 notification.create_dict())
             break
 
+        write_to_deployments(app_name, 'aws')
+
         notification = Notifications(
             user=admin_jwt['email'],
             app_name=json_request['app_name'],
