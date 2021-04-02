@@ -167,9 +167,10 @@ def create_model(dir_path, data):
                             ']') + engine_specific + ')' + ", nullable=" + \
                             str(col["nullable"]).title() + ", unique=" + \
                             str(col["unique"]).title() + ")\n"
-                except KeyError:
+                except KeyError as error:
                     return {
-                        "result": "The ENUM column must have enumerated values."}, 400
+                        "error": "Missing key {} for column {}. ".format(
+                            error.args[0], col["name"])}, 400
                 except ValueError:
                     return {"result": "Incorrect format for ENUM value."}, 400
                 col["default"] = ""
@@ -179,9 +180,10 @@ def create_model(dir_path, data):
                         ", nullable=" + str(col["nullable"]).title() + \
                         ", unique=" + str(col["unique"]).title() + \
                         ", default=" + str(col["default"]) + ')'
-                except KeyError:
+                except KeyError as error:
                     return {
-                        "result": "The ENUM column must have enumerated values."}, 400
+                        "error": "Missing key {} for column {}. ".format(
+                            error.args[0], col["name"])}, 400
                 except ValueError:
                     return {"result": "Incorrect format for ENUM value."}, 400
                 col["default"] = ""
@@ -191,11 +193,12 @@ def create_model(dir_path, data):
                        + ", unique=" + str(col["unique"]).title()
                 if col["foreign_key"] != "":
                     line = "    " + col["name"] + " = Column(" + col["type"] \
-                        + ", ForeignKey('" + col["foreign_key"].lower() + "')" \
+                        + ", ForeignKey('" + col["foreign_key"].lower() + "')"\
                         + ", nullable=" + str(col["nullable"]).title() \
                         + ", unique=" + str(col["unique"]).title()
 
-            if col["default"] == "" and col["type"].upper() not in ['ENUM', 'JSON']:
+            if col["default"] == "" and col["type"].upper() not in [
+                    'ENUM', 'JSON']:
                 line = line + ")\n"
             elif col["type"].upper() in ['ENUM', 'JSON']:
                 pass
@@ -205,28 +208,28 @@ def create_model(dir_path, data):
                     if col["default"].lower() == "current":
                         col["default"] = "CURRENT_TIMESTAMP"
                         line = line + ", server_default=text('" + str(
-                                   col["default"]) + "'))\n"
+                            col["default"]) + "'))\n"
                         done = True
                     if 'VARCHAR' in col["type"].upper():
                         line = line + ", default='" + str(col["default"]) + \
-                                "')\n"
+                            "')\n"
                         done = True
                 if col["type"].upper() == "BOOLEAN":
                     line = line + ", server_default=text('" + str(
-                               col["default"]) + "'))\n"
+                        col["default"]) + "'))\n"
                     done = True
                 if isinstance(col["default"], list):
                     if col['type'].upper() == 'ARRAY':
                         try:
                             line = line + ", server_default=" + \
-                                    str(col["default"]) + "')\n"
+                                str(col["default"]) + "')\n"
                         except ValueError:
                             return {"result": "Incorrect format for "
                                               "Array value."}, 400
                         done = True
                 if done is False:
                     line = line + ", server_default=text('" + str(
-                                col["default"]) + "'))\n"
+                        col["default"]) + "'))\n"
         except KeyError as error:
             return {
                 "result": "Missing parameters for columns",

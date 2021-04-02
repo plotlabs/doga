@@ -68,7 +68,9 @@ class MarkRead(Resource):
                     db.session.commit()
                 return {"response": "Marked All Read"}, 200
             else:
-                return {"response": "Invalid <section> check url parameters."}, 400
+                return {
+                        "response": "Invalid <section> check url parameters."
+                        }, 400
         return
 
 
