@@ -56,16 +56,16 @@ class Apis(Resource):
                                 data[col.name], "%Y-%m-%d")
                         except ValueError:
                             return {
-                                "result": "The format entered for column {} is "
-                                        "not correct. Correct format should"
-                                        " be of type: YYYY-MM-DD.".format(
-                                            col.name)}, 400
+                                "result": "The format entered for column {} is"
+                                " not correct. Correct format should"
+                                " be of type: YYYY-MM-DD.".format(
+                                    col.name)}, 400
                         except TypeError:
                             return {
-                                "result": "The format entered for column {} is "
-                                        "not correct. Correct format should"
-                                        " be of type: YYYY-MM-DD.".format(
-                                            col.name)}, 400
+                                "result": "The format entered for column {} is"
+                                " not correct. Correct format should"
+                                " be of type: YYYY-MM-DD.".format(
+                                    col.name)}, 400
                         except KeyError:
                             pass
 
@@ -75,29 +75,32 @@ class Apis(Resource):
                                 data[col.name], "%Y-%m-%d %H:%M:%S")
                         except ValueError:
                             return {
-                                "result": "The format entered for column {} is "
-                                        "not correct. Correct format should"
-                                        " be of type: YYYY-MM-DD H:M:S.".format(
-                                            col.name)}, 400
+                                "result": "The format entered for column {} is"
+                                " not correct. Correct format should"
+                                " be of type: YYYY-MM-DD H:M:S.".format(
+                                    col.name)}, 400
                         except TypeError:
                             return {
-                                "result": "The format entered for column {} is "
-                                        "not correct. Correct format should"
-                                        " be of type: YYYY-MM-DD H:M:S.".format(
-                                            col.name)}, 400
+                                "result": "The format entered for column {} is"
+                                " not correct. Correct format should"
+                                " be of type: YYYY-MM-DD H:M:S.".format(
+                                    col.name)}, 400
                         except KeyError:
                             pass
 
                     elif str(col.type).upper() in ['INTEGER', 'BIGINTEGER',
-                                                'BIGINT', 'FLOAT', 'INT',
-                                                'SMALLINT', 'NUMERIC',
-                                                'SMALLINTEGER', 'DECIMAL',
-                                                'REAL']:
+                                                   'BIGINT', 'FLOAT', 'INT',
+                                                   'SMALLINT', 'NUMERIC',
+                                                   'SMALLINTEGER', 'DECIMAL',
+                                                   'REAL']:
 
-                        if data.get(col.name) and isinstance(data[col.name], str):
-                            return {"result": "The value entered for column {} "
-                                            "is string and not of type {}"
-                                            "".format(col.name, col.type)}, 400
+                        if data.get(col.name) and isinstance(
+                                data[col.name], str):
+                            return {
+                                "result": "The value entered for column {} "
+                                "is string and not of type {}"
+                                "".format(
+                                    col.name, col.type)}, 400
 
                 except UnsupportedCompilationError as err:
                     if 'JSON' in str(err).upper():
@@ -109,10 +112,10 @@ class Apis(Resource):
                     for f in col.foreign_keys:
                         model_endp = str(f).split("'")[1].split('.')[0]
                         foreign_obj = requests.get(
-                                'http://{}:{}/'.format(HOST, PORT)
-                                + 'module_endp_lower'
-                                + '/' + model_endp
-                                )
+                            'http://{}:{}/'.format(HOST, PORT)
+                            + 'module_endp_lower'
+                            + '/' + model_endp
+                        )
                         result = json.loads(foreign_obj.content)["result"]
 
                         if foreign_obj.status_code != 200:
@@ -121,12 +124,13 @@ class Apis(Resource):
                             }
                         if len(result) == 0:
                             return {"result": "Foreign Key constraint "
-                                                "failed for column "
-                                                "{}".format(col.name)}, 400
+                                    "failed for column "
+                                    "{}".format(col.name)}, 400
                         exists = False
                         try:
                             for entries in result:
-                                if entries[str(f).split("'")[1].split('.')[1]] == data[col.name]:
+                                if entries[str(f).split("'")[1].split('.')[
+                                        1]] == data[col.name]:
                                     exists = True
                                     break
                         except Exception as e:
@@ -235,12 +239,13 @@ class Apis(Resource):
                                 }
                             if len(result) == 0:
                                 return {"result": "Foreign Key constraint "
-                                                "failed for column "
-                                                "{}".format(col.name)}, 400
+                                        "failed for column "
+                                        "{}".format(col.name)}, 400
                             exists = False
                             try:
                                 for entries in result:
-                                    if entries[str(f).split("'")[1].split('.')[1]] == data[col.name]:
+                                    if entries[str(f).split("'")[1].split('.')[
+                                            1]] == data[col.name]:
                                         exists = True
                                         break
                             except Exception as e:

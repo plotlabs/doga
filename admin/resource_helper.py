@@ -143,7 +143,7 @@ def create_aws_deployment_thread(
             create_app_dir(app_name, rds, user_credentials, config, platform)
         except DogaDirectoryCreationError as error:
             notification.action_status = 'ERROR'
-            notification.message = "Could not create files for the exported" + \
+            notification.message = "Could not create files for the exported" +\
                 str(error)
             db.session.add(notification)
             db.session.commit()

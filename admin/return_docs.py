@@ -87,12 +87,13 @@ class ListDocs(Resource):
                          },
                         {"request_type": "POST",
                          "request_body": obj,
-                         "end_point": app_name + '/' + base_table.name + '/login',
+                         "end_point": app_name + '/' + base_table.name + '/login',  # noqa E401
                          "response_body": [{"code": 200,
                                             "body": {"result": "string",
                                                      "id": "integer",
                                                      "access_token": "string",
-                                                     "refresh_token": "string"}},
+                                                     "refresh_token": "string"}
+                                                     },
                                            {"code": 400,
                                             "body": {"result": "Missing Field."
                                                      }},
@@ -103,7 +104,7 @@ class ListDocs(Resource):
                          },
                         {"request_type": "GET",
                          "request_body": None,
-                         "end_point": app_name + '/' + base_table.name + '/<id>',
+                         "end_point": app_name + '/' + base_table.name + '/<id>',  # noqa E401
                          "params": {"name": "id",
                                     "type": "Integer"},
                          "response_body": [{"code": 200,
@@ -118,7 +119,7 @@ class ListDocs(Resource):
                          },
                         {"request_type": "PUT",
                          "request_body": obj,
-                         "end_point": app_name + '/' + base_table.name + '/<id>',
+                         "end_point": app_name + '/' + base_table.name + '/<id>',  # noqa E401
                          "params": {"name": "id",
                                     "type": "Integer"},
                          "response_body": [{"code": 200,
@@ -134,7 +135,7 @@ class ListDocs(Resource):
                          },
                         {"request_type": "DELETE",
                          "request_body": None,
-                         "end_point": app_name + '/' + base_table.name + '/<id>',
+                         "end_point": app_name + '/' + base_table.name + '/<id>',  # noqa E401
                          "params": {"name": "id",
                                     "type": "Integer"},
                          "response_body": [{"code": 200,
@@ -242,7 +243,7 @@ class ListDocs(Resource):
                                 "response_body": [
                                     {
                                                 "code": 200,
-                                                "body": "Successfully Deleted row."
+                                                "body": "Successfully Deleted row."  # noqa E401
                                     },
                                     {
                                         "code": 400,

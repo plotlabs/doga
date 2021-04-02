@@ -564,7 +564,7 @@ def deploy_to_aws(user_credentials, aws_config, ec2, key_name=KEY_NAME,
     )
 
     stdin_, stdout_, stderr_ = client.exec_command(
-                                                'mkdir -p $HOME/exported_app')
+        'mkdir -p $HOME/exported_app')
     stdout_.channel.recv_exit_status()
 
     os.system('scp -o UserKnownHostsFile=/dev/null -o '
@@ -597,7 +597,8 @@ def deploy_to_aws(user_credentials, aws_config, ec2, key_name=KEY_NAME,
     out, err = proc.communicate()
     print("program output:", out)
     """
-    stdin_, stdout_, stderr_  = client.exec_command('curl -sSL https://get.docker.com/ | sh')
+    stdin_, stdout_, stderr_ = client.exec_command(
+        'curl -sSL https://get.docker.com/ | sh')
     stdout_.channel.recv_exit_status()
     client.close()
 

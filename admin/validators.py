@@ -190,7 +190,8 @@ def foreign_key_options(app_name, _type):
     for table in metadata.sorted_tables:
         if app_name == extract_database_name(table.info['bind_key']):
             for column in table.columns:
-                if _type in str(column.type) or str(column.type) in _type.upper():
+                if _type in str(column.type) or \
+                        str(column.type) in _type.upper():
                     try:
                         result[table.name].append(column.name)
                     except KeyError:

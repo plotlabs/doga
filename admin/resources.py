@@ -1043,8 +1043,8 @@ class ExportApp(Resource):
                 required_rds_keys.difference(
                     json_request['rds_config'].keys()))
 
-            if missing_keys['user_credentials'] != [] or missing_keys['ec2_config'] != [
-            ] or missing_keys['rds_config'] != []:
+            if missing_keys['user_credentials'] != [] or missing_keys[
+                    'ec2_config'] != [] or missing_keys['rds_config'] != []:
                 return {
                     "result": "Please Provide the following details: ",
                     "required fields": missing_keys,
@@ -1052,7 +1052,8 @@ class ExportApp(Resource):
                 }, 500
                 notification.action_status = 'ERROR'
                 notification.completed_action_at = dt.now()
-                notification.message = 'Cannot process export missing parameters: ' + missing_keys
+                notification.message = 'Cannot process export missing ' \
+                                       'parameters: ' + missing_keys
                 db.session.add(notification)
                 db.session.commit()
                 triggerSocketioNotif(
