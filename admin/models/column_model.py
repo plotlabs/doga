@@ -144,8 +144,8 @@ class Column(Model):
             raise ValueError("Invalid value for column `name`, length must be "
                              "greater than or equal to `6`.")
         if not re.match("^([a-z]+[0-9_]*)*$", name):
-            raise ValueError("Invalid value for `table_name`m mist contain"
-                             " only alphabets, numbers and -")
+            raise ValueError("Invalid value for column_name: {}, must contain"
+                             " only alphabets, numbers and _".format(name))
 
         self._name = name.lower()
 

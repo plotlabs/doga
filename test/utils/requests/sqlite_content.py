@@ -1,6 +1,6 @@
 invalid_constraint_unique = {
     "table_name": "student",
-    "connection_name": "tmp",
+    "app_name": "test_db",
     "jwt_required": True,
     "filter_keys": ["name"],
     "columns": [
