@@ -40,4 +40,4 @@ jobs:
       run: pip install -r requirements.txt
 
     - name: Run Pycodestyle
-      run: pytest --pycodestyle .
+      run: pytest --pycodestyle . --ignore migrations

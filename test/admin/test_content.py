@@ -21,6 +21,7 @@ class Test_Content:
     """Tests post valid contet table, retreive it and add content to it.
        * database tested : SQLite
     """
+
     def test_setup(self, client):
         client.post('/admin/admin_profile', json=admin)
 
@@ -96,9 +97,9 @@ def test_invalid_colum_type(client):
 
 def test_invalid_column_boolean(client):
     response = client.post(
-            'admin/content/types',
-            json=invalid_boolean_column,
-            headers=headers)
+        'admin/content/types',
+        json=invalid_boolean_column,
+        headers=headers)
     assert b'Boolean datatype for columns is not supported by default database connection.' in response.data  # noqa 401
 
 
