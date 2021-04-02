@@ -5,6 +5,10 @@ from . import headers
 
 
 def test_post_jwt(client):
+    client.post('/admin/content/types',
+                json=invalid_jwt_table,
+                headers=headers)
+    invalid_jwt_table['table_name'] = "second_jwt"
     response = client.post('/admin/content/types',
                            json=invalid_jwt_table,
                            headers=headers)
