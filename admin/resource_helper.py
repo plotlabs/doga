@@ -1,4 +1,5 @@
 import requests
+from requests.exceptions import ConnectionError
 import jwt
 import json
 import sys
@@ -21,10 +22,13 @@ def triggerSocketioNotif(admin_id, token, notification):
     token = jwt.encode({"email": admin_id}, JWT_SECRET_KEY,
                        algorithm='HS256')
 
-    request = requests.post('http://{}:{}/relayMessage'.format(NOTIF_HOST,
-                                                               NOTIF_PORT),
-                            json=json.dumps({'notif': notification}),
-                            headers={"Authorization": token})
+    try:
+        request = requests.post('http://{}:{}/relayMessage'.format(NOTIF_HOST,
+                                                                   NOTIF_PORT),
+                                json=json.dumps({'notif': notification}),
+                                headers={"Authorization": token})
+    except ConnectionError:
+        print("ERROR: Please check the notification server!")
 
 
 def create_contet_thread(

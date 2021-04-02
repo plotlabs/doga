@@ -75,7 +75,7 @@ def column_validation(schema_list, connection_name, table_columns=None):
                 break
         if column["type"].upper() in ['TEXT'] and \
             DB_DICT[connection_name].startswith("mysql") and \
-                column["unique"] == 'True':
+                str(column["unique"]).upper() == 'TRUE':
             valid = False
             msg = "Unique constraint on TEXT column type is not" \
                 " allowed for mysql database."

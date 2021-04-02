@@ -12,7 +12,7 @@ def test_post_jwt(client):
 
 
 def test_post_jwt_invalid(client):
-    invalid_jwt_table['connection_name'] = 'conn'
+    invalid_jwt_table['app_name'] = 'conn'
     response = client.post('/admin/content/types',
                            json=invalid_jwt_table,
                            headers=headers)

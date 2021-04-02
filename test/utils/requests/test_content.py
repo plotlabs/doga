@@ -3,7 +3,7 @@
 # Valid Content
 valid_content = {
     "table_name": "test_table",
-    "connection_name": "default",
+    "app_name": "default",
     "columns": [
         {
             "name": "name",
@@ -38,7 +38,7 @@ valid_content = {
             "foreign_key": ""
         },
         {
-            "name": "DOB",
+            "name": "dob",
             "type": "DateTime",
             "nullable": "False",
             "unique": "False",
@@ -51,7 +51,7 @@ valid_content = {
 # Invalid Content
 invalid_boolean_column = {
     "table_name": "test_table",
-    "connection_name": "default",
+    "app_name": "default",
     "columns": [
         {
             "name": "name",
@@ -86,7 +86,7 @@ invalid_boolean_column = {
             "foreign_key": ""
         },
         {
-            "name": "DOB",
+            "name": "dob",
             "type": "DateTime",
             "nullable": "False",
             "unique": "False",
@@ -98,7 +98,7 @@ invalid_boolean_column = {
 
 invalid_filter_keys = {
     "table_name": "student",
-    "connection_name": "tmp",
+    "app_name": "test_db_test",
     "base_jwt": True,
     "filter_keys": ["invalid_key"],
     "columns": [
@@ -123,7 +123,7 @@ invalid_filter_keys = {
 
 invalid_colum_type = {
     "table_name": "student",
-    "connection_name": "default",
+    "app_name": "default",
     "filter_keys": ["desc"],
     "columns": [
         {
@@ -147,7 +147,7 @@ invalid_colum_type = {
 
 incorrect_filter_keys = {
     "table_name": "student",
-    "connection_name": "default",
+    "app_name": "default",
     "jwt_required": False,
     "filter_keys": ["desc"],
     "columns": [
