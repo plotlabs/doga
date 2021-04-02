@@ -2,6 +2,8 @@ from __future__ import absolute_import
 
 from datetime import date, datetime  # noqa: F401
 
+import re
+
 from typing import List, Dict  # noqa: F401
 
 from admin import utils
@@ -81,8 +83,11 @@ class Table(Model):
         if table_name is not None and table_name.isspace() is True:
             raise ValueError("Invalid value for `table_name`, must contain "
                              "characters")
+        if not re.match("^([a-z]+[0-9_]*)*$", table_name):
+            raise ValueError("Invalid value for `table_name`m mist contain"
+                             " only alphabets, numbers and -")
 
-        self._table_name = table_name
+        self._table_name = table_name.lower()
 
     @property
     def connection_name(self) -> str:
@@ -134,5 +139,3 @@ class Table(Model):
             raise ValueError("At least one column is required.")
 
         self._columns = columns
-
-# TODO: Add base_jwt and restrict_by_jwt to model

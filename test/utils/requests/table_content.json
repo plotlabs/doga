@@ -3,5 +3,5 @@
     "desc": "the test user added",
     "credits": 123123123,
     "active": 1,
-    "DOB": "1970-01-01 00:00:00"
+    "dob": "1970-01-01 00:00:00"
 }

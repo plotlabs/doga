@@ -21,12 +21,13 @@ for connection_name in DB_DICT:
             engine.dispose()
         except OperationalError as err:
             print("Could not delete " + db_type + " database " + db)
+            import traceback
             traceback.print_exc()
             continue
 
 """
-#TODO: couldnot find a way to import the metdata even from inside the app folder
-       * maybe have a cleanup endpoint from iside the app
+#note: could not find a way to import the metadata even from inside the app folder
+       * maybe have a cleanup endpoint from inside the app
 for table in reversed(meta.sorted_tables):
 
     print(table.info['bind_key'])

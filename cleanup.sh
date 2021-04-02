@@ -8,6 +8,4 @@ git clean -d -i
 
 find . | grep -E "(pycache|\.pyc|\.pyo$)" | xargs rm -rf
 
-#TODO:
-# remove all db's from from db.py file
 python cleanup.py

@@ -32,3 +32,5 @@ def after_request(response):
 
 
 CORS(app, supports_credentials=True)
+
+db.create_all()

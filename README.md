@@ -7,15 +7,26 @@
 The python packages required to run the app are given in the requirements.txt
 file and can be installed using the command:
 
+## Recommended: create a python3 virtual environment
+
+Use the following ser of commands to create a python3 virtual environment and
+activate it
+
 ```bash
-    pip install -r requirements.txt
+cd /path/to/doga
+python3 venv venv
+source venv/bin/activate
+pip install -r requirements.txt
 ```
+
 * on an Ubuntu system you might need to run the following command before you
 can install dependencies:
 
 ```bash
 	sudo apt-get install python-dev
 ```
+
+`note: mySQL and Postgres must be loaded to install some of the requirements.`
 
 ## Execution
 
@@ -24,11 +35,13 @@ The app should be started first using the command:
 ```bash
 	sh start.sh
 ```
+
 The app can be started using the command:
 
 ```bash
 	python runserver.py
 ```
+
 By default the app will run on 0.0.0.0:8080.
 This can be edited in the **config.py** file.
 

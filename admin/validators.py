@@ -5,10 +5,16 @@ import requests
 
 
 from sqlalchemy import types
+from sqlalchemy import create_engine, MetaData
+from sqlalchemy.pool import StaticPool
 from templates.models import metadata
 
 from dbs import DB_DICT
-from admin.module_generator import check_table
+
+from admin.module_generator import check_column
+from admin.utils import extract_database_name
+from admin.export.utils import extract_engine_or_fail
+
 from config import HOST, PORT
 
 
@@ -26,9 +32,10 @@ def column_validation(schema_list, connection_name, table_columns=None):
     """Validate columns"""
     valid = True
     msg = ""
-    column_name_list = []
+    column_name_list = [column["name"].lower() for column in schema_list]
     for column in schema_list:
-        if column["name"] in column_name_list:
+        column["name"] = column["name"].lower()
+        if len(set(column_name_list)) < len(column_name_list):
             valid = False
             msg = "Columns cannot have same name."
             break
@@ -37,11 +44,30 @@ def column_validation(schema_list, connection_name, table_columns=None):
             msg = "Invalid column type for column {}.".format(
                 column["name"])
             break
-        if column["foreign_key"] != "":
-            if not check_table(column["foreign_key"], connection_name):
-                valid = False
-                msg = "The Foreign Key module does not exist."
-                break
+        try:
+            if column["foreign_key"] != "":
+                try:
+                    table_name = column["foreign_key"].split(".")[0]
+                    column_name = column["foreign_key"].split(".")[1]
+                except IndexError:
+                    valid = False
+                    msg = "Please format the foreign key in the correct ' \
+                          'format 'TableName.ColumnName' . "
+                    break
+                try:
+                    if not check_column(table_name, column_name,
+                                        column["type"].split("(")[0],
+                                        connection_name):
+                        valid = False
+                        msg = "Foreign Key Module " + \
+                            column["name"] + " does not" + " exist."
+                        break
+                except TypeError as err:
+                    valid = False
+                    msg = str(err.args)
+        except KeyError:
+            column["foreign_key"] = ""
+
         if column["type"].lower().startswith("string"):
             if "(" not in column["type"] and ")" not in column["type"]:
                 valid = False
@@ -49,7 +75,7 @@ def column_validation(schema_list, connection_name, table_columns=None):
                 break
         if column["type"].upper() in ['TEXT'] and \
             DB_DICT[connection_name].startswith("mysql") and \
-                column["unique"] == 'True':
+                str(column["unique"]).upper() == 'TRUE':
             valid = False
             msg = "Unique constraint on TEXT column type is not" \
                 " allowed for mysql database."
@@ -117,13 +143,26 @@ def column_validation(schema_list, connection_name, table_columns=None):
                           " type {}.".format(column["name"], column["type"])
                     break
 
+            # engine specific issues:
+            engine = extract_engine_or_fail(connection_name)
+
+            if engine == 'mysql':
+                # MySQLdb._exceptions.OperationalError 1101
+                # BLOB, TEXT, GEOMETRY or JSON column can't have a default
+                if column['type'].upper() in ['BLOB', 'TEXT', 'GEOMETRY',
+                                              'JSON'] and \
+                        column['default'] is not None:
+                    valid = False
+                    msg = "Cannot set a default value for column {} of" \
+                          " type {}.".format(column["name"], column["type"])
+                    break
+
         if table_columns:
             if column["name"] not in table_columns:
                 if column["type"] in ["Date", "DATETIME"] \
                         and column["nullable"] == "False":
                     valid = False
                     break
-        column_name_list.append(column["name"])
 
     return valid, msg
 
@@ -132,7 +171,7 @@ def nullable_check(data):
     for table in metadata.sorted_tables:
         if table.name == data['table_name']:
             valid, msg = column_validation(data["columns"],
-                                           data['connection_name'],
+                                           data['app_name'],
                                            table.columns)
             if valid is False:
                 model_data = requests.get('http://{}:'.format(HOST) + PORT
@@ -144,5 +183,19 @@ def nullable_check(data):
 
     return False
 
-# TODO:
-# def jwt_filter_key_validator():
+
+def foreign_key_options(app_name, _type):
+
+    result = {}
+    for table in metadata.sorted_tables:
+        if app_name == extract_database_name(table.info['bind_key']):
+            for column in table.columns:
+                if _type in str(column.type) or \
+                        str(column.type) in _type.upper():
+                    try:
+                        result[table.name].append(column.name)
+                    except KeyError:
+                        result[table.name] = [column.name]
+    if result != {}:
+        return result
+    raise ValueError

@@ -25,7 +25,7 @@ def set_jwt_secret_key():
         return
     jwt_secret_key = generate_secret_key()
     o = open("./config.py", "a")
-    o.write("JWT_SECRET_KEY = ' " + jwt_secret_key + "'\n")
+    o.write("JWT_SECRET_KEY = '" + jwt_secret_key + "'\n")
     o.close()
 
     with open('./config.py', 'r') as file:
@@ -44,12 +44,11 @@ def extract_database_name(connection_name):
     connection_string = DB_DICT[connection_name]
     start = connection_string.rfind('/')
     if connection_string.startswith("mysql"):
-        end = connection_string.rfind('?')
+        end = len(connection_string)
     elif connection_string.startswith("postgresql"):
         end = len(connection_string)
     else:
         end = connection_string.rfind('.db')
-
     return connection_string[start+1:end]
 
 
