@@ -69,10 +69,11 @@ class MarkRead(Resource):
                 return {"response": "Marked All Read"}, 200
             else:
                 return {
-                        "response": "Invalid <section> check url parameters."
+                        "response": "Invalid notification id {section} check" +
+                                    " url parameters.".format(section)
                         }, 400
         return
 
 
-api_utils.add_resource(ListAllNotifs, '/allrequests/')
+api_utils.add_resource(ListAllNotifs, '/allrequests')
 api_utils.add_resource(MarkRead, '/markread/<section>')

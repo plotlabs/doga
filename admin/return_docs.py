@@ -384,34 +384,3 @@ class ListDocs(Resource):
 
 
 api_utils.add_resource(ListDocs, '/<app_name>')
-
-
-"""
-{
-    app_name: "",
-    app_type: "",
-    locked_tables: [
-        {
-            "table_object": {
-                {
-
-                },
-                {
-
-                }
-                ....
-            }
-            "request_type":
-            "end_points":
-        },
-        {}
-    ],
-    base_table: [
-        {}
-    ],
-    unrestricted_tables: [
-        {}
-    ],
-
-}
-"""

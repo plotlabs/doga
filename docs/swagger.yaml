@@ -32,6 +32,8 @@ tags:
     emails/numbers notifications.
 - name: admin dashboard
   description: These endpoints are used to get information for the admin dashboard.
+- name: notifications
+  description: These are the endpoints to get and mark notifications as read or getting them.
 paths:
   /admin/admin_profile:
     post:
@@ -214,6 +216,94 @@ paths:
       security:
       - Bearer: []
       x-codegen-request-body-name: data
+  /aws/form/{section}:
+    post:
+      tags:
+        - export
+      parameters:
+        - name: section
+          in: path
+          schema:
+            type: string
+            enum:
+              - config
+              - rds_config
+              - ec2_config
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AWSUserCredentials'
+        required: true
+      responses:
+        200:
+          description: Successful credential verification & defaults created
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/AWSConfig'
+                  - $ref: '#/components/schemas/AWSrdsConfig'
+                  - $ref: '#/components/schemas/AWSEC2Config'
+      secutiry:
+        - Bearer: []
+  /defaults/db:
+    get:
+      tags:
+        - info
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                properties:
+                  host:
+                    type: object
+                  port:
+                    type: object
+        500:
+          description: Server Error
+      security:
+        - Bearer: []
+  /admin/info/allrequests:
+    get:
+      tags:
+        - notifications
+      summary: Lists all the unread notifications for a particular admin user
+      operationId: ListNotifs
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Notification'
+      security:
+        - Bearer: []
+  /admin/info/markread/{section}:
+    post:
+      tags:
+        - notifications
+      parameters:
+      - name: section
+        in: path
+        required: true
+        schema:
+          type: string
+          enum:
+            - all
+            - request_id
+      responses:
+        200:
+          description: Marked read
+        400:
+          description: Request not found
+      security:
+        - Bearer: []
   /admin/notify/email:
     post:
       tags:
@@ -723,51 +813,6 @@ components:
           $ref: '#/components/schemas/AWSrdsConfig'
         ec2_config:
           $ref: '#/components/schemas/AWSEC2Config'
-    ExportApp:
-      type: object
-      properties:
-        schema:
-          oneOf:
-            - $ref: '#/components/schemas/AWSExport'
-            - $ref: '#/components/schemas/HerokuExport'
-            - $ref: '#/components/schemas/LocalExport'
-    HerokuExport:
-      required:
-      - app_name
-      type: object
-      properties:
-        app_name:
-          type: string
-        provision_db:
-          type: boolean
-          description: If DB is to be provisioned
-        tier:
-          type: object
-          description: Info about the db tier
-    LocalExport:
-      type: object
-      properties:
-        app_name:
-          type: string
-        export_path:
-          type: string
-    Table:
-      required:
-      - columns
-      - connection_name
-      - table_name
-      type: object
-      properties:
-        app_name:
-          type: string
-        table_name:
-          type: string
-        connection_name:
-          type: string
-        columns:
-          type: array
-          items:
-            $ref: '#/components/schemas/Column'
     Column:
       required:
       - name
@@ -861,6 +906,14 @@ components:
           type: string
         password:
           type: string
+    ExportApp:
+      type: object
+      properties:
+        schema:
+          oneOf:
+            - $ref: '#/components/schemas/AWSExport'
+            - $ref: '#/components/schemas/HerokuExport'
+            - $ref: '#/components/schemas/LocalExport'
     ErrorResponse:
       type: object
       properties:
@@ -868,6 +921,70 @@ components:
           type: string
           example: Error message
       description: Error Response
+    HerokuExport:
+      required:
+      - app_name
+      type: object
+      properties:
+        app_name:
+          type: string
+        provision_db:
+          type: boolean
+          description: If DB is to be provisioned
+        tier:
+          type: object
+          description: Info about the db tier
+    LocalExport:
+      type: object
+      properties:
+        app_name:
+          type: string
+        export_path:
+          type: string
+    Notification:
+      required:
+      - app_name
+      - user
+      type: object
+      properties:
+        app_name:
+          type: string
+        user:
+          type: string
+        received_at:
+          type: string
+          format: date-time
+        action_status:
+          type: string
+          enum:
+          - 'INITIATED'
+          - 'PROCESSING'
+          - 'ERROR'
+          - 'SUCCESS'
+        message:
+          type: string
+        completed_action_at:
+          type: string
+          format: date-time
+        mark_read:
+          type: boolean
+    Table:
+      required:
+      - columns
+      - connection_name
+      - table_name
+      type: object
+      properties:
+        app_name:
+          type: string
+        table_name:
+          type: string
+        connection_name:
+          type: string
+        columns:
+          type: array
+          items:
+            $ref: '#/components/schemas/Column'
     JwtLoginResponse:
       type: object
       properties:
