@@ -151,7 +151,7 @@ def create_model(dir_path, data):
                     try:
                         for i in col["enum"]:
                             enums.append(i['value'])
-                    except KeyError:
+                    except TypeError:
                         enums = col["enum"]
                     engine_specific = ", name='" + col["name"].lower() + "s'"
                     if col["default"] != "":

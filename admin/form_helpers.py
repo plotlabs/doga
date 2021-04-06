@@ -208,7 +208,6 @@ class AWSEC2info(Resource):
         platform = 'other'
         platforms = ['amazon linux', 'centos', 'debian', 'fedora', 'ubuntu']
 
-        print(platform)
         return json.loads()
 
 

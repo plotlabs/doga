@@ -970,7 +970,7 @@ class ColumnType(Resource):
                   'TIMESTAMP', 'Interval', 'CHAR', 'NCHAR', 'NVARCHAR',
                   'Concatenable', 'BINARY', 'FLOAT', 'BLOB',
                   'REAL', 'NUMERIC', 'DATETIME', 'TIME', 'DATE',
-                  'BIGINT', 'SMALLINT', 'SmallInteger']:
+                  'BIGINT', 'SMALLINT', 'SmallInteger', 'Indexable']:
             available_types.remove(i)
 
         return {

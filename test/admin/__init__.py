@@ -13,5 +13,6 @@ endpoints = {
     'admin_login': '/admin/login',
     'admin_content': 'admin/content/types',
     'admin_profile': '/admin/admin_profile',
+    'column_types': '/admin/columntypes',
     'db_init': '/admin/dbinit',
     }

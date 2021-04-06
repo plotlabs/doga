@@ -61,6 +61,13 @@ class Apis(Resource):
             for col in model_name.__table__.columns:
                 col_name = col.name
                 if col_name not in ['id', 'create_dt']:
+                    if 'BLOB' in str(col.type).upper():
+                        try:
+                            data[col.name] = str(data[col.name]).encode(
+                                                                    'utf-8')
+                        except KeyError:
+                            pass
+
                     if str(col.type).upper() == "DATE":
                         try:
                             data[col.name] = datetime.datetime.strptime(
@@ -228,6 +235,13 @@ class Register(Resource):
             col_name = col.name
             if col_name not in ['id', 'create_dt']:
                 try:
+                    if 'BLOB' in str(col.type).upper():
+                        try:
+                            data[col.name] = str(data[col.name]).encode(
+                                                                    'utf-8')
+                        except KeyError:
+                            pass
+
                     if str(col.type).upper() == "DATE":
                         try:
                             data[col.name] = datetime.datetime.strptime(

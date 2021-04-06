@@ -24,6 +24,7 @@ def app():
     """Create and configure a new app instance for each test."""
     flaskapp.host = HOST
     flaskapp.port = PORT
+    flaskapp.debug = True
     yield flaskapp
 
 
@@ -45,3 +46,7 @@ def delete_migrations():
     # subprocess.run(['git', 'checkout', '-f'])
     subprocess.call('cd ..', shell=True)
     subprocess.run(['rm', ' -rf', '/tmp'])
+
+
+class ResponsesStored:
+    allowed_types = []
