@@ -84,6 +84,10 @@ def column_validation(schema_list, connection_name, table_columns=None):
             valid = False
             msg = "Column name cannot be a default keyword."
             break
+
+        if "default" not in column:
+            column["default"] = ""
+
         if column["default"]:
             if column["type"].upper() in ['INTEGER', 'BIGINTEGER', 'BIGINT',
                                           'FLOAT', 'INT', 'SMALLINT',

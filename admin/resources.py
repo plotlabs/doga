@@ -331,7 +331,14 @@ class ContentType(Resource):
                                        })
 
         if table_list == []:
-            return {"result": "No apps and content created yet."}, 200
+            empty_apps = set(DB_DICT.keys())
+            empty_apps = empty_apps - {'default'}
+            if empty_apps != {}:
+                table_list = {}
+                for app in list(empty_apps):
+                    table_list[app] = {}
+            if table_list == []:
+                return {"result": "No apps and content created yet."}, 200
 
         for bind_key, _ in table_list.items():
             jwt_base = JWT.query.filter_by(connection_name=bind_key).first()
