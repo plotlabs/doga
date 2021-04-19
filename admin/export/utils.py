@@ -204,7 +204,7 @@ def create_aws_config(**kwargs):
 
 
 def validate_ec2_instance_id(user_credentials, aws_config, image_id):
-    """
+
     try:
         ec2_client = boto3.client('ec2',
                               aws_access_key_id=user_credentials['aws_access_key'],  # noqa 401
@@ -216,8 +216,8 @@ def validate_ec2_instance_id(user_credentials, aws_config, image_id):
         raise EC2CreationError("Error connecting to EC2 with given kwags ",
                                str(e))
 
-    images = ec2_client.describe_images()
-    image_dict = images['Images']
+    images = ec2_client.describe_instances(InstanceIds=[image_id])
+    image_dict = images['Instances']
     image_frame = pd.DataFrame.from_dict(image_dict).dropna(axis=1)
 
     if ImageId not in image_frame['ImageId']:
@@ -238,7 +238,7 @@ def validate_ec2_instance_id(user_credentials, aws_config, image_id):
 
     print(platform)
     return platform
-    """
+
     # Connect to EC2
     # ec2 = boto3.resource('ec2')
 
@@ -247,7 +247,7 @@ def validate_ec2_instance_id(user_credentials, aws_config, image_id):
     #    'Name': 'instance-state-name',
     #    'Values': ['running']}])
 
-    return "ubuntu"
+    # return "ubuntu"
 
 
 def create_and_store_keypair(ec2_instance, key_name=KEY_NAME) -> str:
@@ -375,7 +375,6 @@ def create_rds(user_credentials, aws_config, app_name, **kwargs):
     # NOT PASSED FOR NOW: what should be the default
     # EnableCloudwatchLogsExports = kwargs.get()
     # PerformanceInsightsKMSKeyId
-
     try:
         rds_client = boto3.client('rds',
                                   aws_access_key_id=user_credentials['aws_access_key'],  # noqa 401
@@ -383,7 +382,6 @@ def create_rds(user_credentials, aws_config, app_name, **kwargs):
                                   region_name=aws_config.region_name,
                                   config=aws_config
                                   )
-
         rds = rds_client.create_db_instance(
             AllocatedStorage=allocated_storage,
             DBInstanceIdentifier=db_instance_identifier,

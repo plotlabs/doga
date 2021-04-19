@@ -130,6 +130,7 @@ def create_aws_deployment_thread(
             user=admin_jwt['email'],
             app_name=json_request['app_name'],
             action_status='PROCESSING',
+            action_type='deploy-app',
             message='EC2 Created Successfully',
             completed_action_at=dt.now())
         db.session.add(notification)
@@ -158,6 +159,7 @@ def create_aws_deployment_thread(
             user=admin_jwt['email'],
             app_name=json_request['app_name'],
             action_status='PROCESSING',
+            action_type='deploy-app',
             message='App uploaded to EC2 instance successfully.',
             completed_action_at=dt.now())
         db.session.add(notification)
@@ -186,6 +188,7 @@ def create_aws_deployment_thread(
                 str(error),
                 app_name=app_name,
                 action_status='ERROR',
+                action_type='deploy-app',
                 completed_action_at=dt.now())
             db.session.add(notification)
             db.session.commit()
@@ -201,9 +204,15 @@ def create_aws_deployment_thread(
             user=admin_jwt['email'],
             app_name=json_request['app_name'],
             action_status='SUCCESSFUL',
+            action_type='deploy-app',
             message='App deployed to EC2 ' + ec2.id + ' successfully.',
             completed_action_at=dt.now())
         db.session.add(notification)
         db.session.commit()
         triggerSocketioNotif(
             admin_jwt['email'], "", notification.create_dict())
+
+        # TODO: check the status of the deployment and add some sort of
+        # counter for the endpoints.
+        # Then send the notification for AVTIVE to the frontend.
+

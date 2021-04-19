@@ -1,4 +1,4 @@
-from sqlalchemy import Integer, String, DateTime, text, Boolean
+from sqlalchemy import Integer, String, DateTime, text, Boolean, Enum
 from sqlalchemy.schema import UniqueConstraint
 
 from app import db
@@ -119,11 +119,20 @@ class Notifications(Base):
     action_status = Column(String(255), nullable=False)
     message = Column(String(255), nullable=False)
     completed_action_at = Column(DateTime(), nullable=True)
+    action_type = Column(Enum('create-content-tables',
+                              'deploy-app',
+                              'delete-content-tables'),
+                         nullable=True
+                         )
     mark_read = Column(Boolean, server_default=text('False'))
+    full_notif = Column(String(255))
 
     def foramt_notification(self):
-        return f'[{self.id}][{self.received_at}]: {self.action_status}\
-                 {self.completed_action_at}'
+        self.full_notif = f'[{self.id}][{self.received_at}]:'\
+                            f'[[{self.action_status}]]:'\
+                            f'{self.message}'\
+                            f'[{self.completed_action_at}]'
+        return self.full_notif
 
     def create_dict(self):
 
@@ -132,13 +141,15 @@ class Notifications(Base):
         else:
             completed_action_at = self.completed_action_at.strftime(
                                                         "%m/%d/%Y, %H:%M:%S")
-
+        self.foramt_notification()
         return {'id': self.id,
                 'app_name': self.app_name,
                 'user': self.user,
                 'received_at': self.received_at.strftime("%m/%d/%Y, %H:%M:%S"),
                 'action_status': self.action_status,
+                'action_type': self.action_type,
                 'message': self.message,
+                'full_message': self.full_notif,
                 'completed_action_at': completed_action_at,
                 "mark_read": self.mark_read
                 }

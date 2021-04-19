@@ -30,20 +30,14 @@ can install dependencies:
 
 ## Execution
 
-The app should be started first using the command:
-
 ```bash
-	sh start.sh
-```
-
-The app can be started using the command:
-
-```bash
-	python runserver.py
+    honcho start
 ```
 
 By default the app will run on 0.0.0.0:8080.
-This can be edited in the **config.py** file.
+Along with DOGA a notification server will run on 0.0.0.0:8008.
+
+These can be edited in the **config.py** file.
 
 ## Databases
 DOGA allows you to store your content on any to any Postgres, MySQL ad SQLite

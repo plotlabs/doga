@@ -1,6 +1,10 @@
-# -*- coding:utf-8 -*-
 import eventlet
 eventlet.monkey_patch()  # noqa E402
+
+import sys
+import os
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))  # noqa E402
 
 from flask import Flask, send_from_directory, jsonify, request
 from flask_jwt_extended import jwt_required, get_jwt_identity
@@ -9,25 +13,18 @@ from flask_cors import CORS, cross_origin
 
 from flask_sqlalchemy import SQLAlchemy
 
-from admin.models import Notifications, Admin
 from config import NOTIF_HOST, NOTIF_PORT, JWT_SECRET_KEY
 
 from threading import Thread, Event
 import jwt
 import json
 
-from dbs import DB_DICT
 
 app = Flask(__name__, static_url_path='/static')
 async_mode = "eventlet"
 
-app.config['SQLALCHEMY_BINDS'] = DB_DICT
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-
-db = SQLAlchemy(app)
 
 socketio = SocketIO(app, async_mode=async_mode, cors_allowed_origins='*')
-
 
 def ack():
     print('message was received!')
@@ -51,7 +48,6 @@ def conn_event():
 
 @socketio.on('message')
 def handleNotidications(data):
-    print(data)
     socketio.emit('broadcast message', data['notif'],
                   room=data['admin_id'])
 

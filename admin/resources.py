@@ -419,6 +419,7 @@ class ContentType(Resource):
         notification = Notifications(user=admin_jwt['email'],
                                      app_name=data['app_name'],
                                      action_status='INITIATED',
+                                     action_type='create-content-tables',
                                      message='Request Processing'
                                      )
 

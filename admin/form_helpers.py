@@ -199,7 +199,6 @@ class AWSEC2info(Resource):
         except ClientError as e:
             raise EC2CreationError("Error connecting to EC2 with given kwags ",
                                    str(e))
-
         images = ec2_client.describe_images()
         print(images)
         image_dict = images['Images']
@@ -211,6 +210,7 @@ class AWSEC2info(Resource):
         return json.loads()
 
 
+# TODO: provide a dynamic list for the ip addresses.
 # api_utils.add_resource(AWSEC2info, '/aws/ec2')
 api_utils.add_resource(AWSFormHelper, '/aws/form/<string:section>')
 api_utils.add_resource(DBDefaults, '/defaults/db')
