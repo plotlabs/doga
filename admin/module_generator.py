@@ -68,13 +68,6 @@ def create_model(dir_path, data):
             relation = col['relationship']
             relation_type = relation['relationship_type']
 
-            relations = ['one-one', 'many-one', 'many-many', 'one-many']
-            if relation_type not in relations:
-                return {"result": "Relation type for column" +
-                                  col["name"] +
-                                  "must be of type " +
-                                  ','.join(relations)}
-
             if relation_type in ['one-one', 'one-many']:
                 # TODO: what if user has their own foreign key too
                 # deal with a list of foreign keys
