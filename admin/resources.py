@@ -1035,6 +1035,7 @@ class ExportApp(Resource):
             admin_jwt = get_jwt_identity()
             notification = Notifications(user=admin_jwt['email'],
                                          app_name=json_request['app_name'],
+                                         action_type='deploy-app',
                                          action_status='INITIATED',
                                          message='AWS Export'
                                          )

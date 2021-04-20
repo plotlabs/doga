@@ -98,6 +98,7 @@ def create_aws_deployment_thread(
 
         notification = Notifications(user=admin_jwt['email'],
                                      app_name=json_request['app_name'],
+                                     action_type='deploy-app',
                                      action_status='PROCESSING',
                                      message='RDS Created Successfully',
                                      completed_action_at=dt.now()
@@ -212,7 +213,16 @@ def create_aws_deployment_thread(
         triggerSocketioNotif(
             admin_jwt['email'], "", notification.create_dict())
 
-        # TODO: check the status of the deployment and add some sort of
-        # counter for the endpoints.
-        # Then send the notification for AVTIVE to the frontend.
-
+        notification = Notifications(
+                                     user=admin_jwt['email'],
+                                     app_name=json_request['app_name'],
+                                     action_status='COMPLETED',
+                                     action_type='deploy-app',
+                                     message='App at EC2 ' + ec2.id +
+                                             ' is now Active.',
+                                     completed_action_at=dt.now()
+                                    )
+        db.session.add(notification)
+        db.session.commit()
+        triggerSocketioNotif(
+            admin_jwt['email'], "", notification.create_dict())

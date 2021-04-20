@@ -250,7 +250,6 @@ def create_app_dir(
 
 def write_to_deployments(app_name, platform):
     old_entry = Deployments.query.filter_by(app_name=app_name).first()
-    print(old_entry.exports)
     if old_entry is None:
         app_deployed = Deployments(
             app_name=app_name,

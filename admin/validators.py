@@ -211,59 +211,65 @@ def relationship_validation(schema_list, connection_name, table_columns=None):
     relations = ['one-one', 'many-one', 'many-many', 'one-many']
 
     for col in schema_list:
-        relation = col['relationship']
-        relation_type = relation['relationship_type']
-        related_field = relation['related_field']
-        related_table = relation['related_table']
+        if 'relationship' in col:
+            relation = col['relationship']
+            relation_type = relation['relationship_type']
+            related_field = relation['related_field']
+            related_table = relation['related_table']
 
-        # check if relation type is correct
-        if relation_type not in relations:
-            msg = "Relation type for column" + col["name"] + \
-                    "must be of type " + \
-                    ','.join(relations)
+            # check if relation type is correct
+            if relation_type not in relations:
+                msg = "Relation type for column" + col["name"] + \
+                        "must be of type " + \
+                        ','.join(relations)
+                valid = False
+                return valid, msg, schema_list
+
+            # check for related content to exist
             valid = False
-            break
-
-        # check for related content to exist
-        valid = False
-        for table in metadata.sorted_tables:
-            if connection_name == extract_database_name(
-                                                table.info['bind_key']):
-                for column in table.columns:
-                    if str(column) == related_table + "." + related_field:
-                        # check if the related content is of the same type
-                        if col["type"] in str(column.type) or \
-                                str(column.type) in col["type"].upper():
-                            valid = True
-                            break
+            for table in metadata.sorted_tables:
+                if connection_name == extract_database_name(
+                                                    table.info['bind_key']):
+                    for column in table.columns:
+                        if str(column) == related_table + "." + related_field:
+                            # check if the related content is of the same type
+                            if col["type"] in str(column.type) or \
+                                    str(column.type) in col["type"].upper():
+                                valid = True
+                                break
+                            else:
+                                msg = "Relationship cannot be created. " + \
+                                    " The column " + related_field + \
+                                    " is of type " + str(column.type) + " ." + \
+                                    " Required type is " + str(col['type'])
+                                valid = False
+                                break
                         else:
                             msg = "Relationship cannot be created. " + \
-                                " The column " + related_field + \
-                                " is of type " + str(column.type) + " ." + \
-                                " Required type is " + str(col['type'])
+                                "The column " + related_field + \
+                                " cannot be found."
                             valid = False
-                            break
-                    else:
-                        msg = "Relationship cannot be created. " + \
+                if valid is True:
+                    break
+            if valid is False:
+                if msg == "":
+                    msg = "Relationship cannot be created. " + \
                             "The column " + related_field + \
                             " cannot be found."
-                        valid = False
-            if valid is True:
-                break
-        if valid is False:
-            return valid, msg, table_columns
-        # if one-one, many-one or one-many check if unique
-        if relation_type.split('-')[0] == "one":
-            if str(col["unique"]).upper() != "TRUE":
-                msg = "The column must have unique constraint for this" +\
-                      " type of relationship."
-                return False, msg, None
-        if relation_type.split('-')[1] == "one":
-            if column.unique is not True:
-                msg = "The associated column must have unique constraint " +\
-                      " for this type of relationship, please edit the " +\
-                      " columns properties."
-                return False, msg, None
+                return valid, msg, schema_list
+            # if one-one, many-one or one-many check if unique
+            if relation_type.split('-')[0] == "one":
+                if str(col["unique"]).upper() != "TRUE":
+                    msg = "The column must have unique constraint for this" +\
+                        " type of relationship."
+                    return False, msg, None
+            if relation_type.split('-')[1] == "one":
+                if column.unique is not True:
+                    msg = "The associated column must have unique constraint " +\
+                        " for this type of relationship, please edit the " +\
+                        " columns properties."
+                    return False, msg, None
+        else:
+            pass
 
-        # constraints can be appied correctly
-    return valid, msg, table_columns
+    return valid, msg, schema_list

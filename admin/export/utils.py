@@ -217,27 +217,27 @@ def validate_ec2_instance_id(user_credentials, aws_config, image_id):
                                str(e))
 
     images = ec2_client.describe_instances(InstanceIds=[image_id])
-    image_dict = images['Instances']
-    image_frame = pd.DataFrame.from_dict(image_dict).dropna(axis=1)
+    image_dict = images['Reservations'][0]['Instances'][0]
+    # image_frame = pd.DataFrame.from_dict(image_dict).dropna(axis=1)
 
-    if ImageId not in image_frame['ImageId']:
-        raise EC2CreationError("Image ID provided is not valid.")
+    # if image_id not in image_frame['image_id']:
+    #    raise EC2CreationError("Image ID provided is not valid.")
 
-    image_info = image_frame.loc[
-            image_frame['ImageId'] == image_id
-            ].to_dict()
-
-    info = str(image_info)
+    # image_info = image_frame.loc[
+    #        image_frame['ImageId'] == image_id
+    #        ].to_dict()
+    #print(image_info)
+    #info = str(image_info)
 
     platform = 'other'
     platforms = ['amazon linux', 'centos', 'debian', 'fedora', 'ubuntu']
 
-    for i in platforms:
-        if i in info:
-            return i
+    #for i in platforms:
+    #    if i in info:
+    #        return i
 
-    print(platform)
-    return platform
+    return "ubuntu"
+    #return platform
 
     # Connect to EC2
     # ec2 = boto3.resource('ec2')
@@ -492,7 +492,7 @@ def create_ec2(user_credentials, aws_config, rds_port, **kwargs):
 
     platform = validate_ec2_instance_id(user_credentials,
                                         aws_config,
-                                        kwargs['ImageId'])
+                                        ec2.instance_id)
 
     return key_name, sg_name, ec2, vpc_sg, platform
 
@@ -555,6 +555,7 @@ def deploy_to_aws(user_credentials, aws_config, ec2, key_name=KEY_NAME,
     client.load_system_host_keys()
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     # Connect/ssh to an instance
+    sleep(5)
     client.connect(
         hostname=ec2.public_dns_name,
         username=user,
@@ -672,6 +673,7 @@ def connect_rds_to_ec2(rds, ec2, user_credentials, config, sg_name,
         stdout_.channel.recv_exit_status()
         print(stdout_)
     except Exception as error:
+        print(error)
         return False
 
     return True
