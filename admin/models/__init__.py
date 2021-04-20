@@ -121,7 +121,9 @@ class Notifications(Base):
     completed_action_at = Column(DateTime(), nullable=True)
     action_type = Column(Enum('create-content-tables',
                               'deploy-app',
-                              'delete-content-tables'),
+                              'delete-content-tables',
+                              name='doga_action_types',
+                              ),
                          nullable=True
                          )
     mark_read = Column(Boolean, server_default=text('False'))

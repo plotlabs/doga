@@ -27,7 +27,7 @@ from admin.models.sms_notifications import Sms_Notify
 
 from admin.utils import *
 from admin.validators import (column_types, column_validation, nullable_check,
-                              foreign_key_options)
+                              foreign_key_options, relationship_validation)
 
 from admin.export.utils import *
 from admin.export.exportapp import (create_app_dir, check_if_exist,
@@ -458,10 +458,23 @@ class ContentType(Resource):
                               .format(Table.table_name)}, 400
 
         try:
+            valid, msg, data["columns"] = relationship_validation(
+                                                data["columns"],
+                                                Table.connection_name)
+        except KeyError as err:
+            return {
+                "result": "Error, relationship definition incomplete. Please" +
+                          "add required property.",
+                "property": err.args
+            }, 500
+
+        if valid is False:
+            return {"result": msg}, 400
+
+        try:
             valid, msg = column_validation(data["columns"],
                                            Table.connection_name)
         except KeyError as err:
-            print(err)
             return {
                 "result": "Error, column is missing required property.",
                 "property": err.args
