@@ -23,3 +23,5 @@ CSRF_ENABLED = True
 CSRF_SESSION_KEY = ""
 
 JWTSET = True
+# TODO: fix this
+JWT_SECRET_KEY = ' x4BlDzv02dKx'
