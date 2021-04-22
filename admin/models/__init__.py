@@ -130,10 +130,11 @@ class Notifications(Base):
     full_notif = Column(String(255))
 
     def foramt_notification(self):
-        self.full_notif = f'[{self.id}][{self.received_at}]:'\
-                            f'[[{self.action_status}]]:'\
-                            f'{self.message}'\
-                            f'[{self.completed_action_at}]'
+        self.full_notif =   f'[{self.completed_action_at}] ' \
+                            f'{self.app_name}:'\
+                            f'{self.action_status} '\
+                            f'{self.message}'
+
         return self.full_notif
 
     def create_dict(self):

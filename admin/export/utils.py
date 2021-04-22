@@ -499,10 +499,8 @@ def create_ec2(user_credentials, aws_config, rds_port, **kwargs):
 
 def deploy_to_aws(user_credentials, aws_config, ec2, key_name=KEY_NAME,
                   platform='ubuntu'):
-    print('505')
     while ec2.state['Name'] != 'running':
         ec2.load()
-    print('508')
     try:
         ec2_client = boto3.client('ec2',
                                   aws_access_key_id=user_credentials['aws_access_key'],  # noqa 401
@@ -520,7 +518,6 @@ def deploy_to_aws(user_credentials, aws_config, ec2, key_name=KEY_NAME,
             ec2.instance_id,
         ]
     )
-    print('533')
     waiter = ec2_client.get_waiter('instance_running')
     waiter.wait(InstanceIds=[ec2.instance_id])
 
@@ -536,7 +533,6 @@ def deploy_to_aws(user_credentials, aws_config, ec2, key_name=KEY_NAME,
 
     # from:
     # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/managing-users.html
-    print('549')
 
     platforms = {
         'amazon linux': 'ec2-user',
@@ -556,12 +552,18 @@ def deploy_to_aws(user_credentials, aws_config, ec2, key_name=KEY_NAME,
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     # Connect/ssh to an instance
     sleep(5)
-    client.connect(
-        hostname=ec2.public_dns_name,
-        username=user,
-        pkey=key,
-    )
 
+    done = False
+    while done is False:
+        try:
+            client.connect(
+                hostname=ec2.public_dns_name,
+                username=user,
+                pkey=key,
+            )
+            done = True
+        except ClientError as e:
+            done = False
     stdin_, stdout_, stderr_ = client.exec_command(
         'mkdir -p $HOME/exported_app')
     stdout_.channel.recv_exit_status()
@@ -572,7 +574,6 @@ def deploy_to_aws(user_credentials, aws_config, ec2, key_name=KEY_NAME,
               + app_folder + ' ' + user + '@' + ec2.public_dns_name +
               ':exported_app/')
 
-    print("576")
     """    proc = subprocess.Popen(
         [
             'scp -o UserKnownHostsFile=/dev/null',
@@ -646,8 +647,6 @@ def connect_rds_to_ec2(rds, ec2, user_credentials, config, sg_name,
 
     user = platforms[platform]
 
-    print('649')
-
     key = paramiko.RSAKey.from_private_key_file(key_name + '.pem')
     client = paramiko.SSHClient()
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -659,7 +658,6 @@ def connect_rds_to_ec2(rds, ec2, user_credentials, config, sg_name,
     #    line = line.replace("PORT", str(PORT))
 
     # commands = [load_app_commands]
-    print('660')
     sleep(10)
     try:
         client.connect(
@@ -668,7 +666,12 @@ def connect_rds_to_ec2(rds, ec2, user_credentials, config, sg_name,
             pkey=key
         )
 
-        stdin, stdout, stderr = client.exec_command('sudo docker build --tag app:latest .|sudo docker service create --name app -p 8080:8080 app:latest')
+        stdin, stdout, stderr = client.exec_command('cd exported_app |' +
+                                                    'sudo docker build ' +
+                                                    '--tag app:latest .|' +
+                                                    'sudo docker service ' +
+                                                    'create --name app -p ' +
+                                                    '8080:8080 app:latest')
         stdout.channel.recv_exit_status()
         print(stdout)
     except Exception as error:
