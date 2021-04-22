@@ -652,14 +652,13 @@ def connect_rds_to_ec2(rds, ec2, user_credentials, config, sg_name,
     client = paramiko.SSHClient()
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
-    load_app_commands = open('admin/export/create_and_startapp.sh', 'r'
-                             ).read()
+    # load_app_commands = open('admin/export/create_and_startapp.sh', 'r'
+    #                          ).read()
 
     # for line in load_app_commands:
     #    line = line.replace("PORT", str(PORT))
 
     # commands = [load_app_commands]
-
     print('660')
     sleep(10)
     try:
@@ -669,9 +668,9 @@ def connect_rds_to_ec2(rds, ec2, user_credentials, config, sg_name,
             pkey=key
         )
 
-        stdin, stdout, stderr = client.exec_command(load_app_commands)
-        stdout_.channel.recv_exit_status()
-        print(stdout_)
+        stdin, stdout, stderr = client.exec_command('sudo docker build --tag app:latest .|sudo docker service create --name app -p 8080:8080 app:latest')
+        stdout.channel.recv_exit_status()
+        print(stdout)
     except Exception as error:
         print(error)
         return False

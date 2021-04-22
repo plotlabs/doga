@@ -215,6 +215,11 @@ def create_model(dir_path, data):
                     line = line + ", default='" + str(col["default"]) + \
                             "')\n"
                     done = True
+                if "STRING" in  col["type"].upper():
+                    line = line + ", default='" + str(col["default"]) + \
+                            "')\n"
+                    done = True
+
                 if isinstance(col["default"], list):
                     if col['type'].upper() == 'ARRAY':
                         try:

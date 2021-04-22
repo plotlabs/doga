@@ -263,10 +263,22 @@ def relationship_validation(schema_list, connection_name, table_columns=None):
                     msg = "The column must have unique constraint for this" +\
                         " type of relationship."
                     return False, msg, None
+            else:
+                if str(col["unique"]).upper()!= "FALSE":
+                    msg = "The column must have unique constraint for this" +\
+                        " type of relationship."
+                    return False, msg, None
+
             if relation_type.split('-')[1] == "one":
                 if column.unique is not True:
-                    msg = "The associated column must have unique constraint " +\
-                        " for this type of relationship, please edit the " +\
+                    msg = "The associated column must have unique constrain" +\
+                        "t for this type of relationship, please edit the " +\
+                        " columns properties."
+                    return False, msg, None
+            else:
+                if column.unique is not False:
+                    msg = "The associated column must have unique constrain" +\
+                        "t for this type of relationship, please edit the " +\
                         " columns properties."
                     return False, msg, None
         else:
