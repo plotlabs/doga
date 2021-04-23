@@ -208,29 +208,28 @@ def create_model(dir_path, data):
                             "')\n"
                         done = True
                 if col["type"].upper() == "BOOLEAN":
-                    line = line + ", server_default=text('" + str(
+                    line = line + ", default=text('" + str(
                         col["default"]) + "'))\n"
                     done = True
                 if col["type"].upper() == "TEXT":
                     line = line + ", default='" + str(col["default"]) + \
                             "')\n"
                     done = True
-                if "STRING" in  col["type"].upper():
+                if "STRING" in col["type"].upper():
                     line = line + ", default='" + str(col["default"]) + \
                             "')\n"
                     done = True
-
                 if isinstance(col["default"], list):
                     if col['type'].upper() == 'ARRAY':
                         try:
-                            line = line + ", server_default=" + \
+                            line = line + ", default=" + \
                                 str(col["default"]) + "')\n"
                         except ValueError:
                             return {"result": "Incorrect format for "
                                               "Array value."}, 400
                         done = True
                 if done is False:
-                    line = line + ", server_default=text('" + str(
+                    line = line + ", default=text('" + str(
                         col["default"]) + "'))\n"
         except KeyError as error:
             return {
@@ -381,13 +380,17 @@ def check_column(table_name, column_name, column_type, connection_name=''):
         if sorted_table.name.lower() == table_name.lower():
             for column_ in sorted_table.columns:
                 if column_name.lower() == column_.name.lower():
+                    if "BIGINT" in column_type.upper() and \
+                            "BIGINT" in str(column_.type).upper():
+                        return True
                     if str(column_.type) not in allowed_foreign_keys:
                         raise TypeError("Foreign key can only be allowed"
                                         " types", allowed_foreign_keys)
-                    if column_type != str(column_.type):
+                    elif column_type != str(column_.type):
                         raise TypeError("Foreign key and column must have "
                                         "same type.")
-                    exist = True
+                    else:
+                        exist = True
     return exist
 
 

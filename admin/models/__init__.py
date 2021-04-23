@@ -130,9 +130,8 @@ class Notifications(Base):
     full_notif = Column(String(255))
 
     def foramt_notification(self):
-        self.full_notif =   f'[{self.completed_action_at}] ' \
-                            f'{self.app_name}:'\
-                            f'{self.action_status} '\
+        self.full_notif =   f'[{self.action_status.title()}]:'\
+                            f'{self.app_name} '\
                             f'{self.message}'
 
         return self.full_notif

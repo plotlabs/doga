@@ -240,7 +240,7 @@ def relationship_validation(schema_list, connection_name, table_columns=None):
                             else:
                                 msg = "Relationship cannot be created. " + \
                                     " The column " + related_field + \
-                                    " is of type " + str(column.type) + " ." + \
+                                    " is of type " + str(column.type) + " ." +\
                                     " Required type is " + str(col['type'])
                                 valid = False
                                 break
@@ -270,14 +270,19 @@ def relationship_validation(schema_list, connection_name, table_columns=None):
                     return False, msg, None
 
             if relation_type.split('-')[1] == "one":
+                if column.unique is None:
+                    column.unique = True
                 if column.unique is not True:
                     msg = "The associated column must have unique constrain" +\
                         "t for this type of relationship, please edit the " +\
                         " columns properties."
                     return False, msg, None
             else:
+                if column.unique is not None:
+                    column.unique = False
                 if column.unique is not False:
-                    msg = "The associated column must have unique constrain" +\
+                    msg = "The associated column must have not have unique" +\
+                        " constrain" +\
                         "t for this type of relationship, please edit the " +\
                         " columns properties."
                     return False, msg, None

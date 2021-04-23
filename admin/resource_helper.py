@@ -214,7 +214,7 @@ def create_aws_deployment_thread(
             admin_jwt['email'], "", notification.create_dict())
 
         # TODO: send a query to the EC2 to establish active endpoints
-        notification = Notifications(
+        notification_f = Notifications(
                                      user=admin_jwt['email'],
                                      app_name=json_request['app_name'],
                                      action_status='COMPLETED',
@@ -223,7 +223,8 @@ def create_aws_deployment_thread(
                                              ' is now Active.',
                                      completed_action_at=dt.now()
                                     )
-        db.session.add(notification)
+        db.session.add(notification_f)
         db.session.commit()
         triggerSocketioNotif(
-            admin_jwt['email'], "", notification.create_dict())
+            admin_jwt['email'], "", notification_f.create_dict())
+        return

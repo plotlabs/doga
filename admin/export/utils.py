@@ -13,6 +13,7 @@ from botocore.exceptions import (BotoCoreError, ClientError,
                                  ParamValidationError)
 
 import paramiko
+from paramiko.ssh_exception import NoValidConnectionsError
 
 from admin.aws_config import *
 from admin.export.errors import *
@@ -562,7 +563,7 @@ def deploy_to_aws(user_credentials, aws_config, ec2, key_name=KEY_NAME,
                 pkey=key,
             )
             done = True
-        except ClientError as e:
+        except NoValidConnectionsError as e:
             done = False
     stdin_, stdout_, stderr_ = client.exec_command(
         'mkdir -p $HOME/exported_app')
@@ -624,7 +625,6 @@ def connect_rds_to_ec2(rds, ec2, user_credentials, config, sg_name,
             ],
             ApplyImmediately=True,
         )
-        print('618')
         rds_client.reboot_db_instance(
             DBInstanceIdentifier=rds['DBInstanceIdentifier']
         )
@@ -666,11 +666,14 @@ def connect_rds_to_ec2(rds, ec2, user_credentials, config, sg_name,
             pkey=key
         )
 
-        stdin, stdout, stderr = client.exec_command('cd exported_app |' +
-                                                    'sudo docker build ' +
-                                                    '--tag app:latest .|' +
-                                                    'sudo docker service ' +
-                                                    'create --name app -p ' +
+        stdin, stdout, stderr = client.exec_command('cd exported_app && ' +
+                                                    'sudo docker build --tag '
+                                                    'app:latest .')
+        stdout.channel.recv_exit_status()
+
+        stdin, stdout, stderr = client.exec_command('sudo docker swarm init ' +
+                                                    '&& sudo docker service' +
+                                                    ' create --name app -p ' +
                                                     '8080:8080 app:latest')
         stdout.channel.recv_exit_status()
         print(stdout)

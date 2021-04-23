@@ -93,7 +93,7 @@ class AWSFormHelper(Resource):
         A few basic configurations are:
         """
         rds_config = {}
-        rds_config["Engine"] = ["MySQL", "PostgreSQL"]
+        rds_config["Engine"] = ["MySQL", "postgres"]
 
         # Name of the DB to be given by the user the default should be app name
         rds_config["DBInstanceIdentifier"] = ""
