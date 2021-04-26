@@ -6,6 +6,20 @@
 
 ## Pre-requisites
 
+Please make sure you have python3+ and NodeJs installed on your system.
+
+## Quick Install
+
+To run the application please cd /path/to/DOGA and run:
+
+```bash
+    sh start.sh
+```
+
+## Developer Installation
+
+### Python installation
+
 The python packages required to run the app are given in the requirements.txt
 file and can be installed using the command:
 
@@ -15,7 +29,7 @@ file and can be installed using the command:
 
 And following that you can start the server using the command:
 
-```
+```bash
     honcho start
 ```
 

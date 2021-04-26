@@ -83,3 +83,12 @@ vendor
 #Exported apps
 Exports/
 exported_app/*
+
+
+# Dependency directories
+node_modules/
+jspm_packages/
+
+
+# Optional eslint cache
+.eslintcache
