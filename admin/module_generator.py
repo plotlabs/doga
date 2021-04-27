@@ -68,7 +68,7 @@ def create_model(dir_path, data):
             relation = col['relationship']
             relation_type = relation['relationship_type']
 
-            if relation_type in ['one-one', 'one-many']:
+            if relation_type in ['one-one', 'many-one']:
                 # TODO: what if user has their own foreign key too
                 # deal with a list of foreign keys
                 col["foreign_key"] = relation['related_table'].lower() + "." +\
@@ -598,13 +598,14 @@ def create_relationsips(app_name, relation_type, related_table, related_field,
     directory = '/'.join(__file__.split('/')[:-2])
 
     try:
-        if relation_type == 'one-many':
+        if relation_type == 'many-one':
             present_relationships = present_relationships + '    ' + \
                 'parent = relationship("' + \
                 related_table.title() + \
                 '" , backref="' + \
                 current_table.lower() + \
-                '")\n'
+                's", foreign_keys =[' + \
+                current_field + '])\n'
 
         if relation_type == 'many-many':
             class_name = related_table.title() + \
@@ -649,7 +650,7 @@ def create_relationsips(app_name, relation_type, related_table, related_field,
             f.seek(0)
             f.write(''.join(contents))
 
-        if relation_type == 'many-one':
+        if relation_type == 'one-many':
 
             f = open(directory + '/app/' + app_name + '/' +
                      related_table + '/models.py', 'r+')
@@ -676,7 +677,8 @@ def create_relationsips(app_name, relation_type, related_table, related_field,
                 'relation_' + current_field.lower() + ' = relationship("' + \
                 related_table.title() + \
                 '", backref =' + '"' + \
-                current_table.lower() + '")\n'
+                current_table.lower() + 's", foreign_keys = [' + \
+                related_field + '])\n'
     except KeyError as err:
         raise RelatedContentNotFound("The table " +
                                      str(list(err.args)[0]) +

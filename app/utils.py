@@ -6,6 +6,8 @@ import platform
 import subprocess
 
 from sqlalchemy.ext.declarative import DeclarativeMeta
+from sqlalchemy.orm.collections import InstrumentedList
+from sqlalchemy import inspect
 
 
 class AlchemyEncoder(json.JSONEncoder):
@@ -29,7 +31,22 @@ class AlchemyEncoder(json.JSONEncoder):
                         json.dumps(data)
                         fields[field] = data
                     except TypeError:
-                        fields[field] = str(data)
+                        if 'models' in str(type(data)):
+                            related_value = {c.key: str(getattr(data, c.key))
+                                             for c in
+                                             inspect(data).mapper.column_attrs}
+                            fields[field] = related_value
+                        elif isinstance(data, InstrumentedList):
+                            realted_values = []
+                            for item in data:
+                                realted_values.append({
+                                        c.key: str(getattr(item, c.key))
+                                        for c in
+                                        inspect(item).mapper.column_attrs
+                                })
+                            fields[field] = realted_values
+                        else:
+                            fields[field] = str(data)
             return fields
         return json.JSONEncoder.default(self, obj)
 
