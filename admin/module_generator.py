@@ -659,8 +659,16 @@ def create_relationsips(app_name, relation_type, related_table, related_field,
             lines = f.readlines()
             f.seek(0)
 
-            related_key = related_table.lower() + "." + related_field
+            # related_key = related_table.lower() + "." + related_field
             current_key = current_table.lower() + "." + current_field
+
+            # create back_populates on the child
+            relationship = '    ' + 'relation_' + current_field.lower() + \
+                ' = relationship("' + \
+                current_table.title() + \
+                '", backref =' + '"' + \
+                current_table.lower() + 's", foreign_keys = [' + \
+                related_field + '])\n'
 
             for line in lines:
                 if related_field + " =" in line:
@@ -672,13 +680,8 @@ def create_relationsips(app_name, relation_type, related_table, related_field,
                         split_line[1:1] = [f_key_]
                         line = ','.join(split_line)
                 f.write(line)
-            # create back_populates on the child
-            present_relationships = present_relationships + '    ' + \
-                'relation_' + current_field.lower() + ' = relationship("' + \
-                related_table.title() + \
-                '", backref =' + '"' + \
-                current_table.lower() + 's", foreign_keys = [' + \
-                related_field + '])\n'
+            f.write(relationship)
+
     except KeyError as err:
         raise RelatedContentNotFound("The table " +
                                      str(list(err.args)[0]) +

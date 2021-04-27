@@ -31,20 +31,38 @@ class AlchemyEncoder(json.JSONEncoder):
                         json.dumps(data)
                         fields[field] = data
                     except TypeError:
+                        print(data)
                         if 'models' in str(type(data)):
+                            relationships = inspect(data).mapper.relationships
+                            realted_table = data.__table__.name.title()
                             related_value = {c.key: str(getattr(data, c.key))
                                              for c in
                                              inspect(data).mapper.column_attrs}
-                            fields[field] = related_value
+                            fields["related_value"] = related_value
+                            fields["related_table"] = realted_table
                         elif isinstance(data, InstrumentedList):
-                            realted_values = []
-                            for item in data:
-                                realted_values.append({
-                                        c.key: str(getattr(item, c.key))
-                                        for c in
-                                        inspect(item).mapper.column_attrs
-                                })
-                            fields[field] = realted_values
+                            relationships = inspect(data[0]).mapper.relationships
+                            rel = {}
+                            for relation in relationships:
+                                relation_name = relation.direction.name.split("TO")
+                                relation_name.insert(1, "TO")
+                                if data[0].__table__.name in \
+                                        str(relation._reverse_property):
+                                    realted_table = data[0].__table__.name.title()
+                                    realted_values = []
+                                    for item in data:
+                                        realted_values.append({
+                                            c.key: str(getattr(item, c.key))
+                                            for c in
+                                            inspect(item).mapper.column_attrs
+                                        })
+
+                                rel["realted_table"] = realted_table
+                                rel["realted_values"] = realted_values
+                            try:
+                                fields["related_content"].append(rel)
+                            except KeyError:
+                                fields["related_content"] = [rel]
                         else:
                             fields[field] = str(data)
             return fields
