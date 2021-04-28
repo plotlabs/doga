@@ -42,7 +42,7 @@ class AlchemyEncoder(json.JSONEncoder):
                                                      for c in
                                                      inspect(data).mapper.column_attrs}
                                     fields["relation_name"] = relation_name
-                                    fields["related_value"] = related_value
+                                    fields["related_value"] = [related_value]
                                     fields["related_table"] = realted_table
                         elif isinstance(data, InstrumentedList):
                             relationships = inspect(data[0]).mapper.relationships
