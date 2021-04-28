@@ -32,15 +32,18 @@ class AlchemyEncoder(json.JSONEncoder):
                         fields[field] = data
                     except TypeError:
                         if 'models' in str(type(data)):
-                            relationship = inspect(data).mapper.relationship
-                            relation_name = relation.direction.name.split("TO")
-                            realted_table = data.__table__.name.title()
-                            related_value = {c.key: str(getattr(data, c.key))
-                                             for c in
-                                             inspect(data).mapper.column_attrs}
-                            rel["relation_name"] = relation_name
-                            fields["related_value"] = related_value
-                            fields["related_table"] = realted_table
+                            relationship = inspect(data).mapper.relationships
+                            for relation in relationship:
+                                if field in str(relation._reverse_property):
+                                    relation_name = relation.direction.name.split("TO")
+                                    relation_name.insert(1, "TO")
+                                    realted_table = data.__table__.name.title()
+                                    related_value = {c.key: str(getattr(data, c.key))
+                                                     for c in
+                                                     inspect(data).mapper.column_attrs}
+                                    fields["relation_name"] = relation_name
+                                    fields["related_value"] = related_value
+                                    fields["related_table"] = realted_table
                         elif isinstance(data, InstrumentedList):
                             relationships = inspect(data[0]).mapper.relationships
                             rel = {}
