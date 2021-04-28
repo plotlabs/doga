@@ -37,6 +37,7 @@ import BaseJwtLogin from "../../components/Modal/BaseJwtLogin";
 import { useToast, createStandaloneToast } from "@chakra-ui/react";
 import { useIsFetching } from "react-query";
 import ClipLoader from "react-spinners/ClipLoader";
+import RichTextView from "../../components/Modal/RichTextView";
 
 const Content = () => {
   const { isOpen, onOpen, onClose } = useDisclosure();
@@ -45,12 +46,14 @@ const Content = () => {
   const [editDataId, setEditDataId] = useState();
   const [deleteTableToggle, setDeleteTableToggle] = useState(false);
   const [openModal, setOpenModal] = useState();
+  const [richText, setRichText] = useState();
   let { app, table } = useParams();
   const queryClient = useQueryClient();
   const toast = createStandaloneToast();
   const { data, isLoading } = useQuery(APIURLS.getContentType);
   const isFetchingApps = useIsFetching([APIURLS.getContentType]);
   let contentTypeApps = null;
+  let richTextFields = [];
   let tableFieldShow = null;
   let sendGetTableContent = null;
   if (data != null && data[app]["jwt_info"]) {
@@ -62,7 +65,6 @@ const Content = () => {
 
   const fieldData = useQuery(sendGetTableContent);
   let fieldDataBodyArray = [];
-  // console.log("fuck", data[app]["jwt_info"]);
 
   async function exportAppHandler() {
     console.log(app);
@@ -104,6 +106,12 @@ const Content = () => {
     // let table = Object.entries(data[id]);
     contentTypeApps = Object.entries(data[app][table]).map(([prop, val]) => {
       console.log(prop, val);
+      console.log("CHECK", val.type === "VARCHAR(123)");
+      if (val.type === "VARCHAR(123)") {
+        console.log(val.type, "inside");
+        richTextFields.push(val.name);
+        console.log(richTextFields);
+      }
       return (
         <Tr style={{ color: "#4A5568" }}>
           <Td style={{ color: "#4A5568", borderColor: "#EDF2F7" }}>
@@ -246,7 +254,13 @@ const Content = () => {
             </Td>
             {Object.entries(fieldDataBodyArray).map(([prop, value]) => {
               console.log(prop, value, "here", val[value]);
-              return (
+              return richTextFields.includes(value) ? (
+                <Td style={{ color: "#4A5568", borderColor: "#EDF2F7" }}>
+                  <Button onClick={() => richTextViewHandler(val[value])}>
+                    View
+                  </Button>
+                </Td>
+              ) : (
                 <Td style={{ color: "#4A5568", borderColor: "#EDF2F7" }}>
                   {val[value] === true
                     ? "true"
@@ -356,6 +370,11 @@ const Content = () => {
 
     onOpen();
   };
+  const richTextViewHandler = (value) => {
+    setOpenModal(6);
+    onOpen();
+    setRichText(value);
+  };
 
   // let modal = null;
   // if (data) {
@@ -438,6 +457,13 @@ const Content = () => {
           app={app}
           table={table}
           basejwt={data[app]["jwt_info"] ? data[app]["jwt_info"] : null}
+        />
+      ) : openModal === 6 ? (
+        <RichTextView
+          isOpen={isOpen}
+          onOpen={onOpen}
+          onClose={onClose}
+          richText={richText}
         />
       ) : null}
       {/* <Box type="row" justifyContent="spacing-around" margin={6}>

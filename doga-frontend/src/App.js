@@ -82,7 +82,7 @@ const socket = io("http://127.0.0.1:8008", {
   query: `Authorization=${localStorage.getItem("token")}`,
 });
 
-console.log(socket);
+// console.log(socket);
 
 // useEffect(() => {
 socket.on("connect", () => {
@@ -94,15 +94,17 @@ socket.on("connect", () => {
 const App = (props) => {
   const [token, setToken] = useGlobal("token");
   const [deployProcessStatus, setdeployProcessStatus] = useGlobal("deploy");
+  const [html, setHtml] = useGlobal("html");
   const [jwtToken, setJwtToken] = useGlobal("jwtToken");
-  // const [data, setData] = useState();
   const toast = createStandaloneToast();
 
-  // const socket = io("http://127.0.0.1:8008", {
-  //   extraHeaders: {
-  //     Authorization: localStorage.getItem("jwtToken"),
-  //   },
-  // });
+  useEffect(() => {
+    if (socket.disconnected) {
+      socket.on("connect", () => {
+        // socket.send("User has connected!");
+      });
+    }
+  }, [socket]);
 
   React.useEffect(() => {
     socket.on("broadcast message", function (msg) {
@@ -122,10 +124,8 @@ const App = (props) => {
         isClosable: true,
       });
     });
-    // socket.emit("message", { admin_id: "nishant@gmail.com" });
   }, []);
-  // });
-  console.log(deployProcessStatus, "deployProcessStatus-main");
+
   useEffect(() => {
     let token = localStorage.getItem("token");
     if (token) {
@@ -141,10 +141,9 @@ const App = (props) => {
       setJwtHeader(token);
     }
   }, [jwtToken, setJwtHeader, localStorage.getItem("jwtToken")]);
-  console.log("app", token, localStorage.getItem("token"));
+
   let routes = (
     <Switch>
-      {/* <Route path="/auth" render={(props) => <Auth {...props} />} /> */}
       <Route path="/Login" render={(props) => <Login />} />
       <Route path="/Signup" render={(props) => <Signup />} />
       <Redirect to="/Login" />
@@ -176,7 +175,6 @@ const App = (props) => {
           path="/application/:app/:table"
           render={(props) => <Content />}
         />
-        {/* <Redirect to="/" /> */}
       </Switch>
     );
   }
