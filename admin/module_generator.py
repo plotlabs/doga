@@ -68,7 +68,7 @@ def create_model(dir_path, data):
             relation = col['relationship']
             relation_type = relation['relationship_type']
 
-            if relation_type in ['one-one', 'many-one']:
+            if relation_type in ['one-one', 'many-one', 'many-many']:
                 # TODO: what if user has their own foreign key too
                 # deal with a list of foreign keys
                 col["foreign_key"] = relation['related_table'].lower() + "." +\
@@ -607,7 +607,8 @@ def create_relationsips(app_name, relation_type, related_table, related_field,
                 's", foreign_keys =[' + \
                 current_field + '])\n'
 
-        if relation_type == 'many-many':
+        """
+        if relation_type == 'c':
             class_name = related_table.title() + \
                 current_table.title() + \
                 related_field.title()
@@ -632,8 +633,8 @@ def create_relationsips(app_name, relation_type, related_table, related_field,
                      current_table.lower() +
                      '/models.py', 'a')
             f.write(assoc_string)
-
-        if relation_type == 'one-one':
+        """
+        if relation_type in ['one-one', 'many-many']:
 
             f = open(directory + '/app/' + app_name + '/' + related_table +
                      '/models.py', "r+")
@@ -648,6 +649,7 @@ def create_relationsips(app_name, relation_type, related_table, related_field,
                             current_table.lower() +
                             '")\n')
             f.seek(0)
+            print(contents)
             f.write(''.join(contents))
 
         if relation_type == 'one-many':

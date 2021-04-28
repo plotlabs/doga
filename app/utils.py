@@ -31,13 +31,14 @@ class AlchemyEncoder(json.JSONEncoder):
                         json.dumps(data)
                         fields[field] = data
                     except TypeError:
-                        print(data)
                         if 'models' in str(type(data)):
-                            relationships = inspect(data).mapper.relationships
+                            relationship = inspect(data).mapper.relationship
+                            relation_name = relation.direction.name.split("TO")
                             realted_table = data.__table__.name.title()
                             related_value = {c.key: str(getattr(data, c.key))
                                              for c in
                                              inspect(data).mapper.column_attrs}
+                            rel["relation_name"] = relation_name
                             fields["related_value"] = related_value
                             fields["related_table"] = realted_table
                         elif isinstance(data, InstrumentedList):
@@ -47,6 +48,8 @@ class AlchemyEncoder(json.JSONEncoder):
                                 relation_name = relation.direction.name.split("TO")
                                 relation_name.insert(1, "TO")
                                 if data[0].__table__.name in \
+                                        str(relation._reverse_property) or \
+                                        field in \
                                         str(relation._reverse_property):
                                     realted_table = data[0].__table__.name.title()
                                     realted_values = []
@@ -57,8 +60,9 @@ class AlchemyEncoder(json.JSONEncoder):
                                             inspect(item).mapper.column_attrs
                                         })
 
-                                rel["realted_table"] = realted_table
-                                rel["realted_values"] = realted_values
+                                    rel["relation_name"] = relation_name
+                                    rel["realted_table"] = realted_table
+                                    rel["realted_values"] = realted_values
                             try:
                                 fields["related_content"].append(rel)
                             except KeyError:
