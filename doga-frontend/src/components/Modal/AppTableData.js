@@ -30,6 +30,8 @@ import { useQuery, useQueryClient } from "react-query";
 import { useToast, createStandaloneToast } from "@chakra-ui/react";
 import Api, { setHeader, setJwtHeader, APIURLS, ApiJwt } from "../../Api";
 import Select from "react-select";
+import { CKEditor } from "@ckeditor/ckeditor5-react";
+import ClassicEditor from "@ckeditor/ckeditor5-build-classic";
 
 const AppTableData = ({
   isOpen,
@@ -49,6 +51,7 @@ const AppTableData = ({
   const [selectedBooleanType, setSelectedBooleanType] = useState({});
   const [selectedBinaryType, setSelectedBinaryType] = useState({});
   const [jwtToken, setJwtToken] = useGlobal("jwtToken");
+  const [html, setHtml] = useState();
   const toast = createStandaloneToast();
   const queryClient = useQueryClient();
   const columnTypes = useQuery(APIURLS.getColumnTypes);
@@ -96,6 +99,11 @@ const AppTableData = ({
   }, []);
 
   console.log(selectedBooleanType, "selectedBooleanType");
+  const richTextHandler = (event, editor) => {
+    const data = editor.getData();
+    console.log(data);
+    setHtml(data);
+  };
 
   let booleanTypesOptions = [
     {
@@ -383,6 +391,33 @@ const AppTableData = ({
                 options={binaryTypesOptions}
               />
             </Box>
+          ) : val.type === "VARCHAR(123)" ? (
+            <Box
+              style={{
+                marginBottom: "1.5rem",
+                color: "#6E798C",
+                fontSize: "1.25rem",
+                paddingTop: "10px",
+              }}
+            >
+              <div className="App">
+                <CKEditor
+                  editor={ClassicEditor}
+                  onReady={(editor) => {
+                    // You can store the "editor" and use when it is needed.
+                    console.log("Editor is ready to use!", editor);
+                  }}
+                  onChange={richTextHandler}
+
+                  // onBlur={(event, editor) => {
+                  //   console.log("Blur.", editor);
+                  // }}
+                  // onFocus={(event, editor) => {
+                  //   console.log("Focus.", editor);
+                  // }}
+                />
+              </div>
+            </Box>
           ) : (
             <Box type="relative">
               <Input
@@ -481,6 +516,9 @@ const AppTableData = ({
       } else if (columns[key]["type"] === "BLOB") {
         let name = columns[key]["name"];
         params[name] = selectedBinaryType[name];
+      } else if (columns[key]["type"] === "VARCHAR(123)") {
+        let name = columns[key]["name"];
+        params[name] = html;
       }
     }
     console.log(params, value);
@@ -556,7 +594,7 @@ const AppTableData = ({
 
   return (
     <>
-      <Modal isOpen={isOpen} onClose={onClose}>
+      <Modal isOpen={isOpen} onClose={onClose} size={"xl"}>
         <ModalOverlay />
         <ModalContent>
           <ModalHeader>
