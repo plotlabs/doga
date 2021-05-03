@@ -44,7 +44,6 @@ class ListAssets(Resource):
             return ['No assets of this type found!'], 200
 
 
-
 class UploadAssets(Resource):
     """
     Endpoint to list available assets
@@ -87,12 +86,15 @@ class UploadAssets(Resource):
                     )
                 db.session.add(asset)
                 db.session.commit()
+                return {
+                    "result": "Uploaded image successfully."
+                }, 200
 
             except IntegrityError:
-                return { "result":
-                        "Please upload a different asset, assset with this "\
-                        "name is already present."
-                }
+                return {"result": "Please upload a different asset, "
+                                  "assset with this "
+                                  "name is already present."
+                        }
 
 
 api_utils.add_resource(UploadAssets, '/upload/<asset_type>')
