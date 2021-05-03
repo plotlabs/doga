@@ -12,11 +12,20 @@ import {
   MotionBox,
   Para,
 } from "../../styles";
+import {
+  Accordion,
+  AccordionItem,
+  AccordionButton,
+  AccordionPanel,
+  AccordionIcon,
+} from "@chakra-ui/react";
+import { Avatar, AvatarBadge, AvatarGroup } from "@chakra-ui/react";
 import { Tooltip } from "@chakra-ui/react";
 import { Redirect } from "react-router-dom";
 import { Icon } from "@chakra-ui/react";
 import { FaEdit } from "react-icons/fa";
 import { AiOutlineDelete } from "react-icons/ai";
+import { AiOutlineCaretDown, AiOutlineCaretUp } from "react-icons/ai";
 import { useParams } from "react-router";
 import Api, { ApiJwt, APIURLS } from "../../Api";
 import {
@@ -38,6 +47,7 @@ import { useToast, createStandaloneToast } from "@chakra-ui/react";
 import { useIsFetching } from "react-query";
 import ClipLoader from "react-spinners/ClipLoader";
 import RichTextView from "../../components/Modal/RichTextView";
+import ImageView from "../../components/Modal/ImageView";
 
 const Content = () => {
   const { isOpen, onOpen, onClose } = useDisclosure();
@@ -47,6 +57,8 @@ const Content = () => {
   const [deleteTableToggle, setDeleteTableToggle] = useState(false);
   const [openModal, setOpenModal] = useState();
   const [richText, setRichText] = useState();
+  const [imageView, setImageView] = useState();
+  const [relationDropView, setRelationDropView] = useState([]);
   let { app, table } = useParams();
   const queryClient = useQueryClient();
   const toast = createStandaloneToast();
@@ -54,6 +66,7 @@ const Content = () => {
   const isFetchingApps = useIsFetching([APIURLS.getContentType]);
   let contentTypeApps = null;
   let richTextFields = [];
+  let imageColumnFields = [];
   let tableFieldShow = null;
   let sendGetTableContent = null;
   if (data != null && data[app]["jwt_info"]) {
@@ -62,6 +75,9 @@ const Content = () => {
   } else {
     sendGetTableContent = APIURLS.getTableContent({ app, table });
   }
+  useEffect(() => {
+    setRelationDropView([]);
+  }, [table, app]);
 
   const fieldData = useQuery(sendGetTableContent);
   let fieldDataBodyArray = [];
@@ -108,10 +124,15 @@ const Content = () => {
       console.log(prop, val);
       console.log("CHECK", val.type === "VARCHAR(123)");
       if (val.type === "VARCHAR(123)") {
-        console.log(val.type, "inside");
         richTextFields.push(val.name);
         console.log(richTextFields);
       }
+      if (val.type === "ImageType") {
+        console.log(val.type, "inside");
+        imageColumnFields.push(val.name);
+        console.log(imageColumnFields);
+      }
+
       return (
         <Tr style={{ color: "#4A5568" }}>
           <Td style={{ color: "#4A5568", borderColor: "#EDF2F7" }}>
@@ -246,79 +267,238 @@ const Content = () => {
   let fieldDataBody = null;
   if (fieldData?.data?.result) {
     fieldDataBody = Object.entries(fieldData?.data?.result).map(
-      ([prop, val]) => {
+      ([index, val]) => {
+        // console.log(
+        //   Object.entries(val["related_content"]).map(([index, val]) => {
+        //     return "hej";
+        //   })vz
+        // );
+        console.log("yaha", val["related_content"]);
         return (
-          <Tr style={{ color: "#4A5568" }}>
-            <Td style={{ color: "#4A5568", borderColor: "#EDF2F7" }}>
-              {val["id"]}
-            </Td>
-            {Object.entries(fieldDataBodyArray).map(([prop, value]) => {
-              console.log(prop, value, "here", val[value]);
-              return richTextFields.includes(value) ? (
-                <Td style={{ color: "#4A5568", borderColor: "#EDF2F7" }}>
-                  <Button onClick={() => richTextViewHandler(val[value])}>
-                    View
-                  </Button>
-                </Td>
-              ) : (
-                <Td style={{ color: "#4A5568", borderColor: "#EDF2F7" }}>
-                  {val[value] === true
-                    ? "true"
-                    : val[value] === false
-                    ? "false"
-                    : val[value]}
-                </Td>
-              );
-            })}
+          <>
+            <Tr style={{ color: "#4A5568" }}>
+              <Td style={{ color: "#4A5568", borderColor: "#EDF2F7" }}>
+                {val["id"]}
+              </Td>
+              {Object.entries(fieldDataBodyArray).map(([prop, value]) => {
+                console.log(prop, value, "here", val[value]);
 
-            <Td
-              style={{
-                color: "#4A5568",
-                borderColor: "#EDF2F7",
-                textAlign: "center",
-              }}
-            >
-              {val["create_dt"]}
-            </Td>
-            <Td
-              style={{
-                color: "#4A5568",
-                borderColor: "#EDF2F7",
-                textAlign: "center",
-              }}
-            >
-              {
-                // <i onClick={() => {setEditDbConnection(key) &&onOpen }}>
-                <i>
-                  <Tooltip label="Edit Field" bg="#8071b399" placement="top">
-                    <spam>
+                return richTextFields.includes(value) ? (
+                  <Td style={{ color: "#4A5568", borderColor: "#EDF2F7" }}>
+                    <Button onClick={() => richTextViewHandler(val[value])}>
+                      View
+                    </Button>
+                  </Td>
+                ) : imageColumnFields.includes(value) ? (
+                  <Td style={{ color: "#4A5568", borderColor: "#EDF2F7" }}>
+                    <Box>
                       {" "}
-                      <Icon
-                        as={FaEdit}
-                        w={5}
-                        h={5}
-                        cursor={"pointer"}
-                        color={"#4B0082"}
-                        onClick={() => editHandler(val["id"])}
-                      ></Icon>
-                    </spam>
-                  </Tooltip>
-                  <Tooltip label="Delete Field" placement="top" bg="#8071b399">
-                    <spam>
-                      <Icon
-                        as={AiOutlineDelete}
-                        w={5}
-                        h={5}
-                        cursor={"pointer"}
-                        color={"red"}
-                        onClick={() => deleteHandler(val["id"])}
+                      <Avatar
+                        size="lg"
+                        name="Doga"
+                        borderRadius="50px"
+                        onClick={() => imageViewHandler(val[value])}
+                        src={`data:image/png;base64, ${val[value]}`}
+                        cursor="pointer"
                       />
-                    </spam>
-                  </Tooltip>
-                </i>
-              }
-            </Td>
-          </Tr>
+                    </Box>
+                  </Td>
+                ) : (
+                  <Td style={{ color: "#4A5568", borderColor: "#EDF2F7" }}>
+                    {val[value] === true
+                      ? "true"
+                      : val[value] === false
+                      ? "false"
+                      : val[value]}
+                  </Td>
+                );
+              })}
+
+              <Td
+                style={{
+                  color: "#4A5568",
+                  borderColor: "#EDF2F7",
+                  textAlign: "center",
+                }}
+              >
+                {val["create_dt"]}
+              </Td>
+              <Td
+                style={{
+                  color: "#4A5568",
+                  borderColor: "#EDF2F7",
+                  textAlign: "center",
+                }}
+              >
+                {
+                  // <i onClick={() => {setEditDbConnection(key) &&onOpen }}>
+                  <i>
+                    {relationDropView.includes(parseInt(index))
+                      ? val["related_content"] && (
+                          <Tooltip
+                            label="Collapse relationship view"
+                            bg="#8071b399"
+                            placement="top"
+                          >
+                            <spam>
+                              <Icon
+                                as={AiOutlineCaretUp}
+                                w={5}
+                                h={5}
+                                cursor={"pointer"}
+                                color={"#4B0082"}
+                                onClick={() => accIndexHandler(index)}
+                              ></Icon>
+                            </spam>
+                          </Tooltip>
+                        )
+                      : val["related_content"] && (
+                          <Tooltip
+                            label="View Relationship"
+                            placement="top"
+                            bg="#8071b399"
+                          >
+                            <spam>
+                              <Icon
+                                as={AiOutlineCaretDown}
+                                w={5}
+                                h={5}
+                                cursor={"pointer"}
+                                color={"#4B0082"}
+                                onClick={() =>
+                                  setRelationDropView([
+                                    ...relationDropView,
+                                    parseInt(index),
+                                  ])
+                                }
+                              />
+                            </spam>
+                          </Tooltip>
+                        )}
+
+                    <Tooltip label="Edit Field" bg="#8071b399" placement="top">
+                      <spam>
+                        {" "}
+                        <Icon
+                          as={FaEdit}
+                          w={5}
+                          h={5}
+                          cursor={"pointer"}
+                          color={"#4B0082"}
+                          onClick={() => editHandler(val["id"])}
+                        ></Icon>
+                      </spam>
+                    </Tooltip>
+                    <Tooltip
+                      label="Delete Field"
+                      placement="top"
+                      bg="#8071b399"
+                    >
+                      <spam>
+                        <Icon
+                          as={AiOutlineDelete}
+                          w={5}
+                          h={5}
+                          cursor={"pointer"}
+                          color={"red"}
+                          onClick={() => deleteHandler(val["id"])}
+                        />
+                      </spam>
+                    </Tooltip>
+                  </i>
+                }
+              </Td>
+
+              {/* <AccordionPanel>yeahhhh</AccordionPanel> */}
+            </Tr>
+            {/* <> */}
+            <tr>
+              <td colspan="100">
+                <AccordionItem style={{}}>
+                  {" "}
+                  <AccordionButton> </AccordionButton>
+                  <AccordionPanel
+                    pb={4}
+                    style={{ backgroundColor: "#f7f8fb", width: "100%" }}
+                  >
+                    <Box width="100%">
+                      <>
+                        {val["related_content"] &&
+                          Object.entries(val["related_content"]).map(
+                            ([i, v]) => {
+                              console.log("here", i, v);
+                              return (
+                                <>
+                                  <Box>
+                                    <H5 fontSize="1.1rem" m={2}>
+                                      {"Relationship with "}
+                                      {v["realted_table"]} (
+                                      {v["relation_name"][0].toLowerCase()}
+                                      {"-"}
+                                      {v["relation_name"][1].toLowerCase()}
+                                      {"-"}
+                                      {v["relation_name"][2].toLowerCase()})
+                                    </H5>
+                                  </Box>
+                                  <Box type="column">
+                                    {val["related_content"] &&
+                                      Object.entries(v["realted_values"]).map(
+                                        ([i, values]) => {
+                                          console.log(
+                                            values,
+                                            values[v["realted_table"]]
+                                          );
+                                          return (
+                                            <>
+                                              <Box
+                                                style={{
+                                                  borderBottom:
+                                                    "2px solid rgb(226 232 240)",
+                                                }}
+                                                m={4}
+                                                mt={0}
+                                              >
+                                                {Object.entries(values).map(
+                                                  ([key, value]) => {
+                                                    return (
+                                                      <>
+                                                        <Para>
+                                                          {key} : {value}
+                                                        </Para>
+                                                      </>
+                                                    );
+                                                  }
+                                                )}
+                                              </Box>
+                                            </>
+                                          );
+                                        }
+                                      )}
+                                  </Box>
+                                </>
+                              );
+                            }
+                          )}
+                      </>
+                    </Box>
+                  </AccordionPanel>
+                </AccordionItem>
+              </td>
+            </tr>
+            {/* </> */}
+            {/* <Tr style={{ position: "relative" }}>
+              <Td
+                style={{
+                  position: "absolute",
+                  top: "0",
+                  bottom: "0",
+                  width: "100%",
+                }}
+              >
+               
+              </Td>
+            </Tr> */}
+          </>
         );
       }
     );
@@ -375,6 +555,11 @@ const Content = () => {
     onOpen();
     setRichText(value);
   };
+  const imageViewHandler = (value) => {
+    setOpenModal(7);
+    onOpen();
+    setImageView(value);
+  };
 
   // let modal = null;
   // if (data) {
@@ -387,7 +572,12 @@ const Content = () => {
   // if (data) {
 
   // }
-
+  console.log("relationDropView", relationDropView);
+  const accIndexHandler = (index) => {
+    let array = [];
+    array = relationDropView.filter((num) => num != index);
+    setRelationDropView(array);
+  };
   return loading || isLoading ? (
     <Box width="100%" height="100vh">
       <Box type={"loaderCentered"}>
@@ -464,6 +654,13 @@ const Content = () => {
           onOpen={onOpen}
           onClose={onClose}
           richText={richText}
+        />
+      ) : openModal === 7 && imageView ? (
+        <ImageView
+          isOpen={isOpen}
+          onOpen={onOpen}
+          onClose={onClose}
+          imageView={imageView}
         />
       ) : null}
       {/* <Box type="row" justifyContent="spacing-around" margin={6}>
@@ -616,33 +813,39 @@ const Content = () => {
         </Box>
       ) : (
         <Box type="tableView" m={6}>
-          {" "}
-          <Table
-            variant="striped"
-            colorScheme="teal"
-            style={{
-              width: "98%",
-            }}
-          >
-            <TableCaption>{captionButtonData}</TableCaption>
-            <Thead>
-              <Tr style={{ color: "#4A5568" }}>
-                <Th style={{ color: "#4A5568", borderColor: "#EDF2F7" }}>Id</Th>
-                {tableFieldShow}
+          <Accordion index={[...relationDropView]}>
+            {" "}
+            <Table
+              variant="striped"
+              colorScheme="teal"
+              style={{
+                width: "98%",
+              }}
+            >
+              <TableCaption>{captionButtonData}</TableCaption>
 
-                <Th
-                  style={{
-                    color: "#4A5568",
-                    borderColor: "#EDF2F7",
-                    textAlign: "center",
-                  }}
-                >
-                  Created_at
-                </Th>
-              </Tr>
-            </Thead>
-            <Tbody>{fieldDataBody}</Tbody>
-          </Table>
+              <Thead>
+                <Tr style={{ color: "#4A5568" }}>
+                  <Th style={{ color: "#4A5568", borderColor: "#EDF2F7" }}>
+                    Id
+                  </Th>
+                  {tableFieldShow}
+
+                  <Th
+                    style={{
+                      color: "#4A5568",
+                      borderColor: "#EDF2F7",
+                      textAlign: "center",
+                    }}
+                  >
+                    Created_at
+                  </Th>
+                </Tr>
+              </Thead>
+
+              <Tbody>{fieldDataBody}</Tbody>
+            </Table>
+          </Accordion>
         </Box>
       )}
     </>

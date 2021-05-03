@@ -32,6 +32,7 @@ import Api, { setHeader, setJwtHeader, APIURLS, ApiJwt } from "../../Api";
 import Select from "react-select";
 import { CKEditor } from "@ckeditor/ckeditor5-react";
 import ClassicEditor from "@ckeditor/ckeditor5-build-classic";
+import ImageUploadSelect from "../ImageUploadSelect/ImageUploadSelect";
 
 const AppTableData = ({
   isOpen,
@@ -51,6 +52,7 @@ const AppTableData = ({
   const [selectedBooleanType, setSelectedBooleanType] = useState({});
   const [selectedBinaryType, setSelectedBinaryType] = useState({});
   const [jwtToken, setJwtToken] = useGlobal("jwtToken");
+  const [markedImage, setMarkedImage] = useState();
   const [html, setHtml] = useState();
   const toast = createStandaloneToast();
   const queryClient = useQueryClient();
@@ -70,6 +72,7 @@ const AppTableData = ({
   //   const [apiErr, setApiErr] = useState(null);
   //   const queryClient = useQueryClient();
   //   const toast = createStandaloneToast();
+  console.log(markedImage, "Hereeeeeee");
   useEffect(() => {
     let token = Object.entries(columns).map(([prop, val]) => {
       console.log(val);
@@ -418,6 +421,20 @@ const AppTableData = ({
                 />
               </div>
             </Box>
+          ) : val.type === "ImageType" ? (
+            <Box
+              style={{
+                marginBottom: "1.5rem",
+                color: "#6E798C",
+                fontSize: "1.25rem",
+                paddingTop: "10px",
+              }}
+            >
+              <ImageUploadSelect
+                setMarkedImage={setMarkedImage}
+                markedImage={markedImage}
+              />
+            </Box>
           ) : (
             <Box type="relative">
               <Input
@@ -519,6 +536,9 @@ const AppTableData = ({
       } else if (columns[key]["type"] === "VARCHAR(123)") {
         let name = columns[key]["name"];
         params[name] = html;
+      } else if (columns[key]["type"] === "ImageType") {
+        let name = columns[key]["name"];
+        params[name] = markedImage;
       }
     }
     console.log(params, value);
@@ -578,6 +598,7 @@ const AppTableData = ({
         duration: 9000,
         isClosable: false,
       });
+      setMarkedImage();
       onClose();
       console.log("there", data);
     } catch ({ response }) {

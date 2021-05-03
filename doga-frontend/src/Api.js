@@ -30,6 +30,13 @@ export const ApiJwt = axios.create({
   },
 });
 
+export const ApiUpload = axios.create({
+  baseURL: "http://0.0.0.0:8080/",
+  headers: {
+    "Content-Type": "multipart/form-data",
+  },
+});
+
 // ApiJwt.interceptors.response.use(
 //   function (response) {
 //     return response;
@@ -49,6 +56,7 @@ export const ApiJwt = axios.create({
 export function setHeader(token) {
   // Api.defaults.headers.common["x-access-token"] = token;
   Api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+  ApiUpload.defaults.headers.common["Authorization"] = `Bearer ${token}`;
   console.log("heretoken", "Bearer " + token, token);
 }
 export function setJwtHeader(token) {
@@ -85,6 +93,7 @@ export const APIURLS = {
   getDbDefaults: "/admin/utils/defaults/db",
   getColumnTypes: "/admin/columntypes",
   getContentType: "/admin/content/types",
+  getUserImages: "/admin/assets/list/image",
   getTableContent: ({ app, table }) => `/${app}/${table}/`,
   baseJwtLogin: ({ app, table }) => `/${app}/${table}/login`,
   postRegisterTableData: ({ app, table }) => `/${app}/${table}/register`,
@@ -102,6 +111,7 @@ export const APIURLS = {
   smsNotify: () => "/admin/notify/sms",
   markAllNotifications: "/admin/info/markread/all",
   markIndividualNotifications: ({ id }) => `/admin/info/markread/${id}`,
+  uploadImage: () => `/admin/assets/upload/image`,
   getNotifications: "/admin/info/allrequests",
   // getTableContent: "/School/Table_app",
   // getTableContent: (section, filter) => `/${section}/${filter}`,
