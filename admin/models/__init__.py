@@ -184,7 +184,7 @@ class Assets_Table(Base):
             "asset_name": self.asset_name,
             "asset_type": self.asset_type,
             "asset_path": self.asset_path,
-            "image": str(self.image_data),
+            "image": self.image_data.decode("utf-8"),
             "uploaded_at": self.uploaded_at.strftime("%m/%d/%Y, %H:%M:%S"),
             "user": self.user
         }
