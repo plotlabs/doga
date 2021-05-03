@@ -222,6 +222,7 @@ class ContentType(Resource):
 
                 if table.name in ["jwt", "admin", "restricted_by_jwt",
                                   "deployments", "relationships",
+                                  "assets_table",
                                   "notifications"] and\
                         table.info['bind_key'] == "default":
                     continue
@@ -994,6 +995,7 @@ class ColumnType(Resource):
                   'BIGINT', 'SMALLINT', 'SmallInteger', 'Indexable']:
             available_types.remove(i)
 
+        available_types.append('ImageType')
         return {
             "result": available_types
         }, 200

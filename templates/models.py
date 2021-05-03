@@ -1,6 +1,7 @@
 from sqlalchemy import *
 
 from app import db
+from app.types import *
 
 Base = db.Model
 Column = db.Column

@@ -2,6 +2,7 @@ from sqlalchemy import Integer, String, DateTime, text, Boolean, Enum
 from sqlalchemy.schema import UniqueConstraint
 
 from app import db
+from app.types import ImageType
 
 Base = db.Model
 Column = db.Column
@@ -114,7 +115,7 @@ class Notifications(Base):
 
     id = Column(Integer, primary_key=True)
     app_name = Column(String(255))
-    user = Column(String(255), nullable=False)
+    user = Column(String(255), ForeignKey('admin.email'), nullable=False)
     received_at = Column(DateTime(), server_default=text('CURRENT_TIMESTAMP'))
     action_status = Column(String(255), nullable=False)
     message = Column(String(255), nullable=False)
@@ -130,7 +131,7 @@ class Notifications(Base):
     full_notif = Column(String(255))
 
     def foramt_notification(self):
-        self.full_notif =   f'[{self.action_status.title()}]:'\
+        self.full_notif =   f'{self.action_status.title()}: '\
                             f'{self.app_name} '\
                             f'{self.message}'
 
@@ -155,3 +156,35 @@ class Notifications(Base):
                 'completed_action_at': completed_action_at,
                 "mark_read": self.mark_read
                 }
+
+
+class Assets_Table(Base):
+    """ Defines a table Notifications to store the info regarding apps and
+    any new events that need to be passes to the user
+    """
+    __tablename__ = 'assets_table'
+    __bind_key__ = 'default'
+
+    id = Column(Integer, primary_key=True)
+    asset_name = Column(String(255), nullable=False)
+    asset_type = Column(Enum('image',
+                             name='doga_asset_types',
+                            ),
+                        nullable=True)
+    app_name = Column(String(255))
+    image_data = Column(ImageType, nullable=True)
+    extension = Column(String(10), nullable=False)
+    asset_path = Column(String(255), nullable=False, unique=True)
+    user = Column(String(255), ForeignKey('admin.email'), nullable=False)
+    uploaded_at = Column(DateTime(), server_default=text('CURRENT_TIMESTAMP'))
+    UniqueConstraint('asset_name', 'asset_type', name='uix_1')
+
+    def create_dict(self):
+        return {
+            "asset_name": self.asset_name,
+            "asset_type": self.asset_type,
+            "asset_path": self.asset_path,
+            "image": str(self.image_data),
+            "uploaded_at": self.uploaded_at.strftime("%m/%d/%Y, %H:%M:%S"),
+            "user": self.user
+        }

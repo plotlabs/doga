@@ -35,26 +35,32 @@ class AlchemyEncoder(json.JSONEncoder):
                             relationship = inspect(data).mapper.relationships
                             for relation in relationship:
                                 if field in str(relation._reverse_property):
-                                    relation_name = relation.direction.name.split("TO")
+                                    relation_name = relation.direction.name.\
+                                                        split("TO")
                                     relation_name.insert(1, "TO")
                                     realted_table = data.__table__.name.title()
-                                    related_value = {c.key: str(getattr(data, c.key))
-                                                     for c in
-                                                     inspect(data).mapper.column_attrs}
+                                    related_value = {c.key: str(getattr(
+                                                                data, c.key))
+                                                     for c in inspect(data).
+                                                     mapper.column_attrs
+                                                     }
                                     fields["relation_name"] = relation_name
                                     fields["related_value"] = [related_value]
                                     fields["related_table"] = realted_table
                         elif isinstance(data, InstrumentedList):
-                            relationships = inspect(data[0]).mapper.relationships
+                            relationships = inspect(data[0]).mapper. \
+                                                                relationships
                             rel = {}
                             for relation in relationships:
-                                relation_name = relation.direction.name.split("TO")
+                                relation_name = relation.direction.name. \
+                                                                    split("TO")
                                 relation_name.insert(1, "TO")
                                 if data[0].__table__.name in \
                                         str(relation._reverse_property) or \
                                         field in \
                                         str(relation._reverse_property):
-                                    realted_table = data[0].__table__.name.title()
+                                    realted_table = data[0].__table__.name. \
+                                                                        title()
                                     realted_values = []
                                     for item in data:
                                         realted_values.append({

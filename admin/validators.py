@@ -39,7 +39,9 @@ def column_validation(schema_list, connection_name, table_columns=None):
             valid = False
             msg = "Columns cannot have same name."
             break
-        if column["type"].split("(")[0] not in column_types():
+        col_types = column_types()
+        col_types.append('ImageType')
+        if column["type"].split("(")[0] not in col_types:
             valid = False
             msg = "Invalid column type for column {}.".format(
                 column["name"])

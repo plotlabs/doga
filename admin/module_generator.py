@@ -236,7 +236,6 @@ def create_model(dir_path, data):
                 "result": "Missing parameters for columns",
                 "parameters": error.args
             }, 500
-
         o.write(line)
     o.write(relationships)
     o.close()
@@ -649,7 +648,6 @@ def create_relationsips(app_name, relation_type, related_table, related_field,
                             current_table.lower() +
                             '")\n')
             f.seek(0)
-            print(contents)
             f.write(''.join(contents))
 
         if relation_type == 'one-many':

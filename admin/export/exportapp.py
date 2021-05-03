@@ -28,6 +28,7 @@ def check_if_exist(app_name):
 def create_export_files(platform, parent_dir, dest_dir, app_name, deploy,
                         rds_engine, rds, user_credentials, config):
     to_copy = [
+        'app/types.py',
         'app/utils.py',
         'app/__init__.py',
         'runserver.py',
