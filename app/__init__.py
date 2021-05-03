@@ -4,11 +4,6 @@ from flask_migrate import Migrate
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 
-from sqlalchemy import BLOB
-from sqlalchemy import event
-from app.types import ImageType
-from sqlalchemy import Table
-
 # Define application object
 app = Flask(__name__)
 
@@ -21,17 +16,7 @@ db = SQLAlchemy(app)
 from .blueprints import *  # noqa 402
 
 migrate = Migrate(app, db)
-
 jwt = JWTManager(app)
-
-
-@event.listens_for(Table, "column_reflect")
-def _setup_imgtype(inspector, table, column_info):
-    if isinstance(column_info["type"], BLOB):
-        try:
-            column_info["type"] = ImageType()
-        except Exception:
-            pass
 
 
 @app.after_request

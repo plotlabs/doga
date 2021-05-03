@@ -1,5 +1,6 @@
 from sqlalchemy import types
-import base64
+
+from sqlalchemy import BLOB, Table, event
 
 
 class ImageType(types.TypeDecorator):

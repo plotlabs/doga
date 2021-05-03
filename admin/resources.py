@@ -261,6 +261,16 @@ class ContentType(Resource):
                     if column_type == 'BOOLEAN':
                         default = str(default)
 
+                    if column_type == 'BLOB':
+                        model_path = '/'.join(os.path.dirname(__file__).
+                                              split("/")[:-1]) + \
+                                              '/app/' + table.info['bind_key'
+                                                                   ] + '/' \
+                                              + table.name + '/models.py'
+                        models = open(model_path, "r").read()
+                        if 'ImageType' in models:
+                            column_type = "ImageType"
+
                     if 'ColumnDefault' in str(default):
                         default = default[
                                 default.find("(") + 1:default.find(")")
@@ -317,6 +327,18 @@ class ContentType(Resource):
                                 foreign_key = foreign_key.split(".")[0].title()
                         if foreign_key != "":
                             column_type = str(column.foreign_keys).split("}")[0][1:]  # noqa 501
+
+                        if column_type == 'BLOB':
+                            model_path = '/'.join(os.path.dirname(__file__).
+                                                  split("/")[:-1]) + \
+                                                ' /app/' + table.info[
+                                                                    'bind_key'
+                                                                      ] + '/' \
+                                                + table.name + '/models.py'
+                            models = open(model_path, "rb").read()
+                            if 'ImageType' in models:
+                                column_type = "ImageType"
+
                         obj = {
                             "name": column.name,
                             "type": column_type,
