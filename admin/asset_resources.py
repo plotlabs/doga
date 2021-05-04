@@ -94,7 +94,7 @@ class UploadAssets(Resource):
                 return {"result": "Please upload a different asset, "
                                   "assset with this "
                                   "name is already present."
-                        }
+                        }, 400
 
 
 api_utils.add_resource(UploadAssets, '/upload/<asset_type>')

@@ -77,7 +77,10 @@ class AlchemyEncoder(json.JSONEncoder):
                             except KeyError:
                                 fields["related_content"] = [rel]
                         else:
-                            fields[field] = str(data)
+                            try:
+                                fields[field] = data.decode('utf-8')
+                            except (UnicodeDecodeError, AttributeError):
+                                fields[field] = str(data)
             return fields
         return json.JSONEncoder.default(self, obj)
 
