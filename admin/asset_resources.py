@@ -10,8 +10,13 @@ from sqlalchemy.exc import IntegrityError
 from app.utils import verify_jwt
 
 
-from admin.models import (Admin, JWT, Restricted_by_JWT, Notifications,
-                          Assets_Table)
+from admin.models import (
+    Admin,
+    JWT,
+    Restricted_by_JWT,
+    Notifications,
+    Assets_Table,
+)
 
 from app import db
 
@@ -26,13 +31,19 @@ class ListAssets(Resource):
     """
     Endpoint to list available assets
     """
+
     @jwt_required
     def get(self, asset_type):
         admin = get_jwt_identity()
 
         if not verify_jwt(admin, Admin):
-            return {"result": "JWT authorization invalid, user does not"
-                    " exist."}, 401
+            return (
+                {
+                    "result": "JWT authorization invalid, user does not"
+                    " exist."
+                },
+                401,
+            )
 
         assets = Assets_Table.query.filter_by(asset_type=asset_type)
         if assets != []:
@@ -41,29 +52,39 @@ class ListAssets(Resource):
                 obj.extend([asset.create_dict()])
             return obj, 200
         else:
-            return ['No assets of this type found!'], 200
+            return ["No assets of this type found!"], 200
 
 
 class UploadAssets(Resource):
     """
     Endpoint to list available assets
     """
+
     @jwt_required
     def post(self, asset_type):
-        dest = '/'.join(path.dirname(__file__).split("/")[:-1]) + \
-                 '/doga-frontend/public/uploads/'
+        dest = (
+            "/".join(path.dirname(__file__).split("/")[:-1])
+            + "/doga-frontend/public/uploads/"
+        )
 
         admin = get_jwt_identity()
 
         if not verify_jwt(admin, Admin):
-            return {"result": "JWT authorization invalid, user does not"
-                    " exist."}, 401
+            return (
+                {
+                    "result": "JWT authorization invalid, user does not"
+                    " exist."
+                },
+                401,
+            )
 
-        if asset_type == 'image':
-            if 'image' not in request.files:
-                return {'result': 'Error, please attach file with request.'
-                        }, 400
-            img = request.files['image']
+        if asset_type == "image":
+            if "image" not in request.files:
+                return (
+                    {"result": "Error, please attach file with request."},
+                    400,
+                )
+            img = request.files["image"]
             filename = img.filename
             file_type = img.mimetype
 
@@ -75,27 +96,27 @@ class UploadAssets(Resource):
 
             try:
                 asset = Assets_Table(
-                                     asset_name=filename,
-                                     asset_type='image',
-                                     image_data=base64.b64encode(open(dest, "rb").
-                                                                 read()),
-                                     extension=file_type,
-                                     asset_path=dest,
-                                     user=admin['email']
-
-                    )
+                    asset_name=filename,
+                    asset_type="image",
+                    image_data=base64.b64encode(open(dest, "rb").read()),
+                    extension=file_type,
+                    asset_path=dest,
+                    user=admin["email"],
+                )
                 db.session.add(asset)
                 db.session.commit()
-                return {
-                    "result": "Uploaded image successfully."
-                }, 200
+                return {"result": "Uploaded image successfully."}, 200
 
             except IntegrityError:
-                return {"result": "Please upload a different asset, "
-                                  "assset with this "
-                                  "name is already present."
-                        }, 400
+                return (
+                    {
+                        "result": "Please upload a different asset, "
+                        "assset with this "
+                        "name is already present."
+                    },
+                    400,
+                )
 
 
-api_utils.add_resource(UploadAssets, '/upload/<asset_type>')
-api_utils.add_resource(ListAssets, '/list/<asset_type>')
+api_utils.add_resource(UploadAssets, "/upload/<asset_type>")
+api_utils.add_resource(ListAssets, "/list/<asset_type>")

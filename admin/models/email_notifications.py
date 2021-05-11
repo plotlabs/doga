@@ -5,27 +5,23 @@ import ast
 import os
 import re
 
-from datetime import date, datetime  # noqa: F401
-
 import json
-
-from typing import List, Dict  # noqa: F401
 
 from admin import utils
 from admin.models.base_model_ import Model
 
 
 class Email_Notify(Model):
-
     def __init__(
-            self,
-            api_key=None,
-            _from=None,
-            to_emails=None,
-            template_key=None,
-            subject=None,
-            content=None,
-            errors=None):
+        self,
+        api_key=None,
+        _from=None,
+        to_emails=None,
+        template_key=None,
+        subject=None,
+        content=None,
+        errors=None,
+    ):
         """Email_Notify
 
         api_key
@@ -37,22 +33,22 @@ class Email_Notify(Model):
         """
 
         self.param_types = {
-            'api_key': str,
-            '_from': str,
-            'to_emails': str,
-            'template_key': str,
-            'subject': str,
-            'content': str,
+            "api_key": str,
+            "_from": str,
+            "to_emails": str,
+            "template_key": str,
+            "subject": str,
+            "content": str,
         }
 
         self.attribute_map = {
-            'api_key': 'api_key',
-            '_from': '_from',
-            'to_emails': 'to_emails',
-            'template_key': 'template_key',
-            'subject': 'subject',
-            'content': 'content',
-            'errors': 'errors'
+            "api_key": "api_key",
+            "_from": "_from",
+            "to_emails": "to_emails",
+            "template_key": "template_key",
+            "subject": "subject",
+            "content": "content",
+            "errors": "errors",
         }
 
         self._api_key = api_key
@@ -64,7 +60,7 @@ class Email_Notify(Model):
         self.errors = {}
 
     @classmethod
-    def from_dict(cls, dikt) -> 'Email_Notify':
+    def from_dict(cls, dikt) -> "Email_Notify":
         """Returns the dict as a model
 
         :param dikt: A dict.
@@ -93,14 +89,18 @@ class Email_Notify(Model):
 
         :type email: str
         """
-        email_regex = "([a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+)"  # noqa 401
+        email_regex = (
+            r"([a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+)"
+        )
 
         if _from is None or "":
-            self.errors['_from'] = "Invalid value for `email`, must not be "\
-                                   "`None`."
+            self.errors["_from"] = (
+                "Invalid value for `email`, must not be `None`."
+            )
         if not re.match(email_regex, _from):
-            self.errors['_from'] = "Invalid email id, please re-enter a valid"\
-                                   " email address."
+            self.errors["_from"] = (
+                "Invalid email id, please re-enter a valid email address."
+            )
         else:
             self.__from = _from
 
@@ -120,8 +120,9 @@ class Email_Notify(Model):
         :type api_key: str
         """
         if api_key is None or "":
-            self.errors['api_key'] = "Invalid value for `api_key`, must not"\
-                                     " be `None`."
+            self.errors["api_key"] = (
+                "Invalid value for `api_key`, must not be `None`."
+            )
         else:
             self._api_key = api_key
 
@@ -135,12 +136,13 @@ class Email_Notify(Model):
     @to_emails.setter
     def to_emails(self, to_emails):
 
-        rep = {':': ",", '{': '\n(', '}': ')'}
+        rep = {":": ",", "{": "\n(", "}": ")"}
         rep = dict((re.escape(k), v) for k, v in rep.items())
 
         pattern = re.compile("|".join(rep.keys()))
         to_emails = pattern.sub(
-            lambda m: rep[re.escape(m.group(0))], to_emails)
+            lambda m: rep[re.escape(m.group(0))], to_emails
+        )
         self._to_emails = to_emails
 
     @property
@@ -151,8 +153,9 @@ class Email_Notify(Model):
     def template_key(self, template_key):
 
         if template_key is None or "":
-            self.errors['template_key'] = "Invalid value for `template_key`,"\
-                " must not be `None`."
+            self.errors["template_key"] = (
+                "Invalid value for `template_key`, must not be `None`."
+            )
         else:
             self._template_key = template_key
 
@@ -172,44 +175,47 @@ class Email_Notify(Model):
     def content(self, content):
 
         try:
-            eval_json = json.loads(to_emails.replace("'", '"'))
+            eval_json = json.loads(self._to_emails.replace("'", '"'))
         except Exception as error:
             error["content"]: str(error)
         self._content = content
 
     def return_result(self):
         if len(self.errors) != 0:
-            return {
-                "result": "error",
-                "errors": self.errors,
-            }, 500
+            return {"result": "error", "errors": self.errors, }, 500
 
         parent_dir = os.sep.join(__file__.split(os.sep)[:-3])
         # create folder
         Email_Notifications = open(
-            parent_dir + '/templates/SendGrid_email.py', 'r')
+            parent_dir + "/templates/SendGrid_email.py", "r"
+        )
         Email_Notify_Contents = Email_Notifications.read()
         Email_Notifications.close()
 
         Email_Notify_Contents = Email_Notify_Contents.replace(
-            'REPLACE_EMAIL_ID', self.__from)
+            "REPLACE_EMAIL_ID", self.__from
+        )
         Email_Notify_Contents = Email_Notify_Contents.replace(
-            'REPLACE_TEMPLATE_ID', self._template_key)
+            "REPLACE_TEMPLATE_ID", self._template_key
+        )
         Email_Notify_Contents = Email_Notify_Contents.replace(
-            "'REPLACE_RECIPIENT_EMAILS'", self._to_emails)
+            "'REPLACE_RECIPIENT_EMAILS'", self._to_emails
+        )
 
-        _dir = parent_dir + '/Exports/Notifications/'
+        _dir = parent_dir + "/Exports/Notifications/"
 
         if not os.path.exists(_dir):
             os.makedirs(_dir)
 
-        file = open(_dir + 'EmailNotifications.py', 'w+')
+        file = open(_dir + "EmailNotifications.py", "w+")
         file.write(Email_Notify_Contents)
         file.close()
 
-        file_json = open(_dir + 'dynamic_data.json', 'w+')
+        file_json = open(_dir + "dynamic_data.json", "w+")
         json.dump(self.content, file_json)
         file_json.close()
 
-        return {"result": "Successfully created E-mail notification script."
-                }, 200
+        return (
+            {"result": "Successfully created E-mail notification script."},
+            200,
+        )

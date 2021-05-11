@@ -10,31 +10,31 @@ from admin.models.base_model_ import Model
 
 
 class Sms_Notify(Model):
-
     def __init__(
-            self,
-            account_sid=None,
-            auth_token=None,
-            _from=None,
-            to=None,
-            message=None,
-            errors=None):
+        self,
+        account_sid=None,
+        auth_token=None,
+        _from=None,
+        to=None,
+        message=None,
+        errors=None,
+    ):
 
         self.param_types = {
-            'account_sid': str,
-            'auth_token': str,
-            '_from': str,
-            'to': str,
-            'message': str,
+            "account_sid": str,
+            "auth_token": str,
+            "_from": str,
+            "to": str,
+            "message": str,
         }
 
         self.attribute_map = {
-            'account_sid': 'account_sid',
-            '_from': '_from',
-            'auth_token': 'auth_token',
-            'to': 'to',
-            'message': 'message',
-            'errors': 'errors'
+            "account_sid": "account_sid",
+            "_from": "_from",
+            "auth_token": "auth_token",
+            "to": "to",
+            "message": "message",
+            "errors": "errors",
         }
 
         self._account_sid = account_sid
@@ -45,7 +45,7 @@ class Sms_Notify(Model):
         self.errors = {}
 
     @classmethod
-    def from_dict(cls, dikt) -> 'Email_Notify':
+    def from_dict(cls, dikt) -> "Email_Notify":
         """Returns the dict as a model
 
         :param dikt: A dict.
@@ -76,8 +76,9 @@ class Sms_Notify(Model):
         # phone_regex =   # noqa 401
 
         if _from is None or "":
-            self.errors['_from'] = "Invalid value for `_from`, must not be "\
-                                   "`None`."
+            self.errors["_from"] = (
+                "Invalid value for `_from`, must not be `None`."
+            )
         # if not re.match(phone_regex, _from):
         #    self.errors['_from'] = "Invalid  please re-enter a valid"\
         else:
@@ -99,8 +100,9 @@ class Sms_Notify(Model):
         :type api_key: str
         """
         if account_sid is None or "":
-            self.errors['account_sid'] = "Invalid value for `account_sid`,"\
-                                         " must not be `None`."
+            self.errors["account_sid"] = (
+                "Invalid value for `account_sid`, must not be `None`."
+            )
         else:
             self._account_sid = account_sid
 
@@ -118,8 +120,9 @@ class Sms_Notify(Model):
         :type auth_token: str
         """
         if auth_token is None or "":
-            self.errors['auth_token'] = "Invalid value for `auth_token`,"\
-                                         " must not be `None`."
+            self.errors["auth_token"] = (
+                "Invalid value for `auth_token`, must not be `None`."
+            )
         else:
             self._auth_token = auth_token
 
@@ -136,8 +139,9 @@ class Sms_Notify(Model):
             self._to = to
 
         except Exception as error:
-            self.errors['to_emails'] = "Please format recipient numbers"\
-                                       " properly."
+            self.errors["to_emails"] = (
+                "Please format recipient numbers properly."
+            )
 
     @property
     def message(self):
@@ -149,35 +153,36 @@ class Sms_Notify(Model):
 
     def return_result(self):
         if len(self.errors) != 0:
-            return {
-                "result": "error",
-                "errors": self.errors,
-            }, 500
+            return {"result": "error", "errors": self.errors, }, 500
 
         parent_dir = os.sep.join(__file__.split(os.sep)[:-3])
         # create folder
-        Sms_Notifications = open(
-            parent_dir + '/templates/Twilio_sms.py', 'r')
+        Sms_Notifications = open(parent_dir + "/templates/Twilio_sms.py", "r")
         Sms_Notify_Contents = Sms_Notifications.read()
         Sms_Notifications.close()
 
         Sms_Notify_Contents = Sms_Notify_Contents.replace(
-            'REPLACE_WITH_SID', self._account_sid)
+            "REPLACE_WITH_SID", self._account_sid
+        )
         Sms_Notify_Contents = Sms_Notify_Contents.replace(
-            'REPLACE_WITH_AUTH_TOKEN', self._auth_token)
+            "REPLACE_WITH_AUTH_TOKEN", self._auth_token
+        )
         Sms_Notify_Contents = Sms_Notify_Contents.replace(
-            'REPLACE_WITH_TO', self._to)
+            "REPLACE_WITH_TO", self._to
+        )
         Sms_Notify_Contents = Sms_Notify_Contents.replace(
-            'REPLACE_WITH_MESSAGE', self._message)
+            "REPLACE_WITH_MESSAGE", self._message
+        )
         Sms_Notify_Contents = Sms_Notify_Contents.replace(
-            'REPLACE_WITH_FROM', self.__from)
+            "REPLACE_WITH_FROM", self.__from
+        )
 
-        _dir = parent_dir + '/Exports/Notifications/'
+        _dir = parent_dir + "/Exports/Notifications/"
 
         if not os.path.exists(_dir):
             os.makedirs(_dir)
 
-        file = open(_dir + 'SmsNotifications.py', 'w+')
+        file = open(_dir + "SmsNotifications.py", "w+")
         file.write(Sms_Notify_Contents)
         file.close()
 

@@ -10,15 +10,15 @@ from admin.models.base_model_ import Model
 
 
 class Column(Model):
-
-    def __init__(self,
-                 name: str = None,
-                 type: str = None,
-                 unique: bool = None,
-                 default: str = None,
-                 foreign_key: str = None,
-                 nullable: bool = None
-                 ):
+    def __init__(
+        self,
+        name: str = None,
+        type: str = None,
+        unique: bool = None,
+        default: str = None,
+        foreign_key: str = None,
+        nullable: bool = None,
+    ):
         """Column
 
         :param default: The default of this Column.
@@ -40,21 +40,21 @@ class Column(Model):
         :type unique: bool
         """
         self.param_types = {
-            'default': str,
-            'foreign_key': str,
-            'name': str,
-            'nullable': bool,
-            'type': str,
-            'unique': bool
+            "default": str,
+            "foreign_key": str,
+            "name": str,
+            "nullable": bool,
+            "type": str,
+            "unique": bool,
         }
 
         self.attribute_map = {
-            'default': 'default',
-            'foreign_key': 'foreign_key',
-            'name': 'name',
-            'nullable': 'nullable',
-            'type': 'type',
-            'unique': 'unique'
+            "default": "default",
+            "foreign_key": "foreign_key",
+            "name": "name",
+            "nullable": "nullable",
+            "type": "type",
+            "unique": "unique",
         }
 
         self._default = default
@@ -65,7 +65,7 @@ class Column(Model):
         self._unique = unique
 
     @classmethod
-    def from_dict(cls, dikt) -> 'Column':
+    def from_dict(cls, dikt) -> "Column":
         """Returns the dict as a model
 
         :param dikt: A dict.
@@ -135,17 +135,24 @@ class Column(Model):
         :type name: str
         """
         if name is None:
-            raise ValueError("Invalid value for column name, `name` must not"
-                             " be `None`")
+            raise ValueError(
+                "Invalid value for column name, `name` must not be `None`"
+            )
         if name is not None and len(name) > 32:
-            raise ValueError("Invalid value for column `name`, length must be"
-                             " less than or equal to `32`.")
+            raise ValueError(
+                "Invalid value for column `name`, length must be"
+                " less than or equal to `32`."
+            )
         if name is not None and len(name) < 1:
-            raise ValueError("Invalid value for column `name`, length must be "
-                             "greater than or equal to `6`.")
+            raise ValueError(
+                "Invalid value for column `name`, length must be "
+                "greater than or equal to `6`."
+            )
         if not re.match("^([a-z]+[0-9_]*)*$", name):
-            raise ValueError("Invalid value for column_name: {}, must contain"
-                             " only alphabets, numbers and _".format(name))
+            raise ValueError(
+                "Invalid value for column_name: {}, must contain"
+                " only alphabets, numbers and _".format(name)
+            )
 
         self._name = name.lower()
 
@@ -168,8 +175,9 @@ class Column(Model):
         :type nullable: bool
         """
         if nullable is None:
-            raise ValueError("Invalid value for `nullable`, must not be"
-                             " `None`")
+            raise ValueError(
+                "Invalid value for `nullable`, must not be `None`"
+            )
 
         self._nullable = nullable
 

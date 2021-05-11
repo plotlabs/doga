@@ -1,17 +1,16 @@
-
 import json
 
 from sendgrid.helpers.mail import Mail
 from sendgrid import SendGridAPIClient
 
 
-FROM_EMAIL = 'REPLACE_EMAIL_ID'
+FROM_EMAIL = "REPLACE_EMAIL_ID"
 
-TEMPLATE_ID = 'REPLACE_TEMPLATE_ID'
+TEMPLATE_ID = "REPLACE_TEMPLATE_ID"
 
-RECIPIENT_EMAILS = 'REPLACE_RECIPIENT_EMAILS'
+RECIPIENT_EMAILS = "REPLACE_RECIPIENT_EMAILS"
 
-with open('dynamic_data.json', 'r+') as fp:
+with open("dynamic_data.json", "r+") as fp:
     DYNAMIC_DATA = json.load(fp)
 
 
@@ -22,9 +21,7 @@ def SendEmails(dynamic_data, from_email, recepient_emails, template_id):
     :raises Exception e: raises an exception """
 
     # create Mail object and populate
-    message = Mail(
-        from_email=from_email,
-        to_emails=recepient_emails)
+    message = Mail(from_email=from_email, to_emails=recepient_emails)
 
     # pass custom values for HTML placeholders
     message.dynamic_template_data = dynamic_data
@@ -35,7 +32,7 @@ def SendEmails(dynamic_data, from_email, recepient_emails, template_id):
         mail_client = SendGridAPIClient(template_id)
         response = mail_client.send(message)
         code = response.status_code
-        body = response.body,
+        body = (response.body,)
         headers = response.headers
 
         print(f"Response code: {code}")

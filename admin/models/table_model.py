@@ -14,10 +14,12 @@ from dbs import DB_DICT
 
 
 class Table(Model):
-
-    def __init__(self, table_name: str = None,
-                 connection_name: str = None,
-                 columns: List[Column] = None):
+    def __init__(
+        self,
+        table_name: str = None,
+        connection_name: str = None,
+        columns: List[Column] = None,
+    ):
         """Table - a model used to wrap the json object defining content
 
         :param table_name: The table_name of this Table.
@@ -30,15 +32,15 @@ class Table(Model):
         :type columns: List[Column]
         """
         self.param_types = {
-            'table_name': str,
-            'connection_name': str,
-            'columns': List[Column]
+            "table_name": str,
+            "connection_name": str,
+            "columns": List[Column],
         }
 
         self.attribute_map = {
-            'table_name': 'table_name',
-            'connection_name': 'connection_name',
-            'columns': 'columns'
+            "table_name": "table_name",
+            "connection_name": "connection_name",
+            "columns": "columns",
         }
 
         self._table_name = table_name
@@ -46,7 +48,7 @@ class Table(Model):
         self._columns = columns
 
     @classmethod
-    def from_dict(cls, dikt) -> 'Table':
+    def from_dict(cls, dikt) -> "Table":
         """Returns the dict as a model
 
         :param dikt: A dict.
@@ -75,17 +77,23 @@ class Table(Model):
         :type table_name: str
         """
         if table_name is None:
-            raise ValueError("Invalid value for `table_name`, must not"
-                             " be `None`")
+            raise ValueError(
+                "Invalid value for `table_name`, must not be `None`"
+            )
         if table_name is not None and len(table_name) > 32:
-            raise ValueError("Invalid value for `table_name`, length must be"
-                             " less than or equal to `32`.")
+            raise ValueError(
+                "Invalid value for `table_name`, length must be"
+                " less than or equal to `32`."
+            )
         if table_name is not None and table_name.isspace() is True:
-            raise ValueError("Invalid value for `table_name`, must contain "
-                             "characters")
+            raise ValueError(
+                "Invalid value for `table_name`, must contain characters"
+            )
         if not re.match("^([a-z]+[0-9_]*)*$", table_name):
-            raise ValueError("Invalid value for `table_name`m mist contain"
-                             " only alphabets, numbers and -")
+            raise ValueError(
+                "Invalid value for `table_name`m mist contain"
+                " only alphabets, numbers and -"
+            )
 
         self._table_name = table_name.lower()
 
@@ -108,8 +116,9 @@ class Table(Model):
         :type connection_name: str
         """
         if connection_name is None:
-            raise ValueError("Invalid value for `connection_name`, must not"
-                             " be `None`")
+            raise ValueError(
+                "Invalid value for `connection_name`, must not be `None`"
+            )
         if connection_name not in DB_DICT:
             raise ValueError("The database connection given does not exist.")
 

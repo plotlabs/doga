@@ -13,15 +13,16 @@ from admin.default_values import DEFAULT_PORTS
 
 
 class Database(Model):
-
-    def __init__(self,
-                 database_name: str = None,
-                 connection_name: str = None,
-                 database_type: str = None,
-                 host: str = None,
-                 port: str = None,
-                 username: str = None,
-                 password: str = None):
+    def __init__(
+        self,
+        database_name: str = None,
+        connection_name: str = None,
+        database_type: str = None,
+        host: str = None,
+        port: str = None,
+        username: str = None,
+        password: str = None,
+    ):
         """Database - a model defined to wrap incoming db connections
 
         :database_name: The database_name that we would like to create
@@ -46,23 +47,23 @@ class Database(Model):
         :type password: str
         """
         self.param_types = {
-            'database_name': str,
-            'connection_name': str,
-            'database_type': str,
-            'host': str,
-            'port': str,
-            'username': str,
-            'password': str
+            "database_name": str,
+            "connection_name": str,
+            "database_type": str,
+            "host": str,
+            "port": str,
+            "username": str,
+            "password": str,
         }
 
         self.attribute_map = {
-            'database_name': 'database_name',
-            'connection_name': 'connection_name',
-            'database_type': 'database_type',
-            'host': 'host',
-            'port': 'port',
-            'username': 'username',
-            'password': 'password'
+            "database_name": "database_name",
+            "connection_name": "connection_name",
+            "database_type": "database_type",
+            "host": "host",
+            "port": "port",
+            "username": "username",
+            "password": "password",
         }
 
         self._database_name = database_name
@@ -74,7 +75,7 @@ class Database(Model):
         self._password = password
 
     @classmethod
-    def from_dict(cls, dikt) -> 'Database':
+    def from_dict(cls, dikt) -> "Database":
         """Returns the dict as a model
 
         :param dikt: A dict.
@@ -102,8 +103,9 @@ class Database(Model):
         :rtype: str
         """
         if database_name in [None, ""]:
-            raise ValueError("Invalid value for `database_name`, must not be"
-                             " `None`")
+            raise ValueError(
+                "Invalid value for `database_name`, must not be `None`"
+            )
         self._database_name = database_name
 
     @property
@@ -125,14 +127,19 @@ class Database(Model):
         :type connection_name: str
         """
         if connection_name is None or "":
-            raise ValueError("Invalid value for `connection_name`, must not be"
-                             " `None`")
+            raise ValueError(
+                "Invalid value for `connection_name`, must not be `None`"
+            )
         if connection_name in DB_DICT:
-            raise ValueError("Connection with name: {} is already present. Use"
-                             " a different name.".format(connection_name))
+            raise ValueError(
+                "Connection with name: {} is already present. Use"
+                " a different name.".format(connection_name)
+            )
         if not re.match("^([a-z]+[0-9_]*)*$", connection_name):
-            raise ValueError("Connection with name: {} cannot be created. Use"
-                             "lowercase alphabet, numbers and '-' only")
+            raise ValueError(
+                "Connection with name: {} cannot be created. Use"
+                "lowercase alphabet, numbers and '-' only"
+            )
 
         self._connection_name = connection_name
 
@@ -181,7 +188,7 @@ class Database(Model):
         :param host: The host of this Database.
         :type host: str
         """
-        if host in [None, 'None', ""]:
+        if host in [None, "None", ""]:
             host = "localhost"
 
         self._host = host
@@ -204,7 +211,7 @@ class Database(Model):
         :param port: The port of this Database.
         :type port: str
         """
-        if port in [None, '', 'None']:
+        if port in [None, "", "None"]:
             port = DEFAULT_PORTS[self.database_type]
             """
             except KeyError:
@@ -261,19 +268,25 @@ class Database(Model):
         self._password = password
 
     def db_string(self) -> str:
-        string = ''
-        if self.database_type == 'mysql':
-            string = 'mysql://{}:{}@{}:{}/{}'.format(
-                self.username, self.password, self.host,
-                self.port, self.database_name)
+        string = ""
+        if self.database_type == "mysql":
+            string = "mysql://{}:{}@{}:{}/{}".format(
+                self.username,
+                self.password,
+                self.host,
+                self.port,
+                self.database_name,
+            )
 
-        if self.database_type == 'postgres':
-            string = 'postgresql+psycopg2://{}:{}@{}:{}/{}'.format(
-                self.username, self.password, self.host,
-                self.port, self.database_name.lower())
+        if self.database_type == "postgres":
+            string = "postgresql+psycopg2://{}:{}@{}:{}/{}".format(
+                self.username,
+                self.password,
+                self.host,
+                self.port,
+                self.database_name.lower(),
+            )
 
-        if self.database_type == 'sqlite':
-            string = 'sqlite:////tmp/{}.db'.format(
-                self.database_name)
-            # data['host'],data['database_name'])
+        if self.database_type == "sqlite":
+            string = "sqlite:////tmp/{}.db".format(self.database_name)
         return string
