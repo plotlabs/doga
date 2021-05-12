@@ -1618,6 +1618,7 @@ class ExportApp(Resource):
                     ]
                 )
 
+            write_to_deployments(app_name, platform, "")
             return {"response": "heroku app deployed."}, 200
 
         elif platform == "local":
@@ -1671,8 +1672,6 @@ class ExportApp(Resource):
                 },
                 200,
             )
-
-        write_to_deployments(app_name, platform, None)
 
         return (
             {"result": "Registered export request to " + platform + "."},
@@ -1783,8 +1782,8 @@ class AdminDashboardStats(Resource):
                 ).first()
 
                 if restricted_tables is not None:
-                    restricted_tables = restricted_tables.restricted_tables.\
-                                                            split(",")
+                    restricted_tables = restricted_tables.restricted_tables. \
+                                            split(",")
                     app_info["jwt_info"][
                         "restricted_tables"
                     ] = restricted_tables
@@ -1815,12 +1814,16 @@ class AdminDashboardStats(Resource):
                     )
                     app_info["deployment_info"] = {
                         "most_recent_deployment": timestamp,
-                        "platform": deployment_info.platfrom,
+                        "platform": deployment_info.platfrom.split(","),
+                        "deployment_url": deployment_info.deployment_url.split(
+                            ","
+                        ),
                         "total_no_exports": deployment_info.exports,
                     }
                 else:
                     app_info["deployment_info"] = {
                         "most_recent_deployment": None,
+                        "deployment_url": None,
                         "platform": None,
                         "total_no_exports": 0,
                     }

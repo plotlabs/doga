@@ -268,7 +268,7 @@ def create_app_dir(
         )
 
 
-def write_to_deployments(app_name, platform, url):
+def write_to_deployments(app_name, platform, url=""):
     """Utility function to check the status of the deployment and add
        it to the deployment table.
     """
@@ -277,23 +277,28 @@ def write_to_deployments(app_name, platform, url):
     if platform == "aws":
         content = urllib.get(url + ":8080/no-uri")
         if content.status is 404:
-            status = "Active"
+            deployment_url = url.replace("https", "http") + ":8080"
     elif platform == "heroku":
-        status = "Not fetched yet"
+        deployment_url = url
         pass
     else:
         url = "localhost"
-        status = ""
+        deployment_url = "localexport"
 
     if old_entry is None:
         app_deployed = Deployments(
-            app_name=app_name, platfrom=platform, status=status, exports=1
+            app_name=app_name,
+            platfrom=platform,
+            deployment_url=deployment_url,
+            exports=1,
         )
         db.session.add(app_deployed)
     else:
 
         old_entry.platform = old_entry.platform + "," + platform
-        old_entry.status = old_entry.status + "," + status
+        old_entry.deployment_url = (
+            old_entry.deployment_url + "," + deployment_url
+        )
         old_entry.exports = old_entry.exports + 1
 
     db.session.commit()

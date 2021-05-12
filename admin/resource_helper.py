@@ -229,7 +229,7 @@ def create_aws_deployment_thread(
             admin_jwt["email"], "", notification.create_dict()
         )
 
-        write_to_deployments(app_name, "aws", ec2.id)
+        write_to_deployments(app_name, "aws", ec2.public_dns_name)
 
         notification_f = Notifications(
             user=admin_jwt["email"],

@@ -1,4 +1,4 @@
-from os import path, mkdir
+from os import mkdir, path, remove
 import base64
 
 from flask import Blueprint, request
@@ -57,15 +57,42 @@ class ListAssets(Resource):
 
 class UploadAssets(Resource):
     """
-    Endpoint to list available assets
+    Endpoint to upload/delete assets
+    Resource admin/assets/upload/<asset_type>
+    Endpoints:
+        - POST
+        - DELETE
     """
 
     @jwt_required
     def post(self, asset_type):
+        """Allows for a file to be uploaded to the DOGA's assets database,
+
+           Parameters:
+           ----------
+           - asset_type:
+             in: path
+             type: string
+             enum:
+                - Image
+           - assetfile
+             in: form-data
+             type: .*
+
+           Responses:
+           ---------
+            - 200:
+              description: Successful upload
+            - 400:
+              description: Error
+            - 500:
+              description: Server Error
+        """
+
         dest = (
-            "/".join(path.dirname(__file__).split("/")[:-1])
-            + "/doga-frontend/public/uploads/"
-        )
+                    "/".join(path.dirname(__file__).split("/")[:-1])
+                    + "/doga-frontend/public/uploads/"
+                )
 
         admin = get_jwt_identity()
 
@@ -116,6 +143,62 @@ class UploadAssets(Resource):
                     },
                     400,
                 )
+
+    @jwt_required
+    def delete(self, asset_type):
+        """Deletes the asset from the database.
+
+           Parameters:
+           ----------
+           - asset_type:
+                 type: string
+                 in: path
+                 enum:
+                    - Image
+
+           - asset_name:
+                 type: string
+                 in : json body
+                 description: The name of the asset to be deleted.
+        """
+
+        admin = get_jwt_identity()
+
+        dest = (
+                    "/".join(path.dirname(__file__).split("/")[:-1])
+                    + "/doga-frontend/public/uploads/"
+                )
+
+        if not verify_jwt(admin, Admin):
+            return (
+                {
+                    "result": "JWT authorization invalid, user does not"
+                    " exist."
+                },
+                401,
+            )
+
+        if asset_type == "image":
+
+            try:
+                image_name = request.get_json()['asset_name']
+            except KeyError:
+                return {
+                    "result": "Missing required paramenter asset_name"
+                }, 400
+
+            try:
+                db.session.query(Assets_Table).filter(
+                    Assets_Table.asset_name == image_name,
+                    Assets_Table.asset_type == "Image"
+                    ).delete()
+                db.session.commit()
+            except Exception as e:
+                return {"result": e}, 500
+
+            remove(dest + image_name)
+
+            return {"result": "Successfully deleted asset: " + image_name}, 200
 
 
 api_utils.add_resource(UploadAssets, "/upload/<asset_type>")

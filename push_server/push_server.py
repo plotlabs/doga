@@ -1,24 +1,21 @@
 import eventlet
 
-eventlet.monkey_patch()  # noqa E402
+eventlet.monkey_patch()   # noqa E402
 
 import sys
 import os
 
 sys.path.append(
     os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-)
+)   # noqa E402
 
-from flask import Flask, send_from_directory, jsonify, request
-from flask_jwt_extended import jwt_required, get_jwt_identity
+from flask import Flask, request
 from flask_socketio import SocketIO, send, emit, join_room
 from flask_cors import CORS, cross_origin
 
-from flask_sqlalchemy import SQLAlchemy
 
 from config import NOTIF_HOST, NOTIF_PORT, JWT_SECRET_KEY
 
-from threading import Thread, Event
 import jwt
 import json
 
@@ -46,7 +43,7 @@ def conn_event():
         try:
             admin = jwt.decode(token, JWT_SECRET_KEY, algorithm="HS256")
             join_room(admin["identity"]["email"])
-        except Exception as error:
+        except Exception:
             disconnect()
 
 

@@ -681,7 +681,7 @@ def delete_jwt(connection_name):
     try:
         db.session.query(JWT).filter(
             JWT.connection_name == connection_name
-        ).delete()  # noqa 501
+        ).delete()
         db.session.commit()
     except Exception as e:
         return {"result": e}, 500
@@ -693,7 +693,7 @@ def delete_restricted_by_jwt(connection_name):
     try:
         db.session.query(Restricted_by_JWT).filter(
             Restricted_by_JWT.connection_name == connection_name
-        ).delete()  # noqa 501
+        ).delete()
         db.session.commit()
     except Exception as e:
         return {"result": e}, 500
