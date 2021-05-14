@@ -91,7 +91,7 @@ class Deployments(Base):
     id = Column(Integer, primary_key=True)
     app_name = Column(String(255))
     platfrom = Column(String(255), nullable=False)
-    status = Column(String(255), nullable=False)
+    deployment_url = Column(String(255), nullable=False)
     # ID of the things & other dicts
     exports = Column(Integer, nullable=False)
     create_dt = Column(DateTime(), server_default=text("CURRENT_TIMESTAMP"))

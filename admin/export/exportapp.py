@@ -1,5 +1,5 @@
 import os
-import urllib
+import requests
 
 from app import db
 
@@ -275,9 +275,10 @@ def write_to_deployments(app_name, platform, url=""):
     old_entry = Deployments.query.filter_by(app_name=app_name).first()
 
     if platform == "aws":
-        content = urllib.get(url + ":8080/no-uri")
-        if content.status is 404:
-            deployment_url = url.replace("https", "http") + ":8080"
+        url.replace("https", "http")
+        content = requests.get(url + ":8080/no-uri")
+        if content.status_code == 404:
+            deployment_url = url + ":8080"
     elif platform == "heroku":
         deployment_url = url
         pass
