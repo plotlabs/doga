@@ -1814,7 +1814,7 @@ class AdminDashboardStats(Resource):
                     )
                     app_info["deployment_info"] = {
                         "most_recent_deployment": timestamp,
-                        "platform": deployment_info.platfrom.split(","),
+                        "platform": deployment_info.platform.split(","),
                         "deployment_url": deployment_info.deployment_url.split(
                             ","
                         ),

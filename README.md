@@ -89,6 +89,6 @@ connection.
 <img alt="AWS" src="https://img.shields.io/badge/AWS%20-%23FF9900.svg?&style=for-the-badge&logo=amazon-aws&logoColor=white"/>
 <img alt="Heroku" src="https://img.shields.io/badge/heroku%20-%23430098.svg?&style=for-the-badge&logo=heroku&logoColor=white"/>
 
-Apps created using DOGA can be exported using the `admin/export/{platfrom}`
+Apps created using DOGA can be exported using the `admin/export/{platform}`
 endpoint. The user should refer to DOGA's github pages for the swagger specs
 for the required credentials they will need to provide.

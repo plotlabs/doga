@@ -276,9 +276,13 @@ def write_to_deployments(app_name, platform, url=""):
 
     if platform == "aws":
         url.replace("https", "http")
+        """
+        print(url)
         content = requests.get(url + ":8080/no-uri")
         if content.status_code == 404:
             deployment_url = url + ":8080"
+        """
+        deployment_url = url + ":8080"
     elif platform == "heroku":
         deployment_url = url
         pass
@@ -289,7 +293,7 @@ def write_to_deployments(app_name, platform, url=""):
     if old_entry is None:
         app_deployed = Deployments(
             app_name=app_name,
-            platfrom=platform,
+            platform=platform,
             deployment_url=deployment_url,
             exports=1,
         )
