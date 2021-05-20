@@ -1595,7 +1595,10 @@ class ExportApp(Resource):
             file_location = os.sep.join(__file__.split(os.sep)[:-1])
 
             random_string = create_random_string(4)
-            app_deployed = app_name + random_string
+            app_deployed = app_name + "-" + random_string
+            # needs to start with a letter, end with a letter or digit and can
+            # only contain lowercase letters, digits and dashes.
+            app_deployed = app_deployed.replace("_", "-")
 
             if deploy:
                 db_name = "pgsql" + app_name + random_string
@@ -1618,7 +1621,41 @@ class ExportApp(Resource):
                     ]
                 )
 
-            write_to_deployments(app_name, platform, "")
+            app_info = subprocess.Popen(
+                    ['heroku', 'apps:info', "-a", app_deployed],
+                    stdin=subprocess.PIPE,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE)
+
+            out, err = app_info.communicate()
+
+            url_regex = (
+                "\b((?:https?://)?(?:(?:www\.)?(?:[\da-z\.-]+)\.(?:[a-z]{2,6})"
+                "|(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|"
+                "2[0-4][0-9]|[01]?[0-9][0-9]?)|"
+                "(?:(?:[0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|"
+                "(?:[0-9a-fA-F]{1,4}:){1,7}:|"
+                "(?:[0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|"
+                "(?:[0-9a-fA-F]{1,4}:){1,5}(?::[0-9a-fA-F]{1,4}){1,2}|"
+                "(?:[0-9a-fA-F]{1,4}:){1,4}(?::[0-9a-fA-F]{1,4}){1,3}|"
+                "(?:[0-9a-fA-F]{1,4}:){1,3}(?::[0-9a-fA-F]{1,4}){1,4}|"
+                "(?:[0-9a-fA-F]{1,4}:){1,2}(?::[0-9a-fA-F]{1,4}){1,5}|"
+                "[0-9a-fA-F]{1,4}:(?:(?::[0-9a-fA-F]{1,4}){1,6})|"
+                ":(?:(?::[0-9a-fA-F]{1,4}){1,7}|:)|"
+                "fe80:(?::[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|"
+                "::(?:ffff(?::0{1,4}){0,1}:){0,1}(?:(?:25[0-5]|"
+                "(?:2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(?:25[0-5]|"
+                "(?:2[0-4]|1{0,1}[0-9]){0,1}[0-9])|"
+                "(?:[0-9a-fA-F]{1,4}:){1,4}:(?:(?:25[0-5]|(?:2[0-4]|"
+                "1{0,1}[0-9]){0,1}[0-9])\.){3,3}(?:25[0-5]|(?:2[0-4]|"
+                "1{0,1}[0-9]){0,1}[0-9])))(?::[0-9]{1,4}|[1-5][0-9]{4}|"
+                "6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|"
+                "6553[0-5])?(?:/[\w\.-]*)*/?)\b"
+                )
+
+            deployment_url = re.match(url_regex, out)
+            write_to_deployments(app_name, platform, deployment_url)
+            print(deployment_url)
             return {"response": "heroku app deployed."}, 200
 
         elif platform == "local":

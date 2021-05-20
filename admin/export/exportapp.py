@@ -50,6 +50,11 @@ def create_export_files(
         "dbs.py",
     ]
 
+    to_copy_heroku = [
+        "requirements.txt",
+        "wsgi.py"
+    ]
+
     if platform == "heroku":
         try:
             extract_engine_or_fail(app_name)
@@ -93,7 +98,7 @@ def create_export_files(
                 )
         elif file == "Dockerfile":
             create_dockerfile(
-                PORT, dest_dir + "/exported_app/Dockerfile",
+                PORT, platform, dest_dir + "/exported_app/Dockerfile",
             )
         elif file == "blueprints.py":
             export_blueprints(
@@ -197,6 +202,17 @@ def create_export_files(
             os.makedirs(os.path.dirname(d), exist_ok=True)
             shutil.copy2(s, d)
 
+    if platform == "heroku":
+        for file in to_copy_heroku:
+            if file == "requirements.txt":
+                f = open(dest_dir + "/exported_app/" + file, "a+")
+                f.write("gunicorn\n")
+            if file == "wsgi.py":
+                s = parent_dir + "/templates/export/wsgi.py"
+                d = dest_dir + "/exported_app/" + file
+                os.makedirs(os.path.dirname(d), exist_ok=True)
+                shutil.copy2(s, d)
+
 
 def create_app_dir(
     app_name, rds, user_credentials, config, platform, **kwargs
@@ -220,6 +236,11 @@ def create_app_dir(
         if "postgres" not in db_engine and deploy is True:
             raise DogaHerokuDeploymentError(
                 "Only a managed postgres db can be provisioned"
+            )
+
+        elif "mysql" in db_engine and deploy is False:
+            raise DogaHerokuDeploymentError(
+                "Only SQLite and Postgres instances can be provisioned."
             )
 
         create_export_files(

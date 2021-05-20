@@ -14,7 +14,7 @@ fi
 
 cd exported_app
 docker build --tag registry.heroku.com/$1/web .
-docker push registry.heroku.com/$1.web .
+docker push registry.heroku.com/$1/web
 echo "s" |heroku login
 heroku container:login
 heroku create $1
