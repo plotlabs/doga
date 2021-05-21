@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { useGlobal } from "reactn";
 import { NavLink } from "react-router-dom";
-import Api, { setHeader, APIURLS } from "../../Api";
+import Api, { setHeader, APIURLS, setDefaultBaseUrl } from "../../Api";
 import { useQuery, useQueryClient } from "react-query";
 import {
   Box,
@@ -19,6 +19,18 @@ import {
   H5,
   Para,
 } from "../../styles";
+import {
+  Menu,
+  MenuButton,
+  MenuList,
+  MenuItem,
+  MenuItemOption,
+  MenuGroup,
+  MenuOptionGroup,
+  MenuIcon,
+  MenuCommand,
+  MenuDivider,
+} from "@chakra-ui/react";
 import { Icon } from "@chakra-ui/react";
 import { FaUserAlt, FaDatabase } from "react-icons/fa";
 import { FcAcceptDatabase } from "react-icons/fc";
@@ -41,13 +53,34 @@ import { useParams } from "react-router";
 import AppTableCreation from "../../components/Modal/AppTableCreation";
 const AppHome = () => {
   let { app } = useParams();
+  const [baseURL, setBaseURL] = useGlobal("baseURL");
+  // const [selectedBaseUrl, setSelectedBaseUrl] = useState(
+  //   baseURL[app]?.selected || "http://0.0.0.0:8080/"
+  // );
   const queryClient = useQueryClient();
   const userProfile = useQuery(APIURLS.userInfo);
   const toast = createStandaloneToast();
   //   const appsCreated = useQuery(APIURLS.dashboardInfo(app, all));
   const { data, isLoading } = useQuery(APIURLS.appStats(app));
+
+  useEffect(() => {
+    setDefaultBaseUrl(baseURL[app]?.selected || "http://0.0.0.0:8080/");
+  }, [app, baseURL]);
+  useEffect(() => {
+    setBaseURL({
+      ...baseURL,
+      [app]: {
+        options: [
+          "http://0.0.0.0:8080/",
+          data?.deployment_info?.deployment_url?.[0],
+        ],
+        selected: baseURL[app]?.selected || "http://0.0.0.0:8080/",
+      },
+    });
+  }, [app]);
+  console.log(baseURL, "outBASEURL");
   const appDocs = useQuery(APIURLS.appDocs(app));
-  console.log(appDocs?.data?.unrestricted_tables[0]);
+
   const appData = useQuery(APIURLS.getContentType);
 
   const dbConnections = useQuery(APIURLS.getDbConnections);
@@ -74,7 +107,7 @@ const AppHome = () => {
       {
         data: [
           data?.number_of_tables,
-          data?.relationships.length || 0,
+          data?.relationships?.length || 0,
           totalFields,
           data?.deployment_info?.total_no_exports,
         ],
@@ -106,7 +139,6 @@ const AppHome = () => {
   };
 
   async function exportAppHandler() {
-    console.log(app);
     try {
       let { data } = await Api.post(APIURLS.exportApp(), {
         app_name: app,
@@ -119,8 +151,6 @@ const AppHome = () => {
         duration: 9000,
         isClosable: false,
       });
-      // onClose();
-      console.log("there", data);
     } catch ({ response }) {
       toast({
         title: "An error occurred.",
@@ -129,16 +159,13 @@ const AppHome = () => {
         duration: 9000,
         isClosable: true,
       });
-      console.log(response);
     }
   }
 
   let relation = null;
-  //   console.log(data?.relationships);
 
   if (data != null && data.relationships) {
     relation = data?.relationships.map((key) => {
-      console.log(key);
       return (
         <>
           <Box
@@ -207,7 +234,20 @@ const AppHome = () => {
       );
     });
   }
-  return isLoading ? (
+
+  const urlChangeHandler = (value) => {
+    setBaseURL({
+      ...baseURL,
+      [app]: {
+        options: [
+          "http://0.0.0.0:8080/",
+          data?.deployment_info?.deployment_url?.[0],
+        ],
+        selected: value,
+      },
+    });
+  };
+  return false ? (
     <Box type="loader">
       <ClipLoader color={"#ffffff"} size={55} />
     </Box>
@@ -245,7 +285,32 @@ const AppHome = () => {
           </Box>
         </Box>
       </Box>
-
+      <Box type="row" flexDirection="row-reverse" m={6}>
+        <Box
+          style={{
+            backgroundColor: "white",
+            border: "2px solid rgb(226, 232, 240)",
+            padding: "8px",
+            borderRadius: "10px",
+            width: "fit-content",
+          }}
+        >
+          <Menu>
+            <MenuButton style={{ color: "#6E798C" }}>
+              {baseURL[app]?.selected || "Server"}
+            </MenuButton>
+            <MenuList>
+              {baseURL[app]?.options?.map((value) => {
+                return (
+                  <MenuItem onClick={() => urlChangeHandler(value)}>
+                    <Para>{value}</Para>
+                  </MenuItem>
+                );
+              })}
+            </MenuList>
+          </Menu>
+        </Box>
+      </Box>
       <Box
         display="grid"
         gridTemplateColumns={["1fr 1fr", "1fr 1fr 1fr "]}
@@ -356,7 +421,7 @@ const AppHome = () => {
               }}
             >
               <H5 fontSize={10} color={"#6E798C"} lineHeight={10}>
-                {data?.relationships.length || 0}
+                {data?.relationships?.length || 0}
               </H5>
               <Para
                 fontSize={6}

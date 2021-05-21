@@ -28,7 +28,13 @@ import {
 import { Icon } from "@chakra-ui/react";
 import { useQuery, useQueryClient } from "react-query";
 import { useToast, createStandaloneToast } from "@chakra-ui/react";
-import Api, { setHeader, setJwtHeader, APIURLS, ApiJwt } from "../../Api";
+import Api, {
+  setHeader,
+  setJwtHeader,
+  APIURLS,
+  ApiJwt,
+  ApiApp,
+} from "../../Api";
 import Select from "react-select";
 import { CKEditor } from "@ckeditor/ckeditor5-react";
 import ClassicEditor from "@ckeditor/ckeditor5-build-classic";
@@ -563,17 +569,17 @@ const AppTableData = ({
               ...params,
             })
           : basejwt && basejwt.base_table === table
-          ? await Api.post(APIURLS.postRegisterTableData({ app, table }), {
+          ? await ApiApp.post(APIURLS.postRegisterTableData({ app, table }), {
               ...params,
             })
           : editDataId
-          ? await Api.put(
+          ? await ApiApp.put(
               APIURLS.getTableContentById({ app, table, editDataId }),
               {
                 ...params,
               }
             )
-          : await Api.post(APIURLS.getTableContent({ app, table }), {
+          : await ApiApp.post(APIURLS.getTableContent({ app, table }), {
               ...params,
             });
       if (basejwt) {

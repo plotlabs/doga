@@ -1,4 +1,7 @@
 import axios from "axios";
+import { useParams } from "react-router";
+
+// let { app, table } = useParams();
 
 const Api = axios.create({
   baseURL: "http://0.0.0.0:8080/",
@@ -8,6 +11,28 @@ const Api = axios.create({
 });
 
 Api.interceptors.response.use(
+  function (response) {
+    return response;
+  },
+  function (error) {
+    console.log(error.response.status);
+    if (error.response.status === 401) {
+      localStorage.clear();
+      window.location.replace("/login");
+    }
+    if (error.response.status === 403) {
+    }
+    return Promise.reject(error);
+  }
+);
+export const ApiApp = axios.create({
+  baseURL: "http://0.0.0.0:8080/",
+  headers: {
+    "Content-Type": "application/json",
+  },
+});
+
+ApiApp.interceptors.response.use(
   function (response) {
     return response;
   },
@@ -56,8 +81,18 @@ export const ApiUpload = axios.create({
 export function setHeader(token) {
   // Api.defaults.headers.common["x-access-token"] = token;
   Api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+  ApiApp.defaults.headers.common["Authorization"] = `Bearer ${token}`;
   ApiUpload.defaults.headers.common["Authorization"] = `Bearer ${token}`;
   console.log("heretoken", "Bearer " + token, token);
+}
+
+export function setDefaultBaseUrl(baseURL) {
+  // if (app || table) {
+  ApiApp.defaults.baseURL = baseURL;
+  // }
+
+  // Api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+  console.log(ApiApp.defaults.baseURL);
 }
 export function setJwtHeader(token) {
   // Api.defaults.headers.common["x-access-token"] = token;
@@ -68,9 +103,12 @@ export function setJwtHeader(token) {
 export const defaultQueryFn = async ({ queryKey }) => {
   try {
     console.log("key", queryKey);
+    console.log("ApiApp.defaults.baseURL", ApiApp.defaults.baseURL);
     const { data } =
       queryKey[1] === "jwt_info"
         ? await ApiJwt.get(queryKey[0])
+        : queryKey[1] === "baseURL"
+        ? await ApiApp.get(queryKey[0])
         : await Api.get(queryKey[0]);
     return data;
   } catch (error) {

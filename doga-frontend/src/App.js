@@ -29,6 +29,7 @@ const queryClient = new QueryClient({
 
 setGlobal({
   token: null,
+  baseURL: {},
 });
 
 const myTheme = {
@@ -92,6 +93,7 @@ socket.on("connect", () => {
 // }, [localStorage.getItem("userEmail")]);
 
 const App = (props) => {
+  console.log("app.jsss");
   const [token, setToken] = useGlobal("token");
   const [deployProcessStatus, setdeployProcessStatus] = useGlobal("deploy");
   const [html, setHtml] = useGlobal("html");

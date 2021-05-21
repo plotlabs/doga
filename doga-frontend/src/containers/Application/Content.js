@@ -12,6 +12,7 @@ import {
   MotionBox,
   Para,
 } from "../../styles";
+import { useGlobal } from "reactn";
 import {
   Accordion,
   AccordionItem,
@@ -27,7 +28,7 @@ import { FaEdit } from "react-icons/fa";
 import { AiOutlineDelete } from "react-icons/ai";
 import { AiOutlineCaretDown, AiOutlineCaretUp } from "react-icons/ai";
 import { useParams } from "react-router";
-import Api, { ApiJwt, APIURLS } from "../../Api";
+import Api, { ApiJwt, APIURLS, setDefaultBaseUrl } from "../../Api";
 import {
   Table,
   Thead,
@@ -51,6 +52,8 @@ import ImageView from "../../components/Modal/ImageView";
 
 const Content = () => {
   const { isOpen, onOpen, onClose } = useDisclosure();
+  const [baseURL, setBaseURL] = useGlobal("baseURL");
+
   const [toggle, setToggle] = useState(true);
   const [loading, setLoading] = useState(false);
   const [editDataId, setEditDataId] = useState();
@@ -62,6 +65,26 @@ const Content = () => {
   let { app, table } = useParams();
   const queryClient = useQueryClient();
   const toast = createStandaloneToast();
+
+  useEffect(() => {
+    !baseURL[app] &&
+      setBaseURL({
+        ...baseURL,
+        [app]: {
+          options: ["http://0.0.0.0:8080/"],
+          selected: "http://0.0.0.0:8080/",
+        },
+      });
+  }, [app]);
+
+  setDefaultBaseUrl(baseURL[app]?.selected || "http://0.0.0.0:8080/");
+  useEffect(() => {
+    console.log("baseURL[app]?.", baseURL[app]?.selected);
+    baseURL[app]
+      ? setDefaultBaseUrl(baseURL[app]?.selected)
+      : setDefaultBaseUrl("http://0.0.0.0:8080/");
+  }, [app, baseURL]);
+  console.log(baseURL);
   const { data, isLoading } = useQuery(APIURLS.getContentType);
   const isFetchingApps = useIsFetching([APIURLS.getContentType]);
   let contentTypeApps = null;
@@ -70,10 +93,9 @@ const Content = () => {
   let tableFieldShow = null;
   let sendGetTableContent = null;
   if (data != null && data[app]["jwt_info"]) {
-    console.log("Sendhing...", localStorage.getItem("jwtToken"));
     sendGetTableContent = [APIURLS.getTableContent({ app, table }), "jwt_info"];
   } else {
-    sendGetTableContent = APIURLS.getTableContent({ app, table });
+    sendGetTableContent = [APIURLS.getTableContent({ app, table }), "baseURL"];
   }
   useEffect(() => {
     setRelationDropView([]);
@@ -83,7 +105,6 @@ const Content = () => {
   let fieldDataBodyArray = [];
 
   async function exportAppHandler() {
-    console.log(app);
     try {
       let { data } = await Api.post(APIURLS.exportApp(), {
         app_name: app,
@@ -96,8 +117,6 @@ const Content = () => {
         duration: 9000,
         isClosable: false,
       });
-      // onClose();
-      console.log("there", data);
     } catch ({ response }) {
       toast({
         title: "An error occurred.",
@@ -106,31 +125,16 @@ const Content = () => {
         duration: 9000,
         isClosable: true,
       });
-      console.log(response);
     }
   }
 
   if (data != null && data[app][table]) {
-    // const formElementsArray = [];
-    // for (let key in data[id]) {
-    //   formElementsArray.push({
-    //     id: key,
-    //     config: data[id][key],
-    //   });
-    // }
-    // console.log(formElementsArray[0]);
-    // let table = Object.entries(data[id]);
     contentTypeApps = Object.entries(data[app][table]).map(([prop, val]) => {
-      console.log(prop, val);
-      console.log("CHECK", val.type === "VARCHAR(123)");
       if (val.type === "VARCHAR(123)") {
         richTextFields.push(val.name);
-        console.log(richTextFields);
       }
       if (val.type === "ImageType") {
-        console.log(val.type, "inside");
         imageColumnFields.push(val.name);
-        console.log(imageColumnFields);
       }
 
       return (
@@ -220,7 +224,6 @@ const Content = () => {
       });
       onClose();
       setLoading(false);
-      console.log("there", data);
     } catch ({ response }) {
       toast({
         title: "An error occurred.",
@@ -229,7 +232,7 @@ const Content = () => {
         duration: 9000,
         isClosable: true,
       });
-      console.log(response);
+
       setLoading(false);
     }
   }
@@ -259,7 +262,7 @@ const Content = () => {
         duration: 9000,
         isClosable: true,
       });
-      console.log(response);
+
       setLoading(false);
     }
   }
@@ -268,12 +271,6 @@ const Content = () => {
   if (fieldData?.data?.result) {
     fieldDataBody = Object.entries(fieldData?.data?.result).map(
       ([index, val]) => {
-        // console.log(
-        //   Object.entries(val["related_content"]).map(([index, val]) => {
-        //     return "hej";
-        //   })vz
-        // );
-        console.log("yaha", val["related_content"]);
         return (
           <>
             <Tr style={{ color: "#4A5568" }}>
@@ -281,8 +278,6 @@ const Content = () => {
                 {val["id"]}
               </Td>
               {Object.entries(fieldDataBodyArray).map(([prop, value]) => {
-                console.log(prop, value, "here", val[value]);
-
                 return richTextFields.includes(value) ? (
                   <Td style={{ color: "#4A5568", borderColor: "#EDF2F7" }}>
                     <Button onClick={() => richTextViewHandler(val[value])}>
@@ -304,7 +299,13 @@ const Content = () => {
                     </Box>
                   </Td>
                 ) : (
-                  <Td style={{ color: "#4A5568", borderColor: "#EDF2F7" }}>
+                  <Td
+                    style={{
+                      color: "#4A5568",
+                      borderColor: "#EDF2F7",
+                      textAlign: "center",
+                    }}
+                  >
                     {val[value] === true
                       ? "true"
                       : val[value] === false
@@ -426,7 +427,6 @@ const Content = () => {
                         {val["related_content"] &&
                           Object.entries(val["related_content"]).map(
                             ([i, v]) => {
-                              console.log("here", i, v);
                               return (
                                 <>
                                   <Box>
@@ -444,10 +444,6 @@ const Content = () => {
                                     {val["related_content"] &&
                                       Object.entries(v["realted_values"]).map(
                                         ([i, values]) => {
-                                          console.log(
-                                            values,
-                                            values[v["realted_table"]]
-                                          );
                                           return (
                                             <>
                                               <Box
@@ -561,18 +557,6 @@ const Content = () => {
     setImageView(value);
   };
 
-  // let modal = null;
-  // if (data) {
-  //   modal = (
-  //
-  //   );
-  // }
-
-  // let createTableModal = null;
-  // if (data) {
-
-  // }
-  console.log("relationDropView", relationDropView);
   const accIndexHandler = (index) => {
     let array = [];
     array = relationDropView.filter((num) => num != index);
