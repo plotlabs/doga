@@ -5,6 +5,7 @@ import subprocess
 from threading import Thread
 
 from typing import Dict, Tuple
+from time import sleep
 
 from flask import Blueprint, request, jsonify
 from flask_restful import Api, Resource
@@ -1622,40 +1623,18 @@ class ExportApp(Resource):
                 )
 
             app_info = subprocess.Popen(
-                    ['heroku', 'apps:info', "-a", app_deployed],
-                    stdin=subprocess.PIPE,
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE)
+                ["heroku", "apps:info", "-a", app_deployed.lower()],
+                stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
 
             out, err = app_info.communicate()
 
-            url_regex = (
-                "\b((?:https?://)?(?:(?:www\.)?(?:[\da-z\.-]+)\.(?:[a-z]{2,6})"
-                "|(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|"
-                "2[0-4][0-9]|[01]?[0-9][0-9]?)|"
-                "(?:(?:[0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|"
-                "(?:[0-9a-fA-F]{1,4}:){1,7}:|"
-                "(?:[0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|"
-                "(?:[0-9a-fA-F]{1,4}:){1,5}(?::[0-9a-fA-F]{1,4}){1,2}|"
-                "(?:[0-9a-fA-F]{1,4}:){1,4}(?::[0-9a-fA-F]{1,4}){1,3}|"
-                "(?:[0-9a-fA-F]{1,4}:){1,3}(?::[0-9a-fA-F]{1,4}){1,4}|"
-                "(?:[0-9a-fA-F]{1,4}:){1,2}(?::[0-9a-fA-F]{1,4}){1,5}|"
-                "[0-9a-fA-F]{1,4}:(?:(?::[0-9a-fA-F]{1,4}){1,6})|"
-                ":(?:(?::[0-9a-fA-F]{1,4}){1,7}|:)|"
-                "fe80:(?::[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|"
-                "::(?:ffff(?::0{1,4}){0,1}:){0,1}(?:(?:25[0-5]|"
-                "(?:2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(?:25[0-5]|"
-                "(?:2[0-4]|1{0,1}[0-9]){0,1}[0-9])|"
-                "(?:[0-9a-fA-F]{1,4}:){1,4}:(?:(?:25[0-5]|(?:2[0-4]|"
-                "1{0,1}[0-9]){0,1}[0-9])\.){3,3}(?:25[0-5]|(?:2[0-4]|"
-                "1{0,1}[0-9]){0,1}[0-9])))(?::[0-9]{1,4}|[1-5][0-9]{4}|"
-                "6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|"
-                "6553[0-5])?(?:/[\w\.-]*)*/?)\b"
-                )
+            url_regex = "(https?:\\/\\/(?:www\\.|(?!www))[a-zA-Z0-9][a-zA-Z0-9""-]+[a-zA-Z0-9]\\.[^\\s]{2,}|www\\.[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\\.[^\\s]{2,}|https?:\\/\\/(?:www\\.|(?!www))[a-zA-Z0-9]+\\.[^\\s]{2,}|www\\.[a-zA-Z0-9]+\\.[^\\s]{2,})"  # noqa 401
 
-            deployment_url = re.match(url_regex, out)
+            deployment_url = re.findall(url_regex, str(out))[1]
             write_to_deployments(app_name, platform, deployment_url)
-            print(deployment_url)
             return {"response": "heroku app deployed."}, 200
 
         elif platform == "local":
@@ -1819,8 +1798,9 @@ class AdminDashboardStats(Resource):
                 ).first()
 
                 if restricted_tables is not None:
-                    restricted_tables = restricted_tables.restricted_tables. \
-                                            split(",")
+                    restricted_tables = restricted_tables.restricted_tables.split(
+                        ","
+                    )
                     app_info["jwt_info"][
                         "restricted_tables"
                     ] = restricted_tables
