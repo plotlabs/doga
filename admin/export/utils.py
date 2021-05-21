@@ -86,7 +86,7 @@ def create_requirements(
     file.close()
 
 
-def create_dockerfile(port, target_dir):
+def create_dockerfile(port, platform, target_dir):
     """Uses the template Dockerfile to create the same at the target_directory
 
       Paratemers:
@@ -99,8 +99,11 @@ def create_dockerfile(port, target_dir):
     """
     # open dockerfile template
     dockerfile = open("templates/export/Dockerfile", "r")
-    dockerfile_contents = dockerfile.read()
-    dockerfile_contents = dockerfile_contents.replace("PORT", str(port))
+    if platform == "heroku":
+        dockerfile_contents = open("templates/export/Dockerfile_heroku").read()
+    else:
+        dockerfile_contents = dockerfile.read()
+        dockerfile_contents = dockerfile_contents.replace("PORT", str(port))
 
     # create Dockerfile
     exported_dockerfile = open(target_dir, "a+")

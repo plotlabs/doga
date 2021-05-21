@@ -5,6 +5,7 @@ import subprocess
 from threading import Thread
 
 from typing import Dict, Tuple
+from time import sleep
 
 from flask import Blueprint, request, jsonify
 from flask_restful import Api, Resource
@@ -1595,7 +1596,10 @@ class ExportApp(Resource):
             file_location = os.sep.join(__file__.split(os.sep)[:-1])
 
             random_string = create_random_string(4)
-            app_deployed = app_name + random_string
+            app_deployed = app_name + "-" + random_string
+            # needs to start with a letter, end with a letter or digit and can
+            # only contain lowercase letters, digits and dashes.
+            app_deployed = app_deployed.replace("_", "-")
 
             if deploy:
                 db_name = "pgsql" + app_name + random_string
@@ -1618,7 +1622,19 @@ class ExportApp(Resource):
                     ]
                 )
 
-            write_to_deployments(app_name, platform, "")
+            app_info = subprocess.Popen(
+                ["heroku", "apps:info", "-a", app_deployed.lower()],
+                stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+
+            out, err = app_info.communicate()
+
+            url_regex = "(https?:\\/\\/(?:www\\.|(?!www))[a-zA-Z0-9][a-zA-Z0-9""-]+[a-zA-Z0-9]\\.[^\\s]{2,}|www\\.[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\\.[^\\s]{2,}|https?:\\/\\/(?:www\\.|(?!www))[a-zA-Z0-9]+\\.[^\\s]{2,}|www\\.[a-zA-Z0-9]+\\.[^\\s]{2,})"  # noqa 401
+
+            deployment_url = re.findall(url_regex, str(out))[1]
+            write_to_deployments(app_name, platform, deployment_url)
             return {"response": "heroku app deployed."}, 200
 
         elif platform == "local":
@@ -1782,8 +1798,9 @@ class AdminDashboardStats(Resource):
                 ).first()
 
                 if restricted_tables is not None:
-                    restricted_tables = restricted_tables.restricted_tables. \
-                                            split(",")
+                    restricted_tables = restricted_tables.restricted_tables.split(
+                        ","
+                    )
                     app_info["jwt_info"][
                         "restricted_tables"
                     ] = restricted_tables
