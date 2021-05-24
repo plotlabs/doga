@@ -1632,8 +1632,8 @@ class ExportApp(Resource):
             out, err = app_info.communicate()
 
             url_regex = "(https?:\\/\\/(?:www\\.|(?!www))[a-zA-Z0-9][a-zA-Z0-9""-]+[a-zA-Z0-9]\\.[^\\s]{2,}|www\\.[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\\.[^\\s]{2,}|https?:\\/\\/(?:www\\.|(?!www))[a-zA-Z0-9]+\\.[^\\s]{2,}|www\\.[a-zA-Z0-9]+\\.[^\\s]{2,})"  # noqa 401
-
             deployment_url = re.findall(url_regex, str(out))[1]
+            deployment_url = deployment_url.split(".com")[0] + '.com/'
             write_to_deployments(app_name, platform, deployment_url)
             return {"response": "heroku app deployed."}, 200
 
