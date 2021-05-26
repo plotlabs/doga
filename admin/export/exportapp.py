@@ -296,7 +296,7 @@ def write_to_deployments(app_name, platform, url=""):
     old_entry = Deployments.query.filter_by(app_name=app_name).first()
 
     if platform == "aws":
-        deployment_url = "http://" + url + ":8080/"
+        deployment_url = "http://" + url + ":8080"
         """
         content = requests.get(url + ":8080/no-uri")
         if content.status_code == 404:

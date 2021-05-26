@@ -1798,9 +1798,8 @@ class AdminDashboardStats(Resource):
                 ).first()
 
                 if restricted_tables is not None:
-                    restricted_tables = restricted_tables.restricted_tables.split(
-                        ","
-                    )
+                    restricted_tables = restricted_tables.restricted_tables.\
+                        split(",")
                     app_info["jwt_info"][
                         "restricted_tables"
                     ] = restricted_tables

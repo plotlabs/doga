@@ -6,6 +6,7 @@ import os
 import re
 
 import json
+from json import JSONDecodeError
 
 from admin import utils
 from admin.models.base_model_ import Model
@@ -135,15 +136,12 @@ class Email_Notify(Model):
 
     @to_emails.setter
     def to_emails(self, to_emails):
-
-        rep = {":": ",", "{": "\n(", "}": ")"}
-        rep = dict((re.escape(k), v) for k, v in rep.items())
-
-        pattern = re.compile("|".join(rep.keys()))
-        to_emails = pattern.sub(
-            lambda m: rep[re.escape(m.group(0))], to_emails
-        )
-        self._to_emails = to_emails
+        to_emails_formatted = ""
+        to_emails = to_emails.replace("'", '"')
+        to_emails = json.loads(to_emails)
+        for name, email in to_emails.items():
+            to_emails_formatted = to_emails_formatted + "(" + '"' + name + '", "' + email + '"),\n'
+        self._to_emails = to_emails_formatted
 
     @property
     def template_key(self):
@@ -151,11 +149,9 @@ class Email_Notify(Model):
 
     @template_key.setter
     def template_key(self, template_key):
-
+        print(template_key)
         if template_key is None or "":
-            self.errors["template_key"] = (
-                "Invalid value for `template_key`, must not be `None`."
-            )
+            self._template_key = ""
         else:
             self._template_key = template_key
 
@@ -165,7 +161,12 @@ class Email_Notify(Model):
 
     @subject.setter
     def subject(self, subject):
-        self._subject = self.subject
+        if subject is None or "":
+            self.errors["subject"] = (
+               "Invalid value for `subject`, must not be `None`."
+            )
+        else:
+            self._subject = subject
 
     @property
     def content(self):
@@ -175,9 +176,11 @@ class Email_Notify(Model):
     def content(self, content):
 
         try:
-            eval_json = json.loads(self._to_emails.replace("'", '"'))
+            eval_json = json.loads(content.replace("'", '"'))
+        except JSONDecodeError:
+            pass
         except Exception as error:
-            error["content"]: str(error)
+            self.errors["content"]: str(error)
         self._content = content
 
     def return_result(self):
@@ -185,35 +188,51 @@ class Email_Notify(Model):
             return {"result": "error", "errors": self.errors, }, 500
 
         parent_dir = os.sep.join(__file__.split(os.sep)[:-3])
-        # create folder
-        Email_Notifications = open(
-            parent_dir + "/templates/SendGrid_email.py", "r"
-        )
-        Email_Notify_Contents = Email_Notifications.read()
-        Email_Notifications.close()
 
+        if self._template_key in ["None", None, ""]:
+            Email_Notifications = open(
+                parent_dir + "/templates/nt_SendGrid_email.py", "r"
+            )
+            Email_Notify_Contents = Email_Notifications.read()
+            Email_Notifications.close()
+            Email_Notify_Contents = Email_Notify_Contents.replace(
+                "REPLACE_CONTENT", self.content
+            )
+
+        else:
+            # create folder
+            Email_Notifications = open(
+                parent_dir + "/templates/SendGrid_email.py", "r"
+            )
+            Email_Notify_Contents = Email_Notifications.read()
+            Email_Notifications.close()
+            Email_Notify_Contents = Email_Notify_Contents.replace(
+                "REPLACE_TEMPLATE_ID", self._template_key
+            )
+            file_json = open(parent_dir + "dynamic_data.json", "w+")
+            json.dump(self.content, file_json)
+            file_json.close()
+
+        Email_Notify_Contents = Email_Notify_Contents.replace(
+            "REPLACE_SENDGRID_API_KEY", self._api_key
+        )
         Email_Notify_Contents = Email_Notify_Contents.replace(
             "REPLACE_EMAIL_ID", self.__from
         )
         Email_Notify_Contents = Email_Notify_Contents.replace(
-            "REPLACE_TEMPLATE_ID", self._template_key
+            '"REPLACE_RECIPIENT_EMAILS"', self._to_emails
         )
         Email_Notify_Contents = Email_Notify_Contents.replace(
-            "'REPLACE_RECIPIENT_EMAILS'", self._to_emails
+            "REPLACE_EMAIL_SUBJECT", self._subject
         )
 
         _dir = parent_dir + "/Exports/Notifications/"
-
         if not os.path.exists(_dir):
             os.makedirs(_dir)
-
+        print(Email_Notify_Contents)
         file = open(_dir + "EmailNotifications.py", "w+")
         file.write(Email_Notify_Contents)
         file.close()
-
-        file_json = open(_dir + "dynamic_data.json", "w+")
-        json.dump(self.content, file_json)
-        file_json.close()
 
         return (
             {"result": "Successfully created E-mail notification script."},
