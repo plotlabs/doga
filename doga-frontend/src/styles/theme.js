@@ -12,6 +12,7 @@ export const colors = {
   white: "#fff",
   lightGrey: "#f2f2f2",
   purple: "#492897",
+  lightPurple: "#8071b3",
 };
 
 const fonts = {

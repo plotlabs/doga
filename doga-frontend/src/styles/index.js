@@ -49,12 +49,12 @@ export const Box = styled.div(
         marginTop: "1.25rem",
         padding: "0.75rem",
         borderWidth: "1px",
-        borderRadius: "12px",
+        // borderRadius: "12px",
         /* z-index: 1; */
         background: "white",
-        margin: "10px",
+        margin: "1.5rem 2.5rem",
         /* width: 98%; */
-        border: "2px solid rgb(226, 232, 240)",
+        // border: "2px solid rgb(226, 232, 240)",
       },
       loader: {
         position: "fixed",
@@ -358,7 +358,7 @@ export const Tags = styled.div(
 export const H1 = styled.h1(
   {
     fontSize: theme.fontSizes[10],
-    color: theme.colors.purple,
+    color: theme.colors.lightPurple,
     fontFamily: theme.fonts.DM,
     fontWeight: theme.fontWeights.light,
     lineHeight: "64px",
@@ -424,7 +424,7 @@ export const H2 = styled.h2(
 export const H3 = styled.h3(
   {
     fontSize: theme.fontSizes[8],
-    color: theme.colors.purple,
+    color: theme.colors.lightPurple,
     fontFamily: theme.fonts.DM,
     fontWeight: theme.fontWeights.normal,
     lineHeight: "36px",
@@ -460,6 +460,21 @@ export const H5 = styled.h5(
     fontFamily: theme.fonts.DM,
     fontWeight: theme.fontWeights.normal,
     lineHeight: "26px",
+  },
+  space,
+  color,
+  typography,
+  position,
+  border,
+  layout
+);
+export const H6 = styled.h6(
+  {
+    fontSize: theme.fontSizes[4],
+    color: theme.colors.purple,
+    fontFamily: theme.fonts.DM,
+    fontWeight: theme.fontWeights.normal,
+    marginBottom: 0,
   },
   space,
   color,

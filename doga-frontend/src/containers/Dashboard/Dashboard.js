@@ -60,7 +60,7 @@ const Dashboard = () => {
   ) : (
     <>
       <Box
-        boxShadow="card"
+        boxShadow="invision"
         p={2}
         backgroundColor="white"
         // height="250px"

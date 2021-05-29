@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { useGlobal } from "reactn";
 import { NavLink } from "react-router-dom";
+import { Redirect } from "react-router-dom";
 import {
   Box,
   ResponsiveImage,
@@ -17,13 +18,11 @@ import {
   Para,
 } from "../../styles";
 import {
-  Modal,
-  ModalOverlay,
-  ModalContent,
-  ModalHeader,
-  ModalFooter,
-  ModalBody,
-  ModalCloseButton,
+  Accordion,
+  AccordionItem,
+  AccordionButton,
+  AccordionPanel,
+  AccordionIcon,
 } from "@chakra-ui/react";
 import { Icon } from "@chakra-ui/react";
 import { MdEmail, MdTextsms } from "react-icons/md";
@@ -39,8 +38,12 @@ const Notify = (props) => {
   const [token] = useGlobal("token");
   const { handleSubmit, register, errors } = useForm();
   const [toggle, setToggle] = useState(true);
-  const [username, setUsername] = useState();
-  const [userEmail, setUserEmail] = useState();
+  const [userNumber, setUserNumber] = useState();
+  const [success, setSuccess] = useState(false);
+  let authRedirect = null;
+  if (success) {
+    authRedirect = <Redirect to="/dashboard" />;
+  }
   const [userList, setUserList] = useState([]);
   // const queryClient = useQueryClient();
   const toast = createStandaloneToast();
@@ -48,7 +51,7 @@ const Notify = (props) => {
   const { data } = useQuery([APIURLS.getContentType], {
     enabled: !!token,
   });
-  console.log(username, "user", userEmail);
+  // console.log(username, "user", userEmail);
   //   let contentTypeApps = null;
   let selectAppName = [];
   if (data) {
@@ -62,27 +65,26 @@ const Notify = (props) => {
 
   async function handleSignup(params) {
     try {
-      if (toggle) {
-        let obj = {
-          _from: params._from,
-          api_key: params.api_key,
-          to_emails: userList,
-          template_key: params.template_key,
-          subject: params.subject,
-          content: params.content,
-        };
-        let { data } = await Api.post(APIURLS.emailNotify(), obj);
-      } else {
-        let obj = {
-          account_sid: params.account_sid,
-          auth_token: params.auth_token,
-          _from: params._from,
-          to_emails: userList,
-          message: params.message,
-          // "tier": "hobby-dev"
-        };
-        let { data } = await Api.post(APIURLS.smsNotify(), obj);
-      }
+      // if (toggle) {
+      //   let obj = {
+      //     _from: params._from,
+      //     api_key: params.api_key,
+      //     to_emails: userList,
+      //     template_key: params.template_key,
+      //     subject: params.subject,
+      //     content: params.content,
+      //   };
+      //   let { data } = await Api.post(APIURLS.emailNotify(), obj);
+      // } else {
+      let obj = {
+        account_sid: params.account_sid,
+        auth_token: params.auth_token,
+        _from: params._from,
+        to: userList,
+        message: params.message,
+        // "tier": "hobby-dev"
+      };
+      let { data } = await Api.post(APIURLS.smsNotify(), obj);
 
       toast({
         title: "Success",
@@ -91,18 +93,14 @@ const Notify = (props) => {
         duration: 9000,
         isClosable: false,
       });
-      //   await queryClient.refetchQueries([
-      //     APIURLS.getTableContent({ app, table }),
-      //     "jwt_info",
-      //   ]);
-
-      //   onClose();
-    } catch ({ response }) {}
+      setSuccess(true);
+    } catch ({ response }) {
+      setSuccess(false);
+    }
   }
   const addUserHandler = () => {
-    setUserList([...userList, { [username]: userEmail }]);
-    setUsername();
-    setUserEmail();
+    setUserList([...userList, userNumber]);
+    setUserNumber("");
   };
   const removeUserHandler = (index) => {
     let newUserList = [];
@@ -121,6 +119,7 @@ const Notify = (props) => {
   console.log("list", userList);
   return (
     <>
+      {authRedirect}
       <Box type="heading" textAlign="center">
         <Span type="heading">TWILIO</Span>
       </Box>
@@ -217,97 +216,94 @@ const Notify = (props) => {
             </Button>
           </form>
         </Box>
-        <Box>
-          <Label mt={6}>Username</Label>
-          <Box type="relative">
-            <Input
-              name={"_from"}
-              color="grey"
-              fontSize={3}
-              p={2}
-              required
-              width="100%"
-              ref={register}
-              mb={2}
-              onChange={(e) => setUsername(e.target.value)}
-            />
+        <Accordion allowToggle mt={8} p={4}>
+          <AccordionItem>
+            <AccordionButton>
+              <Box type="row" justifyContent="start" width="100%">
+                <Para ml={4} color={"#2a3950"}>
+                  {"Add phone number of users you want to send SMS"}
+                </Para>
+              </Box>
 
-            {errors?.name && (
-              <Span color="orange" mb={4}>
-                {errors?.name?.message}
-              </Span>
-            )}
-          </Box>
-          <Label>User Email ID</Label>
-          <Box type="relative">
-            <Input
-              name={"message"}
-              color="grey"
-              fontSize={3}
-              p={2}
-              required
-              width="100%"
-              ref={register}
-              mb={2}
-              onChange={(e) => setUserEmail(e.target.value)}
-            />
+              <AccordionIcon />
+            </AccordionButton>
+            <AccordionPanel pb={4} style={{ backgroundColor: "#f7f8fb" }}>
+              <Box>
+                <Label mt={6}>Username Phone Number</Label>
+                <Box type="relative">
+                  <Input
+                    name={"to"}
+                    color="grey"
+                    fontSize={3}
+                    p={2}
+                    required
+                    width="100%"
+                    ref={register}
+                    mb={2}
+                    value={userNumber}
+                    onChange={(e) => setUserNumber(e.target.value)}
+                  />
 
-            {errors?.name && (
-              <Span color="orange" mb={4}>
-                {errors?.name?.message}
-              </Span>
-            )}
-          </Box>
-          <Box style={{ textAlign: "center" }}>
-            <Icon
-              as={BsPlusCircleFill}
-              w={"3.5rem"}
-              h={"3.5rem"}
-              color={"rgb(56 46 108 / 92%)"}
-              mt={5}
-              onClick={addUserHandler}
-            />
-          </Box>
-          <Box>
-            {userList.map((key, index) => {
-              let user = Object.keys(key)[0];
-              console.log(index);
-              return (
-                <Box
-                  boxShadow="card"
-                  type="row"
-                  justifyContent="space-between"
-                  style={{
-                    height: "50px",
-                    backgroundColor: "rgb(241 218 249)",
-                  }}
-                  m={4}
-                  p={2}
-                >
-                  <Box type="row" justifyContent="flex-start">
-                    <Icon
-                      as={FaUser}
-                      w={"1.5rem"}
-                      h={"1.5rem"}
-                      color={"rgb(157 57 160 / 87%)"}
-                    />
-                    {/* <Para ml={2}> {user}</Para> */}
-                    <Para ml={2}> {key[user]}</Para>
-                  </Box>
-                  <Box>
-                    <Icon
-                      as={AiOutlineDelete}
-                      w={"1.5rem"}
-                      h={"1.5rem"}
-                      color={"red"}
-                      onClick={() => removeUserHandler(index)}
-                    />
-                  </Box>
+                  {errors?.name && (
+                    <Span color="orange" mb={4}>
+                      {errors?.name?.message}
+                    </Span>
+                  )}
                 </Box>
-              );
-            })}
-          </Box>
-        </Box>
+
+                <Box style={{ textAlign: "center" }}>
+                  <Icon
+                    as={BsPlusCircleFill}
+                    w={"3.5rem"}
+                    h={"3.5rem"}
+                    color={"rgb(56 46 108 / 92%)"}
+                    mt={5}
+                    onClick={addUserHandler}
+                  />
+                </Box>
+                <Box>
+                  {userList.map((key, index) => {
+                    // let user = Object.keys(key)[0];
+                    console.log(index);
+                    return (
+                      <Box
+                        boxShadow="card"
+                        type="row"
+                        justifyContent="space-between"
+                        style={{
+                          height: "50px",
+                          backgroundColor: "rgb(75 78 114 / 22%)",
+                        }}
+                        m={4}
+                        p={2}
+                      >
+                        <Box type="row" justifyContent="flex-start">
+                          <Icon
+                            as={FaUser}
+                            w={"1.5rem"}
+                            h={"1.5rem"}
+                            color={"rgb(72 62 120)"}
+                          />
+                          {/* <Para ml={2}> {user}</Para> */}
+                          <Para ml={2}> {key}</Para>
+                        </Box>
+                        <Box>
+                          <Icon
+                            as={AiOutlineDelete}
+                            w={"1.5rem"}
+                            h={"1.5rem"}
+                            color={"red"}
+                            onClick={() => removeUserHandler(index)}
+                          />
+                        </Box>
+                      </Box>
+                    );
+                  })}
+                </Box>
+              </Box>
+            </AccordionPanel>
+          </AccordionItem>
+        </Accordion>
       </Box>
     </>
   );

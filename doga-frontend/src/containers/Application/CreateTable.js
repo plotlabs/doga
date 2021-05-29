@@ -1301,10 +1301,14 @@ const CreateTable = ({
                 >
                   <Select
                     key={1}
-                    value={{
-                      value: relationshipType,
-                      label: relationshipType,
-                    }}
+                    value={
+                      relationshipType
+                        ? {
+                            value: relationshipType,
+                            label: relationshipType,
+                          }
+                        : null
+                    }
                     onChange={({ value }) => relationTypeHandler(value)}
                     required
                     theme={CARD_ELEMENT_OPTIONS}
@@ -1340,10 +1344,14 @@ const CreateTable = ({
                 >
                   <Select
                     key={2}
-                    value={{
-                      value: relatedTable,
-                      label: relatedTable,
-                    }}
+                    value={
+                      relatedTable
+                        ? {
+                            value: relatedTable,
+                            label: relatedTable,
+                          }
+                        : null
+                    }
                     onChange={({ value }) => setRelatedTable(value)}
                     required
                     theme={CARD_ELEMENT_OPTIONS}
@@ -1362,10 +1370,14 @@ const CreateTable = ({
                 >
                   <Select
                     key={3}
-                    value={{
-                      value: relatedField,
-                      label: relatedField,
-                    }}
+                    value={
+                      relatedField
+                        ? {
+                            value: relatedField,
+                            label: relatedField,
+                          }
+                        : null
+                    }
                     onChange={({ value }) => setRelatedField(value)}
                     required
                     theme={CARD_ELEMENT_OPTIONS}

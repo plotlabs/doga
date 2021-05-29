@@ -139,7 +139,14 @@ const Content = () => {
 
       return (
         <Tr style={{ color: "#4A5568" }}>
-          <Td style={{ color: "#4A5568", borderColor: "#EDF2F7" }}>
+          <Td
+            style={{
+              color: "#4A5568",
+              borderColor: "#EDF2F7",
+              textAlign: "center",
+              fontWeight: "600",
+            }}
+          >
             {val.name}
           </Td>
           <Td
@@ -147,6 +154,7 @@ const Content = () => {
               color: "#4A5568",
               borderColor: "#EDF2F7",
               textAlign: "center",
+              fontWeight: "600",
             }}
           >
             {val.type}
@@ -156,6 +164,7 @@ const Content = () => {
               color: "#4A5568",
               borderColor: "#EDF2F7",
               textAlign: "center",
+              fontWeight: "600",
             }}
           >
             {val.foreign_key}
@@ -176,6 +185,7 @@ const Content = () => {
               color: "#4A5568",
               borderColor: "#EDF2F7",
               textAlign: "right",
+              fontWeight: "600",
             }}
           ></Td>
         </Tr>
@@ -184,7 +194,16 @@ const Content = () => {
     tableFieldShow = Object.entries(data[app][table]).map(([prop, val]) => {
       fieldDataBodyArray.push(val.name);
       return (
-        <Th style={{ color: "#4A5568", borderColor: "#EDF2F7" }}>{val.name}</Th>
+        <Th
+          style={{
+            color: "#4A5568",
+            borderColor: "#EDF2F7",
+            textAlign: "center",
+            fontWeight: "400",
+          }}
+        >
+          {val.name}
+        </Th>
       );
     });
   }
@@ -274,18 +293,39 @@ const Content = () => {
         return (
           <>
             <Tr style={{ color: "#4A5568" }}>
-              <Td style={{ color: "#4A5568", borderColor: "#EDF2F7" }}>
+              <Td
+                style={{
+                  color: "#4A5568",
+                  borderColor: "#EDF2F7",
+                  textAlign: "center",
+                  fontWeight: "600",
+                }}
+              >
                 {val["id"]}
               </Td>
               {Object.entries(fieldDataBodyArray).map(([prop, value]) => {
                 return richTextFields.includes(value) ? (
-                  <Td style={{ color: "#4A5568", borderColor: "#EDF2F7" }}>
+                  <Td
+                    style={{
+                      color: "#4A5568",
+                      borderColor: "#EDF2F7",
+                      textAlign: "center",
+                      fontWeight: "600",
+                    }}
+                  >
                     <Button onClick={() => richTextViewHandler(val[value])}>
                       View
                     </Button>
                   </Td>
                 ) : imageColumnFields.includes(value) ? (
-                  <Td style={{ color: "#4A5568", borderColor: "#EDF2F7" }}>
+                  <Td
+                    style={{
+                      color: "#4A5568",
+                      borderColor: "#EDF2F7",
+                      textAlign: "center",
+                      fontWeight: "600",
+                    }}
+                  >
                     <Box>
                       {" "}
                       <Avatar
@@ -304,6 +344,7 @@ const Content = () => {
                       color: "#4A5568",
                       borderColor: "#EDF2F7",
                       textAlign: "center",
+                      fontWeight: "600",
                     }}
                   >
                     {val[value] === true
@@ -320,6 +361,7 @@ const Content = () => {
                   color: "#4A5568",
                   borderColor: "#EDF2F7",
                   textAlign: "center",
+                  fontWeight: "600",
                 }}
               >
                 {val["create_dt"]}
@@ -329,6 +371,7 @@ const Content = () => {
                   color: "#4A5568",
                   borderColor: "#EDF2F7",
                   textAlign: "center",
+                  fontWeight: "600",
                 }}
               >
                 {
@@ -481,19 +524,6 @@ const Content = () => {
                 </AccordionItem>
               </td>
             </tr>
-            {/* </> */}
-            {/* <Tr style={{ position: "relative" }}>
-              <Td
-                style={{
-                  position: "absolute",
-                  top: "0",
-                  bottom: "0",
-                  width: "100%",
-                }}
-              >
-               
-              </Td>
-            </Tr> */}
           </>
         );
       }
@@ -693,11 +723,11 @@ const Content = () => {
         <Box
           type="tableView"
           //   m={6}
-          style={{
-            width: "80%",
-            margin: "7rem",
-            marginTop: "1.5rem",
-          }}
+          // style={{
+          //   width: "80%",
+          //   margin: "7rem",
+          //   marginTop: "1.5rem",
+          // }}
         >
           <Table
             variant="striped"
@@ -709,7 +739,14 @@ const Content = () => {
             <TableCaption>{captionButtonField}</TableCaption>
             <Thead>
               <Tr style={{ color: "#4A5568" }}>
-                <Th style={{ color: "#4A5568", borderColor: "#EDF2F7" }}>
+                <Th
+                  style={{
+                    color: "#4A5568",
+                    borderColor: "#EDF2F7",
+                    textAlign: "center",
+                    fontWeight: "400",
+                  }}
+                >
                   Fields
                 </Th>
                 <Th
@@ -717,6 +754,7 @@ const Content = () => {
                     color: "#4A5568",
                     borderColor: "#EDF2F7",
                     textAlign: "center",
+                    fontWeight: "400",
                   }}
                 >
                   Type
@@ -726,6 +764,7 @@ const Content = () => {
                     color: "#4A5568",
                     borderColor: "#EDF2F7",
                     textAlign: "center",
+                    fontWeight: "400",
                   }}
                 >
                   Foreign Key
@@ -775,28 +814,13 @@ const Content = () => {
                     </i>
                   }
                 </Th>
-                {/* <Th style={{ color: "#4A5568", borderColor: "#EDF2F7" }}>type</Th>
-              <Th style={{ color: "#4A5568", borderColor: "#EDF2F7" }}>
-                unique
-              </Th>
-              <Th style={{ color: "#4A5568", borderColor: "#EDF2F7" }}>
-                nullable
-              </Th>
-              <Th style={{ color: "#4A5568", borderColor: "#EDF2F7" }}>
-                default
-              </Th>
-              <Th style={{ color: "#4A5568", borderColor: "#EDF2F7" }}>
-                Foreign Key
-              </Th>
-
-              <Th style={{ color: "#4A5568", borderColor: "#EDF2F7" }}></Th> */}
               </Tr>
             </Thead>
             <Tbody>{contentTypeApps}</Tbody>
           </Table>
         </Box>
       ) : (
-        <Box type="tableView" m={6}>
+        <Box type="tableView">
           <Accordion index={[...relationDropView]}>
             {" "}
             <Table
@@ -810,7 +834,14 @@ const Content = () => {
 
               <Thead>
                 <Tr style={{ color: "#4A5568" }}>
-                  <Th style={{ color: "#4A5568", borderColor: "#EDF2F7" }}>
+                  <Th
+                    style={{
+                      color: "#4A5568",
+                      borderColor: "#EDF2F7",
+                      textAlign: "center",
+                      fontWeight: "400",
+                    }}
+                  >
                     Id
                   </Th>
                   {tableFieldShow}
@@ -820,6 +851,7 @@ const Content = () => {
                       color: "#4A5568",
                       borderColor: "#EDF2F7",
                       textAlign: "center",
+                      fontWeight: "400",
                     }}
                   >
                     Created_at

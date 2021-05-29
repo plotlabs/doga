@@ -13,7 +13,8 @@ import {
   Span,
   MotionBox,
   H2,
-  H1,
+  H6,
+  H3,
   Input,
   Label,
   H5,
@@ -45,12 +46,15 @@ import { useDisclosure } from "@chakra-ui/react";
 import CreateDatabase from "../CreateDatabase/CreateDatabase";
 import Application from "../Application/Application";
 import AwsDeploy from "../../components/Modal/AwsDeploy";
+
+import { IoRocketSharp } from "react-icons/io5";
 import { useIsFetching } from "react-query";
 import ClipLoader from "react-spinners/ClipLoader";
 import { Chart } from "chart.js";
 import { Doughnut, Line } from "react-chartjs-2";
 import { useParams } from "react-router";
 import AppTableCreation from "../../components/Modal/AppTableCreation";
+import DoughnutChart from "./DoughnutChart";
 const AppHome = () => {
   let { app } = useParams();
   const [baseURL, setBaseURL] = useGlobal("baseURL");
@@ -77,7 +81,7 @@ const AppHome = () => {
         selected: baseURL[app]?.selected || "http://0.0.0.0:8080/",
       },
     });
-  }, [app]);
+  }, [app, data]);
   console.log(baseURL, "outBASEURL");
   const appDocs = useQuery(APIURLS.appDocs(app));
 
@@ -92,51 +96,6 @@ const AppHome = () => {
     onOpen();
   };
   const isFetching = useIsFetching();
-  let labels = [];
-  let dataset = [];
-  let totalFields = 0;
-  for (let key in data?.tables) {
-    labels.push(data?.tables[key].table_name);
-    dataset.push(data?.tables[key].no_fields);
-    totalFields += data?.tables[key].no_fields;
-  }
-
-  const dataDoughnut = {
-    labels: ["Tables", "Relations", "Fields", "Exported"],
-    datasets: [
-      {
-        data: [
-          data?.number_of_tables,
-          data?.relationships?.length || 0,
-          totalFields,
-          data?.deployment_info?.total_no_exports,
-        ],
-        backgroundColor: ["#FF6384", "#36A2EB", "#FFCE56", "purple"],
-        hoverBackgroundColor: ["#FF6384", "#36A2EB", "#FFCE56", "purple"],
-      },
-    ],
-    text: "23%",
-  };
-  //    dataLine = null;
-
-  const dataLine = {
-    labels: labels,
-    datasets: [
-      {
-        label: "Number Of Fields Per Table",
-        data: dataset,
-        fill: true,
-        backgroundColor: "rgba(75,192,192,0.2)",
-        borderColor: "rgba(75,192,192,1)",
-      },
-      //   {
-      //     label: "Fields dataset",
-      //     data: [5, 7, 6, 10],
-      //     fill: true,
-      //     borderColor: "#742774",
-      //   },
-    ],
-  };
 
   async function exportAppHandler() {
     try {
@@ -313,442 +272,276 @@ const AppHome = () => {
       </Box>
       <Box
         display="grid"
-        gridTemplateColumns={["1fr 1fr", "1fr 1fr 1fr "]}
-        // mb={8}
-        gridGap={4}
-        style={{
-          margin: "30px",
-          marginLeft: "70px",
-          marginRight: "70px",
-          marginBottom: "8px",
-        }}
+        gridTemplateColumns={["1fr", null, "1fr 1fr 1fr"]}
+        gridGap={[4, 6]}
+        my={[2, 0, 0]}
+        p={" 0 2.5rem 1.5rem 2.5rem"}
       >
-        <MotionBox
-          transition={{ ease: "easeOut", duration: 0.3 }}
-          whileHover={{
-            boxShadow: "0 4px 25px 0 rgba(0,0,0,.5)",
-          }}
-          initial={{ y: 50, opacity: 0 }}
-          animate={{
-            y: 0,
-            opacity: 1,
-          }}
-          type="column"
-          boxShadow="card"
-          // bg={"#800080"}
-          p={3}
-          borderRadius="15px"
-          alignItems="center"
-          style={{
-            cursor: "pointer",
-            backgroundColor: "white",
-            border: "2px solid rgb(110, 121, 140)",
-          }}
-          // onClick={onClick}
-        >
-          <Box
-            display="grid"
-            gridTemplateColumns={["1fr 2fr"]}
-            m={"10px"}
-            gridGap={"2.25rem"}
-            style={{
-              "&:hover": {
-                opacity: ".2",
-              },
-            }}
-          >
-            <Box type="row" justifyContent="center">
-              <Icon as={BsTable} w={"4rem"} h={"4rem"} color={"#4B0082"} />
-            </Box>
+        <Box boxShadow="invision" p={[6, 4, 3]} type="column">
+          <Box type="row" flexDirection="row-reverse">
             <Box
               style={{
-                textAlign: "center",
+                borderRadius: "50px",
+                boxShadow: "#382e6c 0px 2px 4px 1px",
+                background: "#8071b3",
+                height: "40px",
+                width: "40px",
+                padding: "3px",
               }}
             >
-              <H5 fontSize={10} color={"#6E798C"} lineHeight={10}>
-                {data?.number_of_tables}
-              </H5>
-              <Para
-                fontSize={6}
-                color={"#6E798C"}
-                style={{ fontWeight: "600" }}
-              >
-                {"Tables"}
-              </Para>
-            </Box>
-          </Box>
-        </MotionBox>
-        <MotionBox
-          transition={{ ease: "easeOut", duration: 0.3 }}
-          whileHover={{
-            boxShadow: "0 4px 25px 0 rgba(0,0,0,.5)",
-          }}
-          initial={{ y: 50, opacity: 0 }}
-          animate={{
-            y: 0,
-            opacity: 1,
-          }}
-          type="column"
-          boxShadow="card"
-          // bg={"#800080"}
-          p={3}
-          borderRadius="15px"
-          alignItems="center"
-          style={{
-            cursor: "pointer",
-            backgroundColor: "white",
-            border: "2px solid rgb(110, 121, 140)",
-          }}
-          // onClick={onClick}
-        >
-          <Box
-            display="grid"
-            gridTemplateColumns={["1fr 2fr"]}
-            m={"10px"}
-            gridGap={"2.25rem"}
-          >
-            <Box type="row" justifyContent="center">
               <Icon
-                as={BsFillLockFill}
-                w={"4rem"}
-                h={"4rem"}
-                color={"#4B0082"}
+                as={BsTable}
+                viewBox="0 0 200 200"
+                w={6}
+                h={6}
+                color={"white"}
+                p={"1px"}
+                m={"5px"}
               />
             </Box>
+          </Box>
+          <Box type="column" flexDirection="column-reverse" pt={[2, 4, 4]}>
+            <H6 fontWeight="500" my={0}>
+              Tables
+            </H6>
+            <H3 color={"#6e798c"} mb={[4, 2, 0]}>
+              {data?.number_of_tables || 0}
+            </H3>
+          </Box>
+        </Box>
+        <Box boxShadow="invision" p={[6, 4, 3]} type="column">
+          <Box type="row" flexDirection="row-reverse">
             <Box
               style={{
-                textAlign: "center",
+                borderRadius: "50px",
+                boxShadow: "#382e6c 0px 2px 4px 1px",
+                background: "#8071b3",
+                height: "40px",
+                width: "40px",
+                padding: "5px",
               }}
             >
-              <H5 fontSize={10} color={"#6E798C"} lineHeight={10}>
-                {data?.relationships?.length || 0}
-              </H5>
-              <Para
-                fontSize={6}
-                color={"#6E798C"}
-                style={{ fontWeight: "600" }}
-              >
-                {"Relations"}
-              </Para>
+              <Icon
+                as={BsFillLockFill}
+                viewBox="0 0 200 200"
+                w={7}
+                h={7}
+                color={"white"}
+                p={"1px"}
+                m={"1px"}
+              />
             </Box>
           </Box>
-        </MotionBox>
-        <MotionBox
-          transition={{ ease: "easeOut", duration: 0.3 }}
-          whileHover={{
-            boxShadow: "0 4px 25px 0 rgba(0,0,0,.5)",
-          }}
-          initial={{ y: 50, opacity: 0 }}
-          animate={{
-            y: 0,
-            opacity: 1,
-          }}
-          type="column"
-          boxShadow="card"
-          // bg={"#800080"}
-          p={3}
-          borderRadius="15px"
-          alignItems="center"
-          style={{
-            cursor: "pointer",
-            backgroundColor: "white",
-            border: "2px solid rgb(110, 121, 140)",
-          }}
-          // onClick={onClick}
-        >
-          <Box
-            display="grid"
-            gridTemplateColumns={["1fr 2fr"]}
-            m={"10px"}
-            gridGap={"2.25rem"}
-          >
-            <Box type="row" justifyContent="center">
-              <Icon as={SiAmazonaws} w={"4rem"} h={"4rem"} color={"#4B0082"} />
-            </Box>
+          <Box type="column" flexDirection="column-reverse" pt={[2, 4, 4]}>
+            <H6 fontWeight="500" my={0}>
+              Relations
+            </H6>
+            <H3 color={"#6e798c"} mb={[4, 2, 0]}>
+              {data?.relationships?.length || 0}
+            </H3>
+          </Box>
+        </Box>
+        <Box boxShadow="invision" p={[6, 4, 3]} type="column">
+          <Box type="row" flexDirection="row-reverse">
             <Box
               style={{
-                textAlign: "center",
+                borderRadius: "50px",
+                boxShadow: "#382e6c 0px 2px 4px 1px",
+                background: "#8071b3",
+                height: "40px",
+                width: "40px",
+                padding: "5px",
               }}
             >
-              <H5 fontSize={10} color={"#6E798C"} lineHeight={10}>
-                {data?.deployment_info?.total_no_exports}
-              </H5>
-              <Para
-                fontSize={6}
-                color={"#6E798C"}
-                style={{ fontWeight: "600" }}
-              >
-                {"Deployed"}
-              </Para>
+              <Icon
+                as={IoRocketSharp}
+                viewBox="0 0 200 200"
+                w={7}
+                h={7}
+                color={"white"}
+                p={"1px"}
+                m={"1px"}
+              />
             </Box>
           </Box>
-        </MotionBox>
-      </Box>
-
-      <Box
-        display="grid"
-        gridTemplateColumns={["1fr", "1fr 1fr"]}
-        // mb={8}
-        gridGap={4}
-        style={{
-          margin: "30px",
-          marginLeft: "70px",
-          marginRight: "70px",
-          marginTop: "20px",
-        }}
-      >
-        <MotionBox
-          transition={{ ease: "easeOut", duration: 0.3 }}
-          whileHover={{
-            boxShadow: "0 4px 25px 0 rgba(0,0,0,.5)",
-          }}
-          initial={{ y: 50, opacity: 0 }}
-          animate={{
-            y: 0,
-            opacity: 1,
-          }}
-          type="column"
-          boxShadow="card"
-          p={3}
-          borderRadius="15px"
-          alignItems="center"
-          style={{
-            cursor: "pointer",
-            backgroundColor: "white",
-            border: "2px solid rgb(110, 121, 140)",
-          }}
-          mb={5}
-        >
-          <H2
-            type="centerBorder"
-            color={"#6E798C"}
-            style={{
-              width: "100%",
-              textAlign: "left",
-            }}
-          >
-            {" "}
-            {app}
-          </H2>
-
-          <Box
-            type="row"
-            style={{
-              justifyContent: "flex-start",
-              margin: "10px",
-              width: "100%",
-            }}
-          >
-            <H5>Type Of Application: </H5>
-            <H5
-              ml={2}
-              style={{
-                color: "#6E798C",
-              }}
-            >
-              {data?.type}
-            </H5>
+          <Box type="column" flexDirection="column-reverse" pt={[2, 4, 4]}>
+            <H6 fontWeight="500" my={0}>
+              Deployed
+            </H6>
+            <H3 color={"#6e798c"} mb={[4, 2, 0]}>
+              {data?.deployment_info?.total_no_exports || 0}
+            </H3>
           </Box>
-          <Box
-            type="row"
-            style={{
-              justifyContent: "flex-start",
-              margin: "10px",
-              width: "100%",
-            }}
-          >
-            <H5>Database Type: </H5>
-            <H5
-              ml={2}
-              style={{
-                color: "#6E798C",
-              }}
-            >
-              {data?.db_type}
-            </H5>
-          </Box>
-
-          <Box
-            type="row"
-            style={{
-              justifyContent: "flex-start",
-              margin: "10px",
-              width: "100%",
-            }}
-          >
-            <H5> Exported At: </H5>
-            <H5
-              ml={2}
-              style={{
-                color: "#6E798C",
-              }}
-            >
-              {data?.deployment_info?.most_recent_deployment ||
-                "Not exported Yet!"}
-            </H5>
-          </Box>
-          <Box
-            type="row"
-            style={{
-              justifyContent: "flex-start",
-              margin: "10px",
-              width: "100%",
-            }}
-          >
-            <H5> Deployed At: </H5>
-            <H5
-              ml={2}
-              style={{
-                color: "#6E798C",
-              }}
-            >
-              {data?.deployment_info?.most_recent_deployment ||
-                "Not deployed yet!"}
-            </H5>
-          </Box>
-          <Box
-            type="row"
-            style={{
-              justifyContent: "flex-start",
-              margin: "10px",
-              width: "100%",
-            }}
-          >
-            <H5> Deployment Platform: </H5>
-            <H5
-              ml={2}
-              style={{
-                color: "#6E798C",
-              }}
-            >
-              {data?.deployment_info?.platform || "Not deployed yet!"}
-            </H5>
-          </Box>
-        </MotionBox>
-
-        <MotionBox
-          transition={{ ease: "easeOut", duration: 0.3 }}
-          whileHover={{
-            boxShadow: "0 4px 25px 0 rgba(0,0,0,.5)",
-          }}
-          initial={{ y: 50, opacity: 0 }}
-          animate={{
-            y: 0,
-            opacity: 1,
-          }}
-          type="column"
-          boxShadow="card"
-          p={3}
-          borderRadius="15px"
-          alignItems="center"
-          style={{
-            cursor: "pointer",
-            backgroundColor: "white",
-            border: "2px solid rgb(110, 121, 140)",
-          }}
-          mb={5}
-        >
-          <Doughnut data={dataDoughnut} />
-          {/* <Box type="column">
-            <Box style={{ marginTop: "65px" }}>
-              {" "}
-             
-            </Box> */}
-          {/* </Box> */}
-        </MotionBox>
+        </Box>
       </Box>
       <Box
         display="grid"
-        gridTemplateColumns={["1fr", "1fr"]}
-        // mb={8}
-        gridGap={4}
-        style={{
-          margin: "30px",
-          marginLeft: "70px",
-          marginRight: "70px",
-          marginTop: "20px",
-        }}
+        gridTemplateColumns={["1fr", null, "1fr 1fr"]}
+        gridGap={[4, 6]}
+        my={[2, 0, 0]}
+        p={"0rem 2.5rem"}
       >
-        <MotionBox
-          transition={{ ease: "easeOut", duration: 0.3 }}
-          whileHover={{
-            boxShadow: "0 4px 25px 0 rgba(0,0,0,.5)",
-          }}
-          initial={{ y: 50, opacity: 0 }}
-          animate={{
-            y: 0,
-            opacity: 1,
-          }}
-          type="column"
-          boxShadow="card"
-          // bg={"#800080"}
-          p={3}
-          borderRadius="15px"
-          alignItems="center"
-          style={{
-            cursor: "pointer",
-            backgroundColor: "white",
-            border: "2px solid rgb(110, 121, 140)",
-          }}
-          // onClick={onClick}
-        >
-          <Line data={dataLine} height={80} />
-        </MotionBox>
-      </Box>
-
-      <MotionBox
-        transition={{ ease: "easeOut", duration: 0.3 }}
-        whileHover={{
-          boxShadow: "0 4px 25px 0 rgba(0,0,0,.5)",
-        }}
-        initial={{ y: 50, opacity: 0 }}
-        animate={{
-          y: 0,
-          opacity: 1,
-        }}
-        type="column"
-        boxShadow="card"
-        p={3}
-        borderRadius="15px"
-        alignItems="center"
-        style={{
-          cursor: "pointer",
-          backgroundColor: "white",
-          border: "2px solid rgb(110, 121, 140)",
-          margin: "30px",
-          marginLeft: "70px",
-          marginRight: "70px",
-          marginTop: "20px",
-        }}
-        mb={5}
-      >
-        <H2
-          type="centerBorder"
-          color={"#6E798C"}
-          style={{
-            width: "100%",
-            textAlign: "left",
-          }}
-        >
-          {app} {"Relationships"}
-        </H2>
-        {data?.relationships?.length ? (
-          <Box
-            display="grid"
-            gridTemplateColumns={["1fr", "1fr 1fr"]}
-            // mb={8}
-            gridGap={4}
-            style={{}}
-          >
-            {relation}
+        <Box type="column">
+          <Box mb={[2, 2, 4]}>
+            <H5 my={0} color="#6e798c">
+              Statistics
+            </H5>
           </Box>
-        ) : (
-          <Para> Relationships have not defined between any tables yet!</Para>
-        )}
-      </MotionBox>
-      {/* <Box>
-       
-      </Box> */}
+          <Box type="column">
+            <Box
+              boxShadow="invision"
+              p={[2, 4, 2]}
+              type="column"
+              mb={[0, 2, 4]}
+            >
+              <Box height={["240px"]} width={["316px"]} ml={11}>
+                <DoughnutChart data={data} />
+              </Box>
+            </Box>
+          </Box>
+        </Box>
+        <Box type="column">
+          <Box mb={[2, 2, 4]}>
+            <H5 my={0} color="#6e798c">
+              App Info
+            </H5>
+          </Box>
+          <Box boxShadow="invision" p={[6, 4, 3]} type="column">
+            <Box
+              type="row"
+              style={{
+                justifyContent: "flex-start",
+                margin: "10px",
+                width: "100%",
+              }}
+            >
+              <H5 my={0} color="lightPurple">
+                Type Of Application:{" "}
+              </H5>
+              <H5
+                ml={2}
+                style={{
+                  color: "#6E798C",
+                }}
+              >
+                {data?.type}
+              </H5>
+            </Box>
+            <Box
+              type="row"
+              style={{
+                justifyContent: "flex-start",
+                margin: "10px",
+                width: "100%",
+              }}
+            >
+              <H5 my={0} color="lightPurple">
+                Database Type:{" "}
+              </H5>
+              <H5
+                ml={2}
+                style={{
+                  color: "#6E798C",
+                }}
+              >
+                {data?.db_type}
+              </H5>
+            </Box>
+
+            <Box
+              type="row"
+              style={{
+                justifyContent: "flex-start",
+                margin: "10px",
+                width: "100%",
+              }}
+            >
+              <H5 my={0} color="lightPurple">
+                Exported At:{" "}
+              </H5>
+              <H5
+                ml={2}
+                style={{
+                  color: "#6E798C",
+                }}
+              >
+                {data?.deployment_info?.most_recent_deployment ||
+                  "Not exported Yet!"}
+              </H5>
+            </Box>
+            <Box
+              type="row"
+              style={{
+                justifyContent: "flex-start",
+                margin: "10px",
+                width: "100%",
+              }}
+            >
+              <H5 my={0} color="lightPurple">
+                {" "}
+                Deployed At:{" "}
+              </H5>
+              <H5
+                ml={2}
+                style={{
+                  color: "#6E798C",
+                }}
+              >
+                {data?.deployment_info?.most_recent_deployment ||
+                  "Not deployed yet!"}
+              </H5>
+            </Box>
+            <Box
+              type="row"
+              style={{
+                justifyContent: "flex-start",
+                margin: "10px",
+                width: "100%",
+              }}
+            >
+              <H5 my={0} color="lightPurple">
+                {" "}
+                Deployment Platform:{" "}
+              </H5>
+              <H5
+                ml={2}
+                style={{
+                  color: "#6E798C",
+                }}
+              >
+                {data?.deployment_info?.platform || "Not deployed yet!"}
+              </H5>
+            </Box>
+          </Box>
+        </Box>
+      </Box>
+      <Box type="column" p={"0.5rem 2.5rem"}>
+        <Box mb={[2, 2, 4]}>
+          <H5 my={0} color="#6e798c">
+            {app} {"Relationships"}
+          </H5>
+        </Box>
+        <Box type="column">
+          <Box boxShadow="invision" p={[2, 4, 2]} type="column" mb={[0, 2, 4]}>
+            {data?.relationships?.length ? (
+              <Box
+                display="grid"
+                gridTemplateColumns={["1fr", "1fr 1fr"]}
+                // mb={8}
+                gridGap={4}
+                style={{}}
+              >
+                {relation}
+              </Box>
+            ) : (
+              <Para>
+                {" "}
+                Relationships have not defined between any tables yet!
+              </Para>
+            )}
+          </Box>
+        </Box>
+      </Box>
     </>
   );
 };
