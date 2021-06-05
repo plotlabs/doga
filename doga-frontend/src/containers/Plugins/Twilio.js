@@ -1,22 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useGlobal } from "reactn";
-import { NavLink } from "react-router-dom";
 import { Redirect } from "react-router-dom";
-import {
-  Box,
-  ResponsiveImage,
-  Image,
-  Button,
-  StyledLink,
-  Span,
-  MotionBox,
-  H2,
-  H5,
-  Input,
-  Label,
-  Para,
-} from "../../styles";
+import { Box, Button, Span, Input, Label, Para } from "../../styles";
 import {
   Accordion,
   AccordionItem,
@@ -25,19 +11,16 @@ import {
   AccordionIcon,
 } from "@chakra-ui/react";
 import { Icon } from "@chakra-ui/react";
-import { MdEmail, MdTextsms } from "react-icons/md";
 import { BsPlusCircleFill } from "react-icons/bs";
 import { FaUser } from "react-icons/fa";
 import { AiOutlineDelete } from "react-icons/ai";
 import { useQuery, useQueryClient } from "react-query";
-import { useToast, createStandaloneToast } from "@chakra-ui/react";
-import Api, { setHeader, APIURLS, ApiJwt } from "../../Api";
-import Select from "react-select";
+import { createStandaloneToast } from "@chakra-ui/react";
+import Api, { APIURLS } from "../../Api";
 
 const Notify = (props) => {
   const [token] = useGlobal("token");
   const { handleSubmit, register, errors } = useForm();
-  const [toggle, setToggle] = useState(true);
   const [userNumber, setUserNumber] = useState();
   const [success, setSuccess] = useState(false);
   let authRedirect = null;
@@ -45,14 +28,10 @@ const Notify = (props) => {
     authRedirect = <Redirect to="/dashboard" />;
   }
   const [userList, setUserList] = useState([]);
-  // const queryClient = useQueryClient();
   const toast = createStandaloneToast();
-  const queryClient = useQueryClient();
   const { data } = useQuery([APIURLS.getContentType], {
     enabled: !!token,
   });
-  // console.log(username, "user", userEmail);
-  //   let contentTypeApps = null;
   let selectAppName = [];
   if (data) {
     for (let key in data) {
@@ -65,24 +44,12 @@ const Notify = (props) => {
 
   async function handleSignup(params) {
     try {
-      // if (toggle) {
-      //   let obj = {
-      //     _from: params._from,
-      //     api_key: params.api_key,
-      //     to_emails: userList,
-      //     template_key: params.template_key,
-      //     subject: params.subject,
-      //     content: params.content,
-      //   };
-      //   let { data } = await Api.post(APIURLS.emailNotify(), obj);
-      // } else {
       let obj = {
         account_sid: params.account_sid,
         auth_token: params.auth_token,
         _from: params._from,
         to: userList,
         message: params.message,
-        // "tier": "hobby-dev"
       };
       let { data } = await Api.post(APIURLS.smsNotify(), obj);
 
@@ -105,18 +72,14 @@ const Notify = (props) => {
   const removeUserHandler = (index) => {
     let newUserList = [];
     for (let key in userList) {
-      console.log(userList[key], "key", key);
       if (key != index) {
         newUserList.push(userList[key]);
       }
     }
-    //  userList.slice(0, index).concat(userList.slice(-index));
-    console.log(newUserList);
+
     setUserList(newUserList);
-    // console.log(userList.splice(index, 1))
   };
 
-  console.log("list", userList);
   return (
     <>
       {authRedirect}
@@ -127,7 +90,6 @@ const Notify = (props) => {
       <Box
         display="grid"
         gridTemplateColumns={["1fr", "1fr 1fr"]}
-        // mb={8}
         gridGap={4}
         style={{
           padding: "40px",
@@ -263,10 +225,9 @@ const Notify = (props) => {
                 </Box>
                 <Box>
                   {userList.map((key, index) => {
-                    // let user = Object.keys(key)[0];
-                    console.log(index);
                     return (
                       <Box
+                        key={index}
                         boxShadow="card"
                         type="row"
                         justifyContent="space-between"

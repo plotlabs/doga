@@ -38,7 +38,6 @@ h6 {
 
 ol,
 ul {
-  /* list-style: none; */
   list-style-position: inside;
 }
 table,
@@ -46,25 +45,6 @@ th,
 td {
   border: none;
 }
-/* 
-table {
-  display: table;
-  border-collapse: collapse;
-  border-spacing: 0;
-}
-
-tr {
-  border-bottom: 1px solid rgba(0, 0, 0, 0.274);
-}
-
-td,
-th {
-  padding: 15px 5px;
-  display: table-cell;
-  text-align: left;
-  vertical-align: middle;
-  border-radius: 2px;
-} */
 
 img {
   max-width: 100%;
@@ -96,7 +76,6 @@ span {
   transform: scale(1.5);
   background-color: transparent;
   transition: 0.4s ease-in-out;
-  /* filter: drop-shadow(0px 6px 32px rgba(0, 0, 0, 0.06)); */
 }
 
 .dot-container button {
@@ -230,12 +209,7 @@ span {
   background-image: " linear-gradient(to right, rgb(127, 0, 255), rgb(139, 0, 139))";
   color: #fff;
 }
-/* .Card:hover:after {
-  background-color: rgb(127, 0, 255);
-}
-.Card:hover:before {
-  background-color: rgb(127, 0, 255);
-} */
+
 .Card div {
   display: table-cell;
   vertical-align: middle;
@@ -269,14 +243,12 @@ span {
   --ck-todo-list-checkmark-size: 16px;
 }
 
-/* ckeditor5-highlight/theme/highlight.css */
 .ck-content .marker-yellow {
   background-color: var(--ck-highlight-marker-yellow);
 }
 .ck-content .h2 {
   color: purple;
 }
-/* ckeditor5-highlight/theme/highlight.css */
 .ck-content .marker-green {
   background-color: var(--ck-highlight-marker-green);
 }

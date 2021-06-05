@@ -1,17 +1,5 @@
-import React, { useState, useEffect } from "react";
-import {
-  Box,
-  ResponsiveImage,
-  Image,
-  Button,
-  StyledLink,
-  Span,
-  MotionBox,
-  H2,
-  H1,
-  Input,
-  Label,
-} from "../../styles";
+import React from "react";
+import { Box, Button, Span, Input, Label } from "../../styles";
 import { useForm } from "react-hook-form";
 
 const CreateAppName = ({ setStep, setAppName }) => {
@@ -28,7 +16,6 @@ const CreateAppName = ({ setStep, setAppName }) => {
         <Box type="row" flexDirection="column" justifyContent="center">
           <Box type="heading" textAlign="center">
             <Span type="heading">Create New App </Span>
-            {/* <Box my={2} borderBottom="4px solid" borderColor="orange"></Box> */}
           </Box>
 
           <Box type="row" justifyContent="center" m={6} mt={"50px"}>
@@ -61,7 +48,6 @@ const CreateAppName = ({ setStep, setAppName }) => {
               </Button>
             </form>
           </Box>
-          {/* </Box> */}
         </Box>
       </Box>
     </>

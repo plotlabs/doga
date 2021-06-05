@@ -1,53 +1,17 @@
-import React, { useState, useEffect } from "react";
-import { useForm } from "react-hook-form";
-import { useGlobal } from "reactn";
+import React, { useState } from "react";
 import { NavLink } from "react-router-dom";
-import Api, { setHeader, APIURLS } from "../../Api";
-import { useQuery, useQueryClient } from "react-query";
-import {
-  Box,
-  ResponsiveImage,
-  Image,
-  Button,
-  StyledLink,
-  Span,
-  MotionBox,
-  H2,
-  H1,
-  Input,
-  Label,
-  H5,
-  Para,
-} from "../../styles";
-import { Icon } from "@chakra-ui/react";
-import { FaUserAlt, FaDatabase } from "react-icons/fa";
-import { FcAcceptDatabase } from "react-icons/fc";
-import { IoAppsSharp } from "react-icons/io5";
-import { SiAmazonaws } from "react-icons/si";
-import { useDisclosure } from "@chakra-ui/react";
-import CreateDatabase from "../CreateDatabase/CreateDatabase";
-import Application from "../Application/Application";
-import AwsDeploy from "../../components/Modal/AwsDeploy";
+import { APIURLS } from "../../Api";
+import { useQuery } from "react-query";
+import { Box, Button, H2, Para } from "../../styles";
 import { useIsFetching } from "react-query";
 import ClipLoader from "react-spinners/ClipLoader";
 
 const Dashboard = () => {
-  const queryClient = useQueryClient();
-
-  // const appsCreated = useQuery(APIURLS.dashboardInfo(app, all));
   const appsCreated = useQuery(APIURLS.appInfo("app"));
 
   const dbConnections = useQuery(APIURLS.getDbConnections);
-  const { isOpen, onOpen, onClose } = useDisclosure();
 
-  const [openModal, setOpenModal] = useState();
-  const openModalHandler = (key) => {
-    setOpenModal(key);
-    onOpen();
-  };
-  const isFetching = useIsFetching();
   const isFetchingApps = useIsFetching([APIURLS.getContentType]);
-  console.log("CONTETN", isFetchingApps);
   return appsCreated?.isLoading ||
     dbConnections?.isLoading ||
     isFetchingApps > 0 ? (
@@ -63,7 +27,6 @@ const Dashboard = () => {
         boxShadow="invision"
         p={2}
         backgroundColor="white"
-        // height="250px"
         style={{ margin: "50px" }}
       >
         <Box style={{ margin: "25px" }}>

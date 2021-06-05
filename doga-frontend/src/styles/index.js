@@ -2,7 +2,6 @@ import styled from "@emotion/styled";
 import { height, variant } from "styled-system";
 import { motion } from "framer-motion";
 import theme from "./theme";
-// import ScaleLoader from "react-spinners/ScaleLoader";
 
 import {
   space,
@@ -49,12 +48,9 @@ export const Box = styled.div(
         marginTop: "1.25rem",
         padding: "0.75rem",
         borderWidth: "1px",
-        // borderRadius: "12px",
-        /* z-index: 1; */
+
         background: "white",
         margin: "1.5rem 2.5rem",
-        /* width: 98%; */
-        // border: "2px solid rgb(226, 232, 240)",
       },
       loader: {
         position: "fixed",
@@ -183,14 +179,12 @@ export const Button = styled("button")(
 
     outline: "none",
     border: "none",
-    // boxShadow: "0 20px 20px -15px rgba(127, 0, 255, .8)",
 
     userSelect: "none",
     padding: "0.75em 1.75em",
     borderRadius: "5px",
     display: "inline-block",
     color: "#ffffff",
-    // backgroundImage: "linear-gradient(to right, #7f00ff, #8b008bd4)",
     boxShadow: "#382e6c 0px 2px 4px 1px",
     background: "#8071b3",
     "&:hover": {
@@ -203,26 +197,14 @@ export const Button = styled("button")(
       primary: {
         width: "110px",
       },
-      secondary: {
-        // border: "1px solid #492897",
-        // borderRadius: "4px 0 4px 0",
-        // color: "#492897",
-        // fontSize: "19px",
-        // backgroundImage: "none",
-        // bg: "orange",
-        // boxShadow: "0px 4px 14px rgba(237, 107, 101, 0.9)",
-      },
+      secondary: {},
       tableAdd: {
-        // border: "1px solid #492897",
         borderRadius: "4px 0 4px 0",
         color: "purple",
         backgroundColor: "rgb(241 218 249)",
         width: "-webkit-fill-available",
 
         backgroundImage: "none",
-
-        // bg: "orange",
-        // boxShadow: "0px 4px 14px rgba(237, 107, 101, 0.9)",
       },
       toggleTable: {
         color: "purple",
@@ -392,7 +374,6 @@ export const H2 = styled.h2(
   {
     fontSize: "2rem",
     color: "#8071b3",
-    // fontFamily: theme.fonts.DM,
     fontWeight: "500",
     lineHeight: "18px",
     marginBottom: "0.5rem",
@@ -576,18 +557,3 @@ export const TextArea = styled("textArea")(
   border,
   shadow
 );
-
-// export function LButton({ label, type, loading, ...props }) {
-//   return (
-//     <Button {...props} type={type}>
-//       {loading ? (
-//         <ScaleLoader
-//           color={type === "primary" ? "#fff" : "#ed6b65"}
-//           height={16}
-//         />
-//       ) : (
-//         label
-//       )}
-//     </Button>
-//   );
-// }

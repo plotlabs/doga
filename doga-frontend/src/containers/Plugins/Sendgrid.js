@@ -17,13 +17,12 @@ import {
 import { BsPlusCircleFill } from "react-icons/bs";
 import { FaUser } from "react-icons/fa";
 import { AiOutlineDelete } from "react-icons/ai";
-import { useQuery, useQueryClient } from "react-query";
+import { useQuery } from "react-query";
 import Api, { APIURLS } from "../../Api";
 
 const Sendgrid = (props) => {
   const [token] = useGlobal("token");
   const { handleSubmit, register, errors } = useForm();
-  const [toggle, setToggle] = useState(true);
   const [username, setUsername] = useState();
   const [userKey, setUserKey] = useState();
   const [templateValueCheck, setTemplateValueCheck] = useState();
@@ -37,12 +36,10 @@ const Sendgrid = (props) => {
     authRedirect = <Redirect to="/dashboard" />;
   }
   const toast = createStandaloneToast();
-  const queryClient = useQueryClient();
   const { data } = useQuery([APIURLS.getContentType], {
     enabled: !!token,
   });
-  console.log(userList, "user", userTemplateList);
-  //   let contentTypeApps = null;
+
   let selectAppName = [];
   if (data) {
     for (let key in data) {
@@ -86,7 +83,6 @@ const Sendgrid = (props) => {
     }
   }
   const addUserHandler = () => {
-    // setUserList(JSON.stringify({ ...userList, [username]: userEmail }));
     setUserList({ ...userList, [username]: userEmail });
     setUsername("");
     setUserEmail("");
@@ -107,7 +103,6 @@ const Sendgrid = (props) => {
     setUserTemplateList({ ...obj });
   };
 
-  console.log("list", userList);
   return (
     <>
       {authRedirect}

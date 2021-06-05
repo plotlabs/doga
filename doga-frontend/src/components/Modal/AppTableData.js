@@ -1,40 +1,19 @@
 import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { useGlobal } from "reactn";
-import { NavLink } from "react-router-dom";
-import {
-  Box,
-  ResponsiveImage,
-  Image,
-  Button,
-  StyledLink,
-  Span,
-  MotionBox,
-  H2,
-  H1,
-  Input,
-  Label,
-} from "../../styles";
+import { Box, Button, Span, Input, Label } from "../../styles";
 import DateTimePicker from "react-datetime-picker";
 import {
   Modal,
   ModalOverlay,
   ModalContent,
   ModalHeader,
-  ModalFooter,
   ModalBody,
   ModalCloseButton,
 } from "@chakra-ui/react";
-import { Icon } from "@chakra-ui/react";
 import { useQuery, useQueryClient } from "react-query";
-import { useToast, createStandaloneToast } from "@chakra-ui/react";
-import Api, {
-  setHeader,
-  setJwtHeader,
-  APIURLS,
-  ApiJwt,
-  ApiApp,
-} from "../../Api";
+import { createStandaloneToast } from "@chakra-ui/react";
+import { setJwtHeader, APIURLS, ApiJwt, ApiApp } from "../../Api";
 import Select from "react-select";
 import { CKEditor } from "@ckeditor/ckeditor5-react";
 import ClassicEditor from "@ckeditor/ckeditor5-build-classic";
@@ -72,17 +51,8 @@ const AppTableData = ({
       enabled: !!token,
     }
   );
-  console.log(data?.result);
-  //   const [loading, setLoading] = useState(false);
-  //   const [success, setSuccess] = useState(false);
-  //   const [apiErr, setApiErr] = useState(null);
-  //   const queryClient = useQueryClient();
-  //   const toast = createStandaloneToast();
-  console.log(markedImage, "Hereeeeeee");
   useEffect(() => {
     let token = Object.entries(columns).map(([prop, val]) => {
-      console.log(val);
-      console.log("here", value, [val?.type], val?.name);
       if (
         val.type === "DATETIME" ||
         val.type === "TIME" ||
@@ -101,16 +71,13 @@ const AppTableData = ({
       if (val.type === "BLOB") {
         let obj = selectedBinaryType;
         obj[val?.name] = "";
-        console.log(obj, "setSelectedBinaryType");
         setSelectedBinaryType(obj);
       }
     });
   }, []);
 
-  console.log(selectedBooleanType, "selectedBooleanType");
   const richTextHandler = (event, editor) => {
     const data = editor.getData();
-    console.log(data);
     setHtml(data);
   };
 
@@ -146,20 +113,9 @@ const AppTableData = ({
     let obj = value;
     obj[name] = e;
     setValue(obj);
-
-    console.log(name);
-    console.log(obj);
-    console.log(e);
   };
-  console.log(value);
   let fields = null;
   fields = Object.entries(columns).map(([prop, val]) => {
-    console.log(val);
-    console.log("here", val.name);
-
-    // if (val.type === "DATETIME" || val.type === "TIME" || val.type === "DATE") {
-    //   setValue({ ...value, [val?.type]: val?.name });
-    // }
     return (
       <>
         <Label>{val.name}</Label>
@@ -219,11 +175,9 @@ const AppTableData = ({
                 paddingTop: "10px",
               }}
             >
-              {" "}
               <DateTimePicker
                 value={value[val.name]}
                 onChange={(e) => setValue({ ...value, [val.name]: e })}
-                // parseDate={(str) => new Date(str)}
                 format={"y-MM-d"}
               />{" "}
             </Box>
@@ -257,7 +211,6 @@ const AppTableData = ({
               <DateTimePicker
                 value={value[val.name]}
                 onChange={(e) => setValue({ ...value, [val.name]: e })}
-                // parseDate={(str) => new Date(str)}
                 format={"y-MM-dd h:m:s"}
               />{" "}
             </Box>
@@ -271,7 +224,6 @@ const AppTableData = ({
                 fontSize={3}
                 p={2}
                 width="100%"
-                // defaultValue={edit ? `${columns[edit]?.default}` : null}
                 ref={register}
                 mb={2}
               />
@@ -292,7 +244,6 @@ const AppTableData = ({
                 fontSize={3}
                 p={2}
                 width="100%"
-                // defaultValue={edit ? `${columns[edit]?.default}` : null}
                 ref={register}
                 mb={2}
               />
@@ -313,7 +264,6 @@ const AppTableData = ({
                 fontSize={3}
                 p={2}
                 width="100%"
-                // defaultValue={edit ? `${columns[edit]?.default}` : null}
                 ref={register}
                 mb={2}
               />
@@ -355,10 +305,7 @@ const AppTableData = ({
               }}
             >
               <Select
-                key={0}
-                // value={selectedBooleanType[val.name]}
-                // onChange={(e) => setValue()}
-                // value={selectedBooleanType}
+                key={"boolen-select"}
                 value={booleanTypesOptions.filter(
                   (option) => option.label === selectedBooleanType[val.name]
                 )}
@@ -384,7 +331,7 @@ const AppTableData = ({
               }}
             >
               <Select
-                key={0}
+                key={"blob-select"}
                 value={binaryTypesOptions.filter(
                   (option) => option.label === selectedBinaryType[val.name]
                 )}
@@ -413,17 +360,9 @@ const AppTableData = ({
                 <CKEditor
                   editor={ClassicEditor}
                   onReady={(editor) => {
-                    // You can store the "editor" and use when it is needed.
                     console.log("Editor is ready to use!", editor);
                   }}
                   onChange={richTextHandler}
-
-                  // onBlur={(event, editor) => {
-                  //   console.log("Blur.", editor);
-                  // }}
-                  // onFocus={(event, editor) => {
-                  //   console.log("Focus.", editor);
-                  // }}
                 />
               </div>
             </Box>
@@ -462,12 +401,7 @@ const AppTableData = ({
               )}
             </Box>
           )}
-          {/* {errors?.name && (
-            <Span color="orange" mb={4}>
-              {errors?.name?.message}
-            </Span>
-          )} */}
-        </Box>{" "}
+        </Box>
       </>
     );
   });
@@ -488,7 +422,6 @@ const AppTableData = ({
         Dec: "12",
       },
       date = str.split(" ");
-    console.log(type, "inside", str);
     if (type === "DATETIME") {
       return [[date[3], mnths[date[1]], date[2]].join("-"), date[4]].join(" ");
     } else if (type === "DATE") {
@@ -499,10 +432,7 @@ const AppTableData = ({
   }
 
   async function handleSignup(params) {
-    console.log(params);
-    console.log("see1", selectedBooleanType);
     for (let key in columns) {
-      console.log(key, columns, columns[key]["type"]);
       if (
         columns[key]["type"] === "INTEGER" ||
         columns[key]["type"] === "Integer" ||
@@ -523,7 +453,6 @@ const AppTableData = ({
         params[name] = convert(`${value[name]}`, columns[key]["type"]);
       } else if (columns[key]["type"] === "DATETIME") {
         let name = columns[key]["name"];
-        console.log("def1", value.name);
         params[name] = convert(`${value[name]}`, columns[key]["type"]);
       } else if (columns[key]["type"] === "DATE") {
         let name = columns[key]["name"];
@@ -547,7 +476,6 @@ const AppTableData = ({
         params[name] = markedImage;
       }
     }
-    console.log(params, value);
     try {
       let { data } =
         basejwt && restrictByJwt && editDataId
@@ -596,7 +524,7 @@ const AppTableData = ({
           APIURLS.getTableContent({ app, table }),
         ]);
       }
-      console.log("see2", queryClient.isFetching());
+
       toast({
         title: "Data Added.",
         description: data?.result,
@@ -606,7 +534,6 @@ const AppTableData = ({
       });
       setMarkedImage();
       onClose();
-      console.log("there", data);
     } catch ({ response }) {
       toast({
         title: "An error occurred.",
@@ -615,7 +542,6 @@ const AppTableData = ({
         duration: 9000,
         isClosable: true,
       });
-      console.log(response);
     }
   }
 

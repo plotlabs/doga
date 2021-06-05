@@ -1,71 +1,31 @@
 import React, { useState, useEffect } from "react";
-import { useForm } from "react-hook-form";
 import { useGlobal } from "reactn";
 import { NavLink } from "react-router-dom";
-import Api, { setHeader, APIURLS, setDefaultBaseUrl } from "../../Api";
-import { useQuery, useQueryClient } from "react-query";
-import {
-  Box,
-  ResponsiveImage,
-  Image,
-  Button,
-  StyledLink,
-  Span,
-  MotionBox,
-  H2,
-  H6,
-  H3,
-  Input,
-  Label,
-  H5,
-  Para,
-} from "../../styles";
+import Api, { APIURLS, setDefaultBaseUrl } from "../../Api";
+import { useQuery } from "react-query";
+import { Box, Image, Button, H2, H6, H3, H5, Para } from "../../styles";
 import {
   Menu,
   MenuButton,
   MenuList,
   MenuItem,
-  MenuItemOption,
-  MenuGroup,
-  MenuOptionGroup,
-  MenuIcon,
-  MenuCommand,
-  MenuDivider,
+  Icon,
+  createStandaloneToast,
+  useDisclosure,
 } from "@chakra-ui/react";
-import { Icon } from "@chakra-ui/react";
-import { FaUserAlt, FaDatabase } from "react-icons/fa";
-import { FcAcceptDatabase } from "react-icons/fc";
-import { IoAppsSharp } from "react-icons/io5";
-import { SiAmazonaws } from "react-icons/si";
 import { BsFillLockFill } from "react-icons/bs";
-import { BsAppIndicator, BsTable } from "react-icons/bs";
-import { TiExport } from "react-icons/ti";
-import { useToast, createStandaloneToast } from "@chakra-ui/react";
-import { AiOutlineCloudServer } from "react-icons/ai";
-import { useDisclosure } from "@chakra-ui/react";
-import CreateDatabase from "../CreateDatabase/CreateDatabase";
-import Application from "../Application/Application";
-import AwsDeploy from "../../components/Modal/AwsDeploy";
-
+import { BsTable } from "react-icons/bs";
 import { IoRocketSharp } from "react-icons/io5";
-import { useIsFetching } from "react-query";
 import ClipLoader from "react-spinners/ClipLoader";
-import { Chart } from "chart.js";
-import { Doughnut, Line } from "react-chartjs-2";
 import { useParams } from "react-router";
 import AppTableCreation from "../../components/Modal/AppTableCreation";
 import DoughnutChart from "./DoughnutChart";
+
 const AppHome = () => {
   let { app } = useParams();
   const [baseURL, setBaseURL] = useGlobal("baseURL");
-  // const [selectedBaseUrl, setSelectedBaseUrl] = useState(
-  //   baseURL[app]?.selected || "http://0.0.0.0:8080/"
-  // );
-  const queryClient = useQueryClient();
-  const userProfile = useQuery(APIURLS.userInfo);
   const toast = createStandaloneToast();
-  //   const appsCreated = useQuery(APIURLS.dashboardInfo(app, all));
-  const { data, isLoading } = useQuery(APIURLS.appStats(app));
+  const { data } = useQuery(APIURLS.appStats(app));
 
   useEffect(() => {
     setDefaultBaseUrl(baseURL[app]?.selected || "http://0.0.0.0:8080/");
@@ -82,12 +42,9 @@ const AppHome = () => {
       },
     });
   }, [app, data]);
-  console.log(baseURL, "outBASEURL");
-  const appDocs = useQuery(APIURLS.appDocs(app));
 
   const appData = useQuery(APIURLS.getContentType);
 
-  const dbConnections = useQuery(APIURLS.getDbConnections);
   const { isOpen, onOpen, onClose } = useDisclosure();
 
   const [openModal, setOpenModal] = useState();
@@ -95,7 +52,6 @@ const AppHome = () => {
     setOpenModal(key);
     onOpen();
   };
-  const isFetching = useIsFetching();
 
   async function exportAppHandler() {
     try {
@@ -124,72 +80,67 @@ const AppHome = () => {
   let relation = null;
 
   if (data != null && data.relationships) {
-    relation = data?.relationships.map((key) => {
+    relation = data?.relationships.map((key, index) => {
       return (
-        <>
+        <Box
+          key={index.toString()}
+          type="row"
+          style={{ borderRight: "1px solid gray", paddingRight: "30px" }}
+        >
           <Box
-            type="row"
-            style={{ borderRight: "1px solid gray", paddingRight: "30px" }}
+            type="column"
+            style={{
+              textAlign: "center",
+              padding: "12px",
+            }}
           >
-            <Box
-              type="column"
+            <H5 color={"#6E798C"} style={{ fontSize: "1.15rem" }}>
+              {key.relation_from.table_name}
+            </H5>
+            <H5 color={"#6E798C"} style={{ fontSize: "1.15rem" }}>
+              {key.relation_from.column_name}
+            </H5>
+            <Para
+              color={"#6E798C"}
               style={{
-                textAlign: "center",
-                padding: "12px",
+                fontWeight: "600",
+                color: "purple",
+                whiteSpace: "nowrap",
+                fontSize: "1.15rem",
               }}
             >
-              <H5 color={"#6E798C"} style={{ fontSize: "1.15rem" }}>
-                {/* {"table Name: "} */}
-                {key.relation_from.table_name}
-              </H5>
-              <H5 color={"#6E798C"} style={{ fontSize: "1.15rem" }}>
-                {/* {"Field: "} */}
-                {key.relation_from.column_name}
-              </H5>
-              <Para
-                color={"#6E798C"}
-                style={{
-                  fontWeight: "600",
-                  color: "purple",
-                  whiteSpace: "nowrap",
-                  fontSize: "1.15rem",
-                }}
-              >
-                {"Relation From"}
-              </Para>
-            </Box>
-            <Box type="column" style={{ alignItems: "center" }}>
-              <Para style={{ paddinLeft: "45px" }}>{key.relation_type}</Para>
-              <Image src={`/${key.relation_type}.png`}></Image>
-            </Box>
-            <Box
-              type="column"
-              style={{
-                textAlign: "center",
-              }}
-            >
-              <H5 color={"#6E798C"} style={{ fontSize: "1.15rem" }}>
-                {/* {"table Name: "} */}
-                {key.relation_to.table_name}
-              </H5>
-              <H5 color={"#6E798C"} style={{ fontSize: "1.15rem" }}>
-                {/* {"Field: "} */}
-                {key.relation_to.column_name}
-              </H5>
-              <Para
-                color={"#6E798C"}
-                style={{
-                  fontWeight: "600",
-                  color: "purple",
-                  whiteSpace: "nowrap",
-                  fontSize: "1.15rem",
-                }}
-              >
-                {"Relation To"}
-              </Para>
-            </Box>
+              {"Relation From"}
+            </Para>
           </Box>
-        </>
+          <Box type="column" style={{ alignItems: "center" }}>
+            <Para style={{ paddinLeft: "45px" }}>{key.relation_type}</Para>
+            <Image src={`/${key.relation_type}.png`}></Image>
+          </Box>
+          <Box
+            type="column"
+            style={{
+              textAlign: "center",
+            }}
+          >
+            <H5 color={"#6E798C"} style={{ fontSize: "1.15rem" }}>
+              {key.relation_to.table_name}
+            </H5>
+            <H5 color={"#6E798C"} style={{ fontSize: "1.15rem" }}>
+              {key.relation_to.column_name}
+            </H5>
+            <Para
+              color={"#6E798C"}
+              style={{
+                fontWeight: "600",
+                color: "purple",
+                whiteSpace: "nowrap",
+                fontSize: "1.15rem",
+              }}
+            >
+              {"Relation To"}
+            </Para>
+          </Box>
+        </Box>
       );
     });
   }
@@ -206,6 +157,7 @@ const AppHome = () => {
       },
     });
   };
+
   return false ? (
     <Box type="loader">
       <ClipLoader color={"#ffffff"} size={55} />
@@ -225,8 +177,6 @@ const AppHome = () => {
               ? appData.data[app]["jwt_info"]
               : null
           }
-          // connectionSelected={data[id].connection_name}
-          // columns={data[id].columns}
         />
       ) : null}
       <Box type="heading" textAlign="center">
@@ -237,7 +187,7 @@ const AppHome = () => {
               Create New Table
             </Button>
             <Button onClick={() => exportAppHandler()}>Export Your App</Button>
-            {/* <Button>Deploy Your App</Button> */}
+
             <NavLink to={`/application/docs/${app}`}>
               <Button>App Docs</Button>
             </NavLink>
@@ -259,9 +209,12 @@ const AppHome = () => {
               {baseURL[app]?.selected || "Server"}
             </MenuButton>
             <MenuList>
-              {baseURL[app]?.options?.map((value) => {
+              {baseURL[app]?.options?.map((value, index) => {
                 return (
-                  <MenuItem onClick={() => urlChangeHandler(value)}>
+                  <MenuItem
+                    key={`${index}-menu`}
+                    onClick={() => urlChangeHandler(value)}
+                  >
                     <Para>{value}</Para>
                   </MenuItem>
                 );
@@ -527,15 +480,12 @@ const AppHome = () => {
               <Box
                 display="grid"
                 gridTemplateColumns={["1fr", "1fr 1fr"]}
-                // mb={8}
                 gridGap={4}
-                style={{}}
               >
                 {relation}
               </Box>
             ) : (
               <Para>
-                {" "}
                 Relationships have not defined between any tables yet!
               </Para>
             )}

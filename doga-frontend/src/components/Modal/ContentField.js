@@ -1,36 +1,16 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useGlobal } from "reactn";
-import { Checkbox, CheckboxGroup } from "@chakra-ui/react";
-import { NavLink } from "react-router-dom";
-import {
-  Box,
-  ResponsiveImage,
-  Image,
-  Button,
-  StyledLink,
-  Span,
-  MotionBox,
-  H2,
-  H1,
-  Input,
-  Label,
-  Para,
-} from "../../styles";
+import { Box, Button, Span, Input, Label, Para } from "../../styles";
 import {
   Modal,
   ModalOverlay,
   ModalContent,
   ModalHeader,
-  ModalFooter,
   ModalBody,
   ModalCloseButton,
 } from "@chakra-ui/react";
 import { Switch } from "@chakra-ui/react";
-// import { useQueryClient } from "react-query";
-// import { useToast, createStandaloneToast } from "@chakra-ui/react";
-// import Api, { setHeader, APIURLS } from "../../Api";
-import { Icon } from "@chakra-ui/react";
 import { useQuery, useQueryClient } from "react-query";
 import { useToast, createStandaloneToast } from "@chakra-ui/react";
 import Api, { setHeader, APIURLS } from "../../Api";
@@ -58,16 +38,10 @@ const ContentField = ({
   const [relatedTable, setRelatedTable] = useState();
   const [relatedField, setRelatedField] = useState();
   const [value, setValue] = React.useState("1");
-  //   const queryClient = useQueryClient();
   const toast = createStandaloneToast();
   const queryClient = useQueryClient();
   const columnTypes = useQuery(APIURLS.getColumnTypes);
   const contentType = useQuery(APIURLS.getContentType);
-  //   const [loading, setLoading] = useState(false);
-  //   const [success, setSuccess] = useState(false);
-  //   const [apiErr, setApiErr] = useState(null);
-  //   const queryClient = useQueryClient();
-  //   const toast = createStandaloneToast();
 
   async function foreignkeyfn() {
     let foreignKeyCheckValue = foreignKeyCheck;
@@ -78,9 +52,7 @@ const ContentField = ({
         type: selectedFieldType,
       });
       setForeignKeyOptions(data);
-    } catch ({ response }) {
-      console.log(response);
-    }
+    } catch ({ response }) {}
   }
 
   async function relationshipfn() {
@@ -92,18 +64,14 @@ const ContentField = ({
         type: "",
       });
       setRelationOptions(data);
-    } catch ({ response }) {
-      console.log(response);
-    }
+    } catch ({ response }) {}
   }
 
-  console.log("here", columns);
   let columnTypesOptions = [];
 
   if (columnTypes?.data?.result) {
     {
       Object.entries(columnTypes?.data?.result).map(([prop, val]) => {
-        // console.log(val);
         return columnTypesOptions.push({ value: val, label: val });
       });
     }
@@ -113,16 +81,13 @@ const ContentField = ({
   if (foreignKeyOptions) {
     {
       Object.entries(foreignKeyOptions).map(([prop, val]) => {
-        // console.log(val);
         return foreignkeyTable.push({ value: prop, label: prop });
       });
     }
   }
   let foreignkeyColumns = [];
   if (foreignKeyTable) {
-    console.log(foreignKeyOptions[foreignKeyTable]);
     for (let key in foreignKeyOptions[foreignKeyTable]) {
-      console.log(foreignKeyOptions[foreignKeyTable][key]);
       foreignkeyColumns.push({
         value: foreignKeyOptions[foreignKeyTable][key],
         label: foreignKeyOptions[foreignKeyTable][key],
@@ -133,16 +98,13 @@ const ContentField = ({
   if (relationOptions) {
     {
       Object.entries(relationOptions).map(([prop, val]) => {
-        // console.log(val);
         return relationTable.push({ value: prop, label: prop });
       });
     }
   }
   let relationColumns = [];
   if (relatedTable) {
-    // console.log(relationOptions[relationTable]);
     for (let key in relationOptions[relatedTable]) {
-      console.log(relationOptions[relatedTable][key]);
       relationColumns.push({
         value: relationOptions[relatedTable][key],
         label: relationOptions[relatedTable][key],
@@ -150,17 +112,10 @@ const ContentField = ({
     }
   }
 
-  console.log("foreignkeyTable", relationTable);
-  console.log("foreignKeyOptions", relationOptions);
-  console.log("foreignkeyColumns", relationColumns);
-  console.log("sds", foreignKeyCheck);
-
   async function handleSignup(params) {
-    // console.log(params);
     try {
       let def = params.default;
       if (selectedFieldType === ("INTEGER" || "INT" || "Integer")) {
-        console.log("inttt");
         def = parseInt(params.default);
       }
       if (foreignkeyColumns && foreignKeyCheck) {
@@ -213,7 +168,6 @@ const ContentField = ({
         isClosable: false,
       });
       onClose();
-      console.log("there", columns);
     } catch ({ response }) {
       toast({
         title: "An error occurred.",
@@ -222,12 +176,7 @@ const ContentField = ({
         duration: 9000,
         isClosable: true,
       });
-      console.log(response);
-      //   setApiErr(response?.data?.message);
-      //   setLoading(false);`
     }
-    // setTableName(params.name);
-    // setStep(3);
   }
 
   return (
@@ -246,23 +195,6 @@ const ContentField = ({
                 onSubmit={handleSubmit(handleSignup)}
                 style={{ width: "35vw" }}
               >
-                {/* <Box type="relative"> */}
-                {/* <Input
-                  name="tableName"
-                  color="grey"
-                  required
-                  fontSize={3}
-                  p={2}
-                  width="100%"
-                  ref={register}
-                  mb={2}
-                />
-
-                {errors?.name && (
-                  <Span color="orange" mb={4}>
-                    {errors?.name?.message}
-                  </Span>
-                )} */}
                 <Label>Select Field type</Label>
                 <Box
                   style={{
@@ -359,17 +291,6 @@ const ContentField = ({
                   )}
                 </Box>
 
-                {/* <Checkbox
-                  isChecked={foreignKeyCheck}
-                  // isIndeterminate={foreignKeyCheck}
-                  onChange={(e) => setForeignKeyCheck(e.target.checked)}
-                  // value={true}
-                  // isIndeterminate={isIndeterminate}
-                  // onChange={(e) => setCheckedItems([e.target.checked, e.target.checked])}
-                  onClick={foreignkeyfn}
-                >
-                  Do you want to add foreign key
-                </Checkbox> */}
                 <Box>
                   <Switch
                     size="lg"
@@ -394,12 +315,6 @@ const ContentField = ({
                   <Select
                     key={1}
                     style={{ marginBottom: "5px" }}
-                    // value={edit ? `${columns[edit]?.type}` : selectedFieldType}
-                    // value={columnTypesOptions.filter((option) =>
-                    //   edit
-                    //     ? option.label === selectedFieldTypeEdit
-                    //     : option.label === selectedFieldType
-                    // )}
                     onChange={({ value }) => setForeignKeyTable(value)}
                     required
                     theme={CARD_ELEMENT_OPTIONS}
@@ -416,17 +331,6 @@ const ContentField = ({
                 >
                   <Select
                     key={2}
-                    // value={edit ? `${columns[edit]?.type}` : selectedFieldType}
-                    // value={columnTypesOptions.filter((option) =>
-                    //   edit
-                    //     ? option.label === selectedFieldTypeEdit
-                    //     : option.label === selectedFieldType
-                    // )}
-                    // onChange={({ value }) =>
-                    //   edit
-                    //     ? setSelectedFieldTypeEdit(value)
-                    //     : setSelectedFieldType(value)
-                    // }
                     onChange={({ value }) => setForeignKeyColumn(value)}
                     required
                     theme={CARD_ELEMENT_OPTIONS}
@@ -454,12 +358,6 @@ const ContentField = ({
                 >
                   <Select
                     key={1}
-                    // value={edit ? `${columns[edit]?.type}` : selectedFieldType}
-                    // value={columnTypesOptions.filter((option) =>
-                    //   edit
-                    //     ? option.label === selectedFieldTypeEdit
-                    //     : option.label === selectedFieldType
-                    // )}
                     onChange={({ value }) => setRelationshipType(value)}
                     required
                     theme={CARD_ELEMENT_OPTIONS}
@@ -493,17 +391,6 @@ const ContentField = ({
                 >
                   <Select
                     key={2}
-                    // value={edit ? `${columns[edit]?.type}` : selectedFieldType}
-                    // value={columnTypesOptions.filter((option) =>
-                    //   edit
-                    //     ? option.label === selectedFieldTypeEdit
-                    //     : option.label === selectedFieldType
-                    // )}
-                    // onChange={({ value }) =>
-                    //   edit
-                    //     ? setSelectedFieldTypeEdit(value)
-                    //     : setSelectedFieldType(value)
-                    // }
                     onChange={({ value }) => setRelatedTable(value)}
                     required
                     theme={CARD_ELEMENT_OPTIONS}
@@ -520,17 +407,6 @@ const ContentField = ({
                 >
                   <Select
                     key={3}
-                    // value={edit ? `${columns[edit]?.type}` : selectedFieldType}
-                    // value={columnTypesOptions.filter((option) =>
-                    //   edit
-                    //     ? option.label === selectedFieldTypeEdit
-                    //     : option.label === selectedFieldType
-                    // )}
-                    // onChange={({ value }) =>
-                    //   edit
-                    //     ? setSelectedFieldTypeEdit(value)
-                    //     : setSelectedFieldType(value)
-                    // }
                     onChange={({ value }) => setRelatedField(value)}
                     required
                     theme={CARD_ELEMENT_OPTIONS}

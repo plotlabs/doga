@@ -1,29 +1,16 @@
 import React, { useState, useEffect } from "react";
-import {
-  Box,
-  ResponsiveImage,
-  Image,
-  Button,
-  StyledLink,
-  Span,
-  H1,
-  H2,
-  H5,
-  MotionBox,
-  Para,
-} from "../../styles";
+import { Box, Button, Span, H5, Para } from "../../styles";
 import { useGlobal } from "reactn";
 import {
   Accordion,
   AccordionItem,
   AccordionButton,
   AccordionPanel,
-  AccordionIcon,
+  Avatar,
+  Tooltip,
+  Icon,
 } from "@chakra-ui/react";
-import { Avatar, AvatarBadge, AvatarGroup } from "@chakra-ui/react";
-import { Tooltip } from "@chakra-ui/react";
 import { Redirect } from "react-router-dom";
-import { Icon } from "@chakra-ui/react";
 import { FaEdit } from "react-icons/fa";
 import { AiOutlineDelete } from "react-icons/ai";
 import { AiOutlineCaretDown, AiOutlineCaretUp } from "react-icons/ai";
@@ -44,7 +31,7 @@ import ContentField from "../../components/Modal/ContentField";
 import AppTableCreation from "../../components/Modal/AppTableCreation";
 import AppTableData from "../../components/Modal/AppTableData";
 import BaseJwtLogin from "../../components/Modal/BaseJwtLogin";
-import { useToast, createStandaloneToast } from "@chakra-ui/react";
+import { createStandaloneToast } from "@chakra-ui/react";
 import { useIsFetching } from "react-query";
 import ClipLoader from "react-spinners/ClipLoader";
 import RichTextView from "../../components/Modal/RichTextView";
@@ -79,12 +66,10 @@ const Content = () => {
 
   setDefaultBaseUrl(baseURL[app]?.selected || "http://0.0.0.0:8080/");
   useEffect(() => {
-    console.log("baseURL[app]?.", baseURL[app]?.selected);
     baseURL[app]
       ? setDefaultBaseUrl(baseURL[app]?.selected)
       : setDefaultBaseUrl("http://0.0.0.0:8080/");
   }, [app, baseURL]);
-  console.log(baseURL);
   const { data, isLoading } = useQuery(APIURLS.getContentType);
   const isFetchingApps = useIsFetching([APIURLS.getContentType]);
   let contentTypeApps = null;
@@ -195,6 +180,7 @@ const Content = () => {
       fieldDataBodyArray.push(val.name);
       return (
         <Th
+          key={`${val}-fieldData`}
           style={{
             color: "#4A5568",
             borderColor: "#EDF2F7",
@@ -292,7 +278,7 @@ const Content = () => {
       ([index, val]) => {
         return (
           <>
-            <Tr style={{ color: "#4A5568" }}>
+            <Tr style={{ color: "#4A5568" }} key={`${val}-field-Data`}>
               <Td
                 style={{
                   color: "#4A5568",
@@ -306,6 +292,7 @@ const Content = () => {
               {Object.entries(fieldDataBodyArray).map(([prop, value]) => {
                 return richTextFields.includes(value) ? (
                   <Td
+                    key={`${value}-rich-text`}
                     style={{
                       color: "#4A5568",
                       borderColor: "#EDF2F7",
@@ -319,6 +306,7 @@ const Content = () => {
                   </Td>
                 ) : imageColumnFields.includes(value) ? (
                   <Td
+                    key={`${value}-image-column`}
                     style={{
                       color: "#4A5568",
                       borderColor: "#EDF2F7",
@@ -340,6 +328,7 @@ const Content = () => {
                   </Td>
                 ) : (
                   <Td
+                    key={`${value}-view`}
                     style={{
                       color: "#4A5568",
                       borderColor: "#EDF2F7",
@@ -472,7 +461,7 @@ const Content = () => {
                             ([i, v]) => {
                               return (
                                 <>
-                                  <Box>
+                                  <Box key={`${v}-fieldData`}>
                                     <H5 fontSize="1.1rem" m={2}>
                                       {"Relationship with "}
                                       {v["realted_table"]} (
@@ -490,6 +479,7 @@ const Content = () => {
                                           return (
                                             <>
                                               <Box
+                                                key={`${values}-related`}
                                                 style={{
                                                   borderBottom:
                                                     "2px solid rgb(226 232 240)",
@@ -500,11 +490,11 @@ const Content = () => {
                                                 {Object.entries(values).map(
                                                   ([key, value]) => {
                                                     return (
-                                                      <>
-                                                        <Para>
-                                                          {key} : {value}
-                                                        </Para>
-                                                      </>
+                                                      <Para
+                                                        key={`${value}-pair`}
+                                                      >
+                                                        {key} : {value}
+                                                      </Para>
                                                     );
                                                   }
                                                 )}
@@ -554,22 +544,9 @@ const Content = () => {
   }
   let CreateTable,
     exportTable = null;
-  // if (data) {
-  //   CreateTable = (
-  //     <Button onClick={() => openModalHandler(3)} mr={6}>
-  //       Create New Table
-  //     </Button>
-  //   );
-  //   exportTable = (
-  //     <Button onClick={() => exportAppHandler()}>Export App</Button>
-  //   );
-  // }
+
   let editTable = null;
-  // if (data) {
-  //   editTable = (
-  //     <Button }>Create New Table</Button>
-  //   );
-  // }
+
   let modal = null;
   const openModalHandler = (key) => {
     setOpenModal(key);

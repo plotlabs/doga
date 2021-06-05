@@ -1,38 +1,20 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useGlobal } from "reactn";
 import { NavLink } from "react-router-dom";
 import { Redirect } from "react-router-dom";
-import {
-  Box,
-  ResponsiveImage,
-  Image,
-  Button,
-  StyledLink,
-  Span,
-  MotionBox,
-  H2,
-  H1,
-  Input,
-  Label,
-} from "../../styles";
+import { Box, Button, Span, MotionBox, H2, Input, Label } from "../../styles";
 import Api, { setHeader, APIURLS } from "../../Api";
 import { Icon } from "@chakra-ui/react";
-import { FaUserAlt } from "react-icons/fa";
 import { MdEmail } from "react-icons/md";
 import { RiLockPasswordFill } from "react-icons/ri";
 import ClipLoader from "react-spinners/ClipLoader";
-import { useToast, createStandaloneToast } from "@chakra-ui/react";
-import { useQuery, useQueryClient } from "react-query";
+import { createStandaloneToast } from "@chakra-ui/react";
 
 const Login = () => {
-  // const router = useRouter();
   const [token, setToken] = useGlobal("token");
-  // const [, setForgotPassword] = useGlobal("forgotPassword");
-  // const [oldVersionModal, setOldVersionModal] = useState(false);
   const [loading, setLoading] = useState(false);
   const [apiErr, setApiErr] = useState(null);
-  // const [token] = useGlobal("token");
   const { handleSubmit, register, errors } = useForm();
   const toast = createStandaloneToast();
   let authRedirect = null;
@@ -40,17 +22,11 @@ const Login = () => {
     authRedirect = <Redirect to="/dashboard" />;
   }
 
-  // useEffect(() => {
-  //   // router.prefetch("/dashboard");
-  // }, []);
-
   async function handleSignup(params) {
     try {
       setApiErr(null);
       setLoading(true);
       let { data } = await Api.post(APIURLS.login, params);
-      // let version = data?.data.version;
-
       let token = data?.access_token;
       let userId = data?.id;
       let userEmail = data?.email;
@@ -113,7 +89,6 @@ const Login = () => {
             justifyContent="center"
             style={{
               width: "30%",
-              // padding: "50px",
               borderRadius: "10px",
               boxShadow: "#161617 0px 2px 4px -1px",
               backgroundColor: "#ffffff",
@@ -139,7 +114,6 @@ const Login = () => {
                     required
                     fontSize={3}
                     p={2}
-                    //   placeholder=""
                     width="100%"
                     ref={register}
                     mb={2}
@@ -166,7 +140,6 @@ const Login = () => {
                     fontSize={3}
                     required
                     p={2}
-                    //   placeholder=""
                     ref={register}
                     width="100%"
                     mb={2}

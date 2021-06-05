@@ -1,25 +1,7 @@
-import React, { useState, useEffect } from "react";
-import { useForm } from "react-hook-form";
-import { useGlobal } from "reactn";
-import { NavLink } from "react-router-dom";
-import Api, { setHeader, APIURLS } from "../../Api";
-import { useQuery, useQueryClient } from "react-query";
-import {
-  Box,
-  ResponsiveImage,
-  Image,
-  Button,
-  StyledLink,
-  Span,
-  MotionBox,
-  H2,
-  H1,
-  Input,
-  Label,
-  H5,
-  Para,
-} from "../../styles";
-import { Icon } from "@chakra-ui/react";
+import React from "react";
+import { APIURLS } from "../../Api";
+import { useQuery } from "react-query";
+import { Box, Button, Span, H5, Para } from "../../styles";
 import {
   Accordion,
   AccordionItem,
@@ -27,29 +9,12 @@ import {
   AccordionPanel,
   AccordionIcon,
 } from "@chakra-ui/react";
-import { useToast, createStandaloneToast } from "@chakra-ui/react";
-import { AiOutlineCloudServer } from "react-icons/ai";
-import { useDisclosure } from "@chakra-ui/react";
-import CreateDatabase from "../CreateDatabase/CreateDatabase";
-import Application from "../Application/Application";
-import AwsDeploy from "../../components/Modal/AwsDeploy";
-import { useIsFetching } from "react-query";
 import ClipLoader from "react-spinners/ClipLoader";
-import { Chart } from "chart.js";
-import { Doughnut, Line } from "react-chartjs-2";
 import { useParams } from "react-router";
-import AppTableCreation from "../../components/Modal/AppTableCreation";
+
 const AppDocs = () => {
   let { app } = useParams();
-  const queryClient = useQueryClient();
-  const userProfile = useQuery(APIURLS.userInfo);
-  const toast = createStandaloneToast();
-  //   const appsCreated = useQuery(APIURLS.dashboardInfo(app, all));
-
   const { data, isLoading } = useQuery(APIURLS.appDocs(app));
-  console.log(data?.locked_tables[0]);
-
-  const isFetching = useIsFetching();
 
   return isLoading ? (
     <Box type="loader">
@@ -60,25 +25,16 @@ const AppDocs = () => {
       <Box type="heading" textAlign="center">
         <Span type="heading">App Docs </Span>
       </Box>
-      {/* <H5 type="heading" style={{ padding: "20px", marginTop: "5px" }}>
-        Unrestricted Tables
-      </H5> */}
       <Accordion allowToggle style={{ padding: "20px" }}>
         {data.app_type == "JWT Authenticated" ? (
           <>
-            {/* <H5 type="heading" style={{ padding: "20px", marginTop: "5px" }}>
-              Base Table
-            </H5> */}
-
             {data?.base_table.map((key) => {
-              console.log(key.end_points);
               return (
                 <>
                   <Para fontSize={"1.2rem"} m={3}>
                     {key?.name}
                   </Para>
                   {key?.end_points.map((api) => {
-                    console.log("aoi", api.request_body);
                     return (
                       <AccordionItem>
                         <h2>
@@ -198,9 +154,6 @@ const AppDocs = () => {
             })}
           </>
         ) : null}
-        {/* <H5 type="heading" style={{ padding: "20px", marginTop: "5px" }}>
-          Unrestricted Tables
-        </H5> */}
 
         {data?.unrestricted_tables[0].map((key) => {
           return (
@@ -209,7 +162,6 @@ const AppDocs = () => {
                 {key?.table_name}
               </Para>
               {key?.end_points.map((api) => {
-                console.log("aoi", api);
                 return (
                   <AccordionItem>
                     <h2>
@@ -327,10 +279,6 @@ const AppDocs = () => {
         })}
         {data.app_type == "JWT Authenticated" ? (
           <>
-            {" "}
-            {/* <H5 type="heading" style={{ padding: "20px", marginTop: "5px" }}>
-              Locked Tables
-            </H5> */}
             {data?.locked_tables[0].map((key) => {
               return (
                 <>
@@ -338,7 +286,6 @@ const AppDocs = () => {
                     {key?.table_name}
                   </Para>
                   {key?.end_points.map((api) => {
-                    console.log("aoi", api);
                     return (
                       <AccordionItem>
                         <h2>

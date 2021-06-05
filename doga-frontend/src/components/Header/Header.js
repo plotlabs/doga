@@ -1,94 +1,58 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { useGlobal } from "reactn";
-import {
-  NavLink,
-  Link,
-  useLocation,
-  useParams,
-  useRouteMatch,
-} from "react-router-dom";
-import {
-  Box,
-  ResponsiveImage,
-  Image,
-  Button,
-  StyledLink,
-  Span,
-  H1,
-  H2,
-  Para,
-  MotionBox,
-  H5,
-} from "../../styles";
-import { useDisclosure } from "@chakra-ui/react";
-import { FaUserAlt, FaBell } from "react-icons/fa";
-import { AiFillHome, AiFillCaretDown } from "react-icons/ai";
-import { Tooltip } from "@chakra-ui/react";
-import Trigger from "rc-trigger";
-import { Icon, ChevronDownIcon } from "@chakra-ui/react";
-import AdminProfile from "./AdminProfile";
-import Sidebar from "../Sidebar/Sidebar";
-import {
-  Menu,
-  MenuButton,
-  MenuList,
-  MenuItem,
-  MenuItemOption,
-  MenuGroup,
-  MenuOptionGroup,
-  MenuIcon,
-  MenuCommand,
-  MenuDivider,
-} from "@chakra-ui/react";
-import { useQuery, useQueryClient } from "react-query";
-import { useToast, createStandaloneToast } from "@chakra-ui/react";
-import Api, { setHeader, APIURLS } from "../../Api";
+import { NavLink, Link, useLocation, useRouteMatch } from "react-router-dom";
+import { Box, Button, Para, MotionBox, H5 } from "../../styles";
 import {
   Breadcrumb,
   BreadcrumbItem,
   BreadcrumbLink,
-  BreadcrumbSeparator,
+  createStandaloneToast,
+  Menu,
+  MenuButton,
+  MenuList,
+  MenuItem,
+  MenuGroup,
+  MenuDivider,
+  Icon,
+  Tooltip,
 } from "@chakra-ui/react";
+import { FaBell } from "react-icons/fa";
+import { AiFillHome, AiFillCaretDown } from "react-icons/ai";
+import { useQuery, useQueryClient } from "react-query";
+import Api, { APIURLS } from "../../Api";
 
 const Header = () => {
   const location = useLocation();
   let match = useRouteMatch();
-  console.log(match);
-
   const [token, setToken] = useGlobal("token");
-  const { isOpen, onOpen, onClose } = useDisclosure();
   const queryClient = useQueryClient();
   const toast = createStandaloneToast();
 
-  const { data, loading } = useQuery(APIURLS.getNotifications, {
+  const { data } = useQuery(APIURLS.getNotifications, {
     enabled: !!token,
   });
+
   async function notificationRefreshHandler() {
     try {
       await queryClient.refetchQueries(APIURLS.getNotifications());
-      console.log(data);
     } catch ({ response }) {}
   }
 
-  // console.log(refreshNotifications);
   async function handleLogout() {
     localStorage.removeItem("token");
     localStorage.removeItem("userId");
     localStorage.removeItem("userEmail");
     localStorage.removeItem("userName");
     setToken(null);
-    console.log("tokie");
   }
 
   async function markAllHandler() {
     try {
       let { data } = await Api.post(APIURLS.markAllNotifications);
       await queryClient.refetchQueries(APIURLS.getNotifications());
-      console.log(data);
     } catch ({ response }) {}
   }
   async function markIndividualHandler(id) {
-    console.log(id);
     try {
       let { data } = await Api.post(APIURLS.markIndividualNotifications(), {
         id: id,
@@ -101,7 +65,6 @@ const Header = () => {
         duration: 9000,
         isClosable: false,
       });
-      console.log();
     } catch ({ response }) {
       toast({
         title: "An error occurred.",
@@ -115,7 +78,6 @@ const Header = () => {
 
   return (
     <>
-      {/* <Sidebar isOpen={isOpen} onOpen={onOpen} onClose={onClose} /> */}
       <Box
         gridColumn={2}
         px={4}
@@ -134,14 +96,7 @@ const Header = () => {
               <Tooltip label="Dashboard" placement="top-start" bg="#8071b399">
                 <BreadcrumbLink as={Link} to="/dashboard">
                   {" "}
-                  <Icon
-                    as={AiFillHome}
-                    w={5}
-                    h={5}
-                    // mr={3}
-                    mb={1}
-                    color={"#8071b3"}
-                  />
+                  <Icon as={AiFillHome} w={5} h={5} mb={1} color={"#8071b3"} />
                 </BreadcrumbLink>
               </Tooltip>
             </BreadcrumbItem>
@@ -153,14 +108,7 @@ const Header = () => {
             <BreadcrumbItem>
               <BreadcrumbLink as={Link} to="/dashboard">
                 {" "}
-                <Icon
-                  as={AiFillHome}
-                  w={5}
-                  h={5}
-                  // mr={3}
-                  mb={1}
-                  color={"#8071b3"}
-                />
+                <Icon as={AiFillHome} w={5} h={5} mb={1} color={"#8071b3"} />
               </BreadcrumbLink>
             </BreadcrumbItem>
             <BreadcrumbItem>
@@ -292,9 +240,6 @@ const Header = () => {
               </NavLink>{" "}
             </>
           ) : (
-            // <Button mb={[4, 0]} onClick={handleLogout}>
-            //   Sign out
-            // </Button>
             <>
               <Box type="row" justifyContent="start" mt={2} mb={2}>
                 <Menu
@@ -366,8 +311,9 @@ const Header = () => {
                       ></Box>
 
                       {data?.length ? (
-                        data?.reverse()?.map((key) => (
+                        data?.reverse()?.map((key, index) => (
                           <Box
+                            key={index}
                             borderBottom="1px solid #e1e1e1"
                             py={4}
                             bg={key.mark_read ? "white" : "#80808017"}
@@ -476,61 +422,5 @@ const Header = () => {
     </>
   );
 };
-
-function UserMenu() {
-  // const router = useRouter();
-  const [token, setToken] = useGlobal("token");
-  // const queryCache = useQueryCache();
-
-  // const userProfile = useQuery(APIURLS.getUserDetails, {
-  //   enabled: !!token,
-  // });
-
-  // let user = userProfile?.data?.data?.user || {};
-
-  async function handleLogout() {
-    try {
-      localStorage.clear();
-      setToken(null);
-    } catch (error) {}
-  }
-
-  // useEffect(() => {
-  //   let userId = localStorage.getItem("userId");
-  //   if (userId) {
-  //     connectToPusher(userId);
-  //   }
-  // }, []);
-
-  return (
-    <Box
-      display="flex"
-      flexDirection={["column", "row"]}
-      justifyContent="space-between"
-      alignItems={["flex-end", "center"]}
-      ml={[0]}
-    >
-      <Box>
-        <Trigger
-          action={["click", "focus"]}
-          destroyPopupOnHide
-          popup={
-            <AdminProfile
-              // user={user}
-              handleLogout={handleLogout}
-            />
-          }
-          popupAlign={{
-            points: ["tl", "tl"],
-            // offset: [10, 3],
-          }}
-          alignPoint
-        >
-          <Icon as={FaUserAlt} />
-        </Trigger>
-      </Box>
-    </Box>
-  );
-}
 
 export default Header;

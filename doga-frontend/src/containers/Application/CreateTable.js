@@ -1,22 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useForm } from "react-hook-form";
-import { useGlobal } from "reactn";
-import { NavLink } from "react-router-dom";
 import { Tooltip } from "@chakra-ui/react";
-import {
-  Box,
-  ResponsiveImage,
-  Image,
-  Button,
-  StyledLink,
-  Span,
-  MotionBox,
-  H2,
-  H1,
-  Input,
-  Para,
-  Label,
-} from "../../styles";
+import { Box, Button, Span, Input, Para, Label } from "../../styles";
 import {
   Table,
   Thead,
@@ -34,7 +19,7 @@ import { BsPlusCircleFill } from "react-icons/bs";
 import DateTimePicker from "react-datetime-picker";
 import { useIsFetching } from "react-query";
 import { useQuery, useQueryClient } from "react-query";
-import { useToast, createStandaloneToast } from "@chakra-ui/react";
+import { createStandaloneToast } from "@chakra-ui/react";
 import Api, { setHeader, APIURLS } from "../../Api";
 import Select from "react-select";
 import ClipLoader from "react-spinners/ClipLoader";
@@ -52,7 +37,6 @@ const CreateTable = ({
   table,
   tableName,
 }) => {
-  //   const [token] = useGlobal("token");
   const { handleSubmit, register, errors, reset } = useForm();
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -73,7 +57,6 @@ const CreateTable = ({
   const [columns, setColumns] = useState(columnsData || []);
   const [arrayDefault, setArrayDefault] = useState();
   const [arrayDefaultList, setArrayDefaultList] = useState([]);
-  // const [tableName, setTableName] = useState(table || null);
   const [edit, setEdit] = useState();
   const [foreignKeyOptions, setForeignKeyOptions] = useState();
   const [foreignKeyTable, setForeignKeyTable] = useState();
@@ -88,7 +71,6 @@ const CreateTable = ({
   const [baseJWT, setbaseJWT] = useState(false);
   const [restByJWT, setRestByJWT] = useState(false);
   const [filterOpt, setFilterOpt] = useState([]);
-  //   const queryClient = useQueryClient();
   const toast = createStandaloneToast();
   const queryClient = useQueryClient();
   const columnTypes = useQuery(APIURLS.getColumnTypes);
@@ -101,39 +83,30 @@ const CreateTable = ({
         type: selectedFieldType,
       });
       setForeignKeyOptions(data);
-    } catch ({ response }) {
-      console.log(response);
-    }
+    } catch ({ response }) {}
   }
 
   async function relationshipfn(value) {
-    // let relationCheckValue = relationCheck;
-    // setRelationCheck(!relationCheckValue);
     try {
       let { data } = await Api.post(APIURLS.getForeignkey, {
         app_name: appName,
         type: value || selectedFieldType,
       });
       setRelationOptions(data);
-    } catch ({ response }) {
-      console.log(response);
-    }
+    } catch ({ response }) {}
   }
 
   let relationTable = [];
   if (relationOptions) {
     {
       Object.entries(relationOptions).map(([prop, val]) => {
-        // console.log(val);
         return relationTable.push({ value: prop, label: prop });
       });
     }
   }
   let relationColumns = [];
   if (relatedTable) {
-    // console.log(relationOptions[relationTable]);
     for (let key in relationOptions[relatedTable]) {
-      console.log(relationOptions[relatedTable][key]);
       relationColumns.push({
         value: relationOptions[relatedTable][key],
         label: relationOptions[relatedTable][key],
@@ -160,7 +133,6 @@ const CreateTable = ({
       setDefaultValueCheck(true);
     }
   };
-  console.log("CHECKKEY", value);
 
   function convert(str) {
     var mnths = {
@@ -178,7 +150,6 @@ const CreateTable = ({
         Dec: "12",
       },
       date = str.split(" ");
-    console.log(selectedFieldType, "inside");
     if ((selectedFieldType || selectedFieldTypeEdit) === "DateTime") {
       return [[date[3], mnths[date[1]], date[2]].join("-"), date[4]].join(" ");
     } else if ((selectedFieldType || selectedFieldTypeEdit) === "Date") {
@@ -188,19 +159,7 @@ const CreateTable = ({
     }
   }
 
-  const timeChangeHandler = (str) => {
-    // let date = str.split(" ");
-    // setValue(date[4]);
-    console.log(str);
-  };
-  console.log("valueeeeee", value, selectedFieldType);
   async function handleSignup(params) {
-    console.log(
-      "inttt1",
-      selectedFieldType,
-      (selectedFieldType || selectedFieldTypeEdit) ===
-        ("INTEGER" || "INT" || "integer" || "BigInteger")
-    );
     let def;
     if (
       (selectedFieldType || selectedFieldTypeEdit) === "INTEGER" ||
@@ -210,7 +169,6 @@ const CreateTable = ({
       (selectedFieldType || selectedFieldTypeEdit) === "Numeric"
     ) {
       def = parseInt(params.default);
-      console.log("inttt", def);
     } else if (
       (selectedFieldType || selectedFieldTypeEdit) === "Float" ||
       (selectedFieldType || selectedFieldTypeEdit) === "DECIMAL"
@@ -221,7 +179,6 @@ const CreateTable = ({
     } else if ((selectedFieldType || selectedFieldTypeEdit) === "Time") {
       def = convert(`${value}`);
     } else if ((selectedFieldType || selectedFieldTypeEdit) === "DateTime") {
-      console.log("def1", value);
       def = convert(`${value}`);
     } else if ((selectedFieldType || selectedFieldTypeEdit) === "Date") {
       def = convert(`${value}`);
@@ -237,7 +194,6 @@ const CreateTable = ({
       def = params.default;
     }
 
-    console.log("def2", def);
     let column =
       (selectedFieldType || selectedFieldTypeEdit) === "Enum"
         ? {
@@ -312,7 +268,6 @@ const CreateTable = ({
     }
 
     setColumns(columnArray);
-    console.log("columnArray", columnArray);
     setSelectedFieldType();
     setSelectedNullableType();
     setSelectedBooleanType();
@@ -330,7 +285,6 @@ const CreateTable = ({
     // setValue(new Date());
     reset();
   }
-  console.log("setColumns", columns);
 
   async function createTableRequest() {
     setLoading(true);
@@ -393,8 +347,6 @@ const CreateTable = ({
           duration: 9000,
           isClosable: false,
         });
-        // console.log("heretimeloop", queryClient.isFetching());
-        // setOnLoading(true);
 
         if (step) {
           setStep(5);
@@ -402,12 +354,7 @@ const CreateTable = ({
         if (!step) {
           setNewStep(3);
         }
-
-        // onCloseHandler();
       }, 20000);
-
-      // onClose();
-      console.log("data", data);
     } catch ({ response }) {
       toast({
         title: "An error occurred.",
@@ -416,12 +363,9 @@ const CreateTable = ({
         duration: 9000,
         isClosable: true,
       });
-      console.log(response);
-      //   setApiErr(response?.data?.message);
+
       setLoading(false);
-      // onCloseHandler();
     }
-    // setTableName(params.name);
   }
 
   let filterOptions = [];
@@ -482,12 +426,10 @@ const CreateTable = ({
       label: "false",
     },
   ];
-  console.log("selectedUniqueType", selectedUniqueType);
   let columnTypesOptions = [];
   if (columnTypes?.data?.result) {
     {
       Object.entries(columnTypes?.data?.result).map(([prop, val]) => {
-        // console.log(val);
         if (val === "String") {
           return columnTypesOptions.push({
             value: "String(123)",
@@ -502,16 +444,13 @@ const CreateTable = ({
   if (foreignKeyOptions) {
     {
       Object.entries(foreignKeyOptions).map(([prop, val]) => {
-        // console.log(val);
         return foreignkeyTable.push({ value: prop, label: prop });
       });
     }
   }
   let foreignkeyColumns = [];
   if (foreignKeyTable) {
-    console.log(foreignKeyOptions[foreignKeyTable]);
     for (let key in foreignKeyOptions[foreignKeyTable]) {
-      console.log(foreignKeyOptions[foreignKeyTable][key]);
       foreignkeyColumns.push({
         value: foreignKeyOptions[foreignKeyTable][key],
         label: foreignKeyOptions[foreignKeyTable][key],
@@ -519,13 +458,9 @@ const CreateTable = ({
     }
   }
 
-  console.log("foreignkeyTable", foreignkeyTable);
-  console.log("foreignKeyOptions", foreignKeyOptions);
-  console.log("foreignkeyColumns", foreignkeyColumns);
   let contentTypeApps = Object.entries(columns).map(([prop, val]) => {
-    console.log(val);
     return (
-      <Tr style={{ color: "#4A5568" }}>
+      <Tr style={{ color: "#4A5568" }} key={`${val}-columns`}>
         <Td style={{ color: "#4A5568", borderColor: "#EDF2F7" }}>{val.name}</Td>
         <Td
           style={{
@@ -587,35 +522,14 @@ const CreateTable = ({
     );
   });
 
-  const setbaseJWTHandler = (e) => {
-    // let baseJWTvalue = !baseJWT;
-    console.log("Valuejwt", e);
-    // setbaseJWT(baseJWTvalue);
-  };
-
-  console.log("JWT", baseJWT);
-
   const handleMultiChange = (option) => {
-    console.log("jndjs", option);
     let array = [];
     for (let key in option) {
-      console.log(option);
       array.push(option[key].value);
     }
-    console.log(array);
+
     setFilterOpt(array);
   };
-
-  // const handleEnumChange = (option) => {
-  //   console.log("jndjs", option);
-  //   let array = [];
-  //   for (let key in option) {
-  //     console.log(option);
-  //     array.push(option[key].value);
-  //   }
-  //   console.log(array);
-  //   setFilterOpt(array);
-  // };
 
   const addArrayDefaultHandler = () => {
     let newEnumList = arrayDefaultList;
@@ -627,23 +541,19 @@ const CreateTable = ({
 
     setArrayDefaultList(newEnumList);
     setArrayDefault("");
-    // setUserEmail();
   };
-  console.log(arrayDefaultList);
+
   const removeArrayDefaultHandler = (index) => {
     let newArrayDefaultList = [];
     for (let key in arrayDefaultList) {
-      console.log(arrayDefaultList[key], "key", key);
       if (key != index) {
         newArrayDefaultList.push(arrayDefaultList[key]);
       }
     }
 
-    // console.log(newArrayDefaultList);
     setArrayDefaultList(newArrayDefaultList);
   };
   const relationTypeHandler = (value) => {
-    console.log("INSIDDDEEEEEEEEEEEEE");
     setRelationshipType(value);
 
     if (relationCheck && (value === "one-one" || value === "one-many")) {
@@ -660,7 +570,6 @@ const CreateTable = ({
     relationshipfn(value);
   };
 
-  console.log("arrayDefaultList", arrayDefaultList);
   return loading || isFetching > 0 ? (
     <Box width="100%" height="100vh">
       <Box type={step ? "loader" : "loaderCentered"}>
@@ -674,48 +583,13 @@ const CreateTable = ({
           <Span type="heading">Create Table for your App</Span>
         </Box>
       ) : null}
-      <Box
-        display="grid"
-        gridTemplateColumns={"1fr 1fr"}
-        // mb={8}
-        // gridGap={4}
-        // style={{ margin: "30px", marginLeft: "70px", marginRight: "70px" }}
-      >
-        {/* <Box display="grid" gridTemplateColumns="1fr" gridGap={8} height="100%"> */}
-
+      <Box display="grid" gridTemplateColumns={"1fr 1fr"}>
         <Box type="row" flexDirection="column" justifyContent="center">
-          {/* <Box m={6} textAlign="center">
-            <Span fontSize={6} mb={2}>
-              Create A Collection type
-            </Span>
-           
-          </Box> */}
           <Box type="row" justifyContent="center" m={6}>
             <form
               onSubmit={handleSubmit(handleSignup)}
               style={{ width: "28vw" }}
             >
-              {/* <Box type="relative">
-                <Label>Table Name</Label>
-                <Input
-                  name="tableName"
-                  color="grey"
-                  required
-                  defaultValue={tableName}
-                  pattern="^([a-z]+[0-9_]*)*$"
-                  fontSize={3}
-                  p={2}
-                  width="100%"
-                  ref={register}
-                  mb={2}
-                />
-
-                {errors?.name && (
-                  <Span color="orange" mb={4}>
-                    {errors?.name?.message}
-                  </Span>
-                )}
-              </Box> */}
               <Label>Select Field type</Label>
               <Box
                 style={{
@@ -728,7 +602,6 @@ const CreateTable = ({
               >
                 <Select
                   key={0}
-                  // value={edit ? `${columns[edit]?.type}` : selectedFieldType}
                   value={columnTypesOptions.filter((option) =>
                     edit
                       ? option.label === selectedFieldTypeEdit
@@ -773,7 +646,6 @@ const CreateTable = ({
               >
                 <Select
                   key={0}
-                  // value={edit ? `${columns[edit]?.type}` : selectedFieldType}
                   value={nullableTypesOptions.filter((option) =>
                     edit
                       ? option.label === selectedNullableTypeEdit
@@ -801,8 +673,6 @@ const CreateTable = ({
               >
                 <Select
                   key={0}
-                  // value={edit ? `${columns[edit]?.type}` : selectedFieldType}
-                  // menuIsOpen={false}
                   value={
                     relationCheck
                       ? {
@@ -849,7 +719,6 @@ const CreateTable = ({
                     <Switch
                       size="lg"
                       style={{ background: "rgb(241 218 249)" }}
-                      // onClick={foreignkeyfn}
                       isChecked={defaultValueCheck}
                       onChange={(e) => setDefaultValueCheck(e.target.checked)}
                     />
@@ -870,7 +739,6 @@ const CreateTable = ({
                   >
                     <Select
                       key={0}
-                      // value={edit ? `${columns[edit]?.type}` : selectedFieldType}
                       value={arrayDefaultList.filter((option) =>
                         edit
                           ? option.label === selectedEnumTypeEdit
@@ -901,7 +769,6 @@ const CreateTable = ({
                   <DateTimePicker
                     value={value}
                     onChange={setValue}
-                    // parseDate={(str) => new Date(str)}
                     format={"y-MM-d"}
                   />{" "}
                 </Box>
@@ -935,7 +802,6 @@ const CreateTable = ({
                   <DateTimePicker
                     value={value}
                     onChange={setValue}
-                    // parseDate={(str) => new Date(str)}
                     format={"y-MM-dd h:m:s"}
                   />{" "}
                 </Box>
@@ -1031,7 +897,6 @@ const CreateTable = ({
                 >
                   <Select
                     key={0}
-                    // value={edit ? `${columns[edit]?.type}` : selectedFieldType}
                     value={booleanTypesOptions.filter((option) =>
                       edit
                         ? option.label === selectedBooleanTypeEdit
@@ -1058,7 +923,6 @@ const CreateTable = ({
                 >
                   <Select
                     key={0}
-                    // value={edit ? `${columns[edit]?.type}` : selectedFieldType}
                     value={binaryTypesOptions.filter((option) =>
                       edit
                         ? option.label === selectedBinaryTypeEdit
@@ -1109,7 +973,6 @@ const CreateTable = ({
                         color="grey"
                         fontSize={3}
                         p={2}
-                        //  defaultValue={edit ? `${columns[edit]?.default}` : null}
                         width="100%"
                         ref={register}
                         mb={2}
@@ -1233,12 +1096,6 @@ const CreateTable = ({
                 >
                   <Select
                     key={1}
-                    // value={edit ? `${columns[edit]?.type}` : selectedFieldType}
-                    // value={columnTypesOptions.filter((option) =>
-                    //   edit
-                    //     ? option.label === selectedFieldTypeEdit
-                    //     : option.label === selectedFieldType
-                    // )}
                     onChange={({ value }) => setForeignKeyTable(value)}
                     required
                     theme={CARD_ELEMENT_OPTIONS}
@@ -1386,26 +1243,6 @@ const CreateTable = ({
                   />
                 </Box>
               ) : null}
-              <Box type="relative">
-                {/* <Input
-                  type="file"
-                  id="filepicker"
-                  name="fileList"
-                  webkitdirectory
-                  multiple
-                 
-                  onChange={(event) => getfolder(event)}
-                  name="dirpath"
-                  webkitdirectory
-                  webkitdirectory
-                  mozdirectory
-                  msdirectory
-                  odirectory
-                  directory
-                  multiple
-                /> */}
-              </Box>
-              {/* <input /> */}
               <Button mt={4} width="100%" fontSize={18} type="submit">
                 {edit ? "Edit" : "Add"}
               </Button>
@@ -1413,22 +1250,8 @@ const CreateTable = ({
           </Box>
         </Box>
         <Box>
-          <Box
-            type="tableView"
-            //   m={6}
-            // style={{
-            //   width: "80%",
-            //   margin: "7rem",
-            //   marginTop: "1.5rem",
-            // }}
-          >
-            <Table
-              variant="striped"
-              colorScheme="teal"
-              // style={{
-              //   width: "98%",
-              // }}
-            >
+          <Box type="tableView">
+            <Table variant="striped" colorScheme="teal">
               <TableCaption>
                 {basejwtPresent ? (
                   <Box type="row" justifyContent="start" mb={3}>
@@ -1489,11 +1312,6 @@ const CreateTable = ({
                       }}
                     >
                       <Select
-                        // value={columnTypesOptions.filter((option) =>
-                        //   edit
-                        //     ? option.label === selectedFieldTypeEdit
-                        //     : option.label === selectedFieldType
-                        // )}
                         onChange={handleMultiChange}
                         isMulti
                         theme={CARD_ELEMENT_OPTIONS}
@@ -1524,9 +1342,6 @@ const CreateTable = ({
                   <Th style={{ color: "#4A5568", borderColor: "#EDF2F7" }}>
                     default
                   </Th>
-                  {/* <Th style={{ color: "#4A5568", borderColor: "#EDF2F7" }}>
-                    Foreign Key
-                  </Th> */}
 
                   <Th style={{ color: "#4A5568", borderColor: "#EDF2F7" }}></Th>
                 </Tr>

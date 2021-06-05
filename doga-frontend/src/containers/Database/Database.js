@@ -1,66 +1,15 @@
-import React, { useState, useEffect } from "react";
-import { useForm } from "react-hook-form";
-import { useGlobal } from "reactn";
-import { NavLink } from "react-router-dom";
-import {
-  Table,
-  Thead,
-  Tbody,
-  Tr,
-  Th,
-  Td,
-  TableCaption,
-} from "@chakra-ui/react";
-import {
-  Box,
-  ResponsiveImage,
-  Image,
-  Button,
-  StyledLink,
-  Span,
-  H1,
-  H2,
-  H5,
-  MotionBox,
-  Para,
-} from "../../styles";
-import {
-  Menu,
-  MenuButton,
-  MenuList,
-  MenuItem,
-  MenuItemOption,
-  MenuGroup,
-  MenuOptionGroup,
-  MenuIcon,
-  MenuCommand,
-  MenuDivider,
-} from "@chakra-ui/react";
-import { useDisclosure } from "@chakra-ui/react";
-import CreateDatabase from "../CreateDatabase/CreateDatabase";
-import { Icon } from "@chakra-ui/react";
-import { FaEdit } from "react-icons/fa";
+import React, { useState } from "react";
+import { Table, Thead, Tbody, Tr, Th, Td } from "@chakra-ui/react";
+import { Box, H2, Para } from "../../styles";
+import { Menu, MenuButton, MenuList, MenuItem } from "@chakra-ui/react";
 import ClipLoader from "react-spinners/ClipLoader";
 import { useQuery } from "react-query";
-import Api, { setHeader, APIURLS } from "../../Api";
-import EditDatabase from "../../components/Modal/EditDatabase";
+import { APIURLS } from "../../Api";
 
 const Database = () => {
   const [typeSelected, setTypeSelected] = useState();
-  const [editDbConnection, setEditDbConnection] = useState();
-  const { isOpen, onOpen, onClose } = useDisclosure();
-
   const { data, isLoading } = useQuery(APIURLS.getDbConnections);
   const db = data;
-
-  const editDbHandler = (key) => {
-    setEditDbConnection(key);
-    onOpen();
-  };
-  const onCloseHandler = () => {
-    setEditDbConnection();
-    onClose();
-  };
 
   return isLoading ? (
     <Box type="loader">
@@ -68,15 +17,7 @@ const Database = () => {
     </Box>
   ) : (
     <>
-      {/* <EditDatabase
-        isOpen={isOpen}
-        onOpen={onOpen}
-        onClose={onCloseHandler}
-        edit={editDbConnection}
-      /> */}
-
       <Box type="heading" textAlign="center">
-        {/* <Span type="heading">{table}</Span> */}
         <H2>Database</H2>
       </Box>
       <Box type="row" flexDirection="row-reverse" m={6}>
@@ -119,11 +60,6 @@ const Database = () => {
             width: "98%",
           }}
         >
-          {/* <TableCaption>
-            <Button type="tableAdd" onClick={onOpen}>
-              Create A DB Connection
-            </Button>
-          </TableCaption> */}
           <Thead>
             <Tr style={{ color: "#4A5568" }}>
               <Th style={{ color: "#4A5568", borderColor: "#EDF2F7" }}>
@@ -147,12 +83,12 @@ const Database = () => {
             </Tr>
           </Thead>
           <Tbody>
-            {db?.map((key) => {
+            {db?.map((key, index) => {
               if (typeSelected && key.database_type != typeSelected) {
                 return true;
               }
               return (
-                <Tr style={{ color: "#4A5568" }}>
+                <Tr style={{ color: "#4A5568" }} key={index}>
                   <Td style={{ color: "#4A5568", borderColor: "#EDF2F7" }}>
                     {key.connection_name}
                   </Td>
@@ -177,14 +113,6 @@ const Database = () => {
                   <Td style={{ color: "#4A5568", borderColor: "#EDF2F7" }}>
                     {key.password}
                   </Td>
-                  {/* <Td style={{ color: "#4A5568", borderColor: "#EDF2F7" }}>
-                    {
-                      // <i onClick={() => {setEditDbConnection(key) &&onOpen }}>
-                      <i onClick={() => editDbHandler(key)}>
-                        <Icon as={FaEdit} w={5} h={5} color={"#4B0082"} />
-                      </i>
-                    }
-                  </Td> */}
                 </Tr>
               );
             })}

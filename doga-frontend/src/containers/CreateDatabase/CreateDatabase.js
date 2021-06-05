@@ -1,47 +1,23 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useGlobal } from "reactn";
-import { NavLink } from "react-router-dom";
-import {
-  Box,
-  ResponsiveImage,
-  Image,
-  Button,
-  StyledLink,
-  Span,
-  MotionBox,
-  H2,
-  H1,
-  Input,
-  Label,
-} from "../../styles";
-import {
-  Modal,
-  ModalOverlay,
-  ModalContent,
-  ModalHeader,
-  ModalFooter,
-  ModalBody,
-  ModalCloseButton,
-} from "@chakra-ui/react";
+import { Box, Button, Span, Input, Label } from "../../styles";
 import Select from "react-select";
 import { useQueryClient, useQuery } from "react-query";
-import { useToast, createStandaloneToast } from "@chakra-ui/react";
-import Api, { setHeader, APIURLS } from "../../Api";
+import { createStandaloneToast } from "@chakra-ui/react";
+import Api, { APIURLS } from "../../Api";
 import ClipLoader from "react-spinners/ClipLoader";
 
 const CreateDatabase = ({ edit, setStep, appName }) => {
-  const [token] = useGlobal("token");
   const { handleSubmit, register, errors } = useForm();
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
   const [apiErr, setApiErr] = useState(null);
   const queryClient = useQueryClient();
   const toast = createStandaloneToast();
   const [dbType, setDbType] = useState();
 
-  const { data, isLoading } = useQuery(APIURLS.getDbDefaults);
-  console.log(data);
+  const { data } = useQuery(APIURLS.getDbDefaults);
+
   async function handleSignup(params) {
     setLoading(true);
     try {
@@ -55,33 +31,26 @@ const CreateDatabase = ({ edit, setStep, appName }) => {
             database_type: dbType,
           });
       await queryClient.refetchQueries([APIURLS.getDbConnections]);
-      console.log(params.database_name);
-      //   setSuccess(true);
 
       toast({
         title: "Database created successfully.",
-        // description: data?.result,
         status: "success",
         duration: 9000,
         isClosable: false,
       });
-      // onClose();
       setLoading(false);
       setStep(3);
     } catch ({ response }) {
       toast({
         title: "An error occurred.",
-        // description: response?.data?.result,
+
         status: "error",
         duration: 9000,
         isClosable: true,
       });
-      console.log(response);
-      //   setApiErr(response?.data?.message);
+
       setLoading(false);
     }
-
-    console.log(params);
   }
 
   return loading ? (
@@ -92,7 +61,6 @@ const CreateDatabase = ({ edit, setStep, appName }) => {
     <>
       <Box type="heading" textAlign="center">
         <Span type="heading">Congif Databse for your App </Span>
-        {/* <Box my={2} borderBottom="4px solid" borderColor="orange"></Box> */}
       </Box>
       <Box p={"300px"} pt={"50px"}>
         <form onSubmit={handleSubmit(handleSignup)}>
@@ -116,26 +84,7 @@ const CreateDatabase = ({ edit, setStep, appName }) => {
               </Span>
             )}
           </Box>
-          {/* <Label>Database Type</Label>
-          <Box type="relative">
-            <Input
-              name="database_type"
-              color="grey"
-              required
-              fontSize={3}
-              p={2}
-              defaultValue={edit ? edit.database_type : null}
-              width="100%"
-              ref={register}
-              mb={2}
-            />
 
-            {errors?.email && (
-              <Span color="orange" mb={4}>
-                {errors?.email?.message}
-              </Span>
-            )}
-          </Box> */}
           <Label>Database Type</Label>
           <Box
             style={{
@@ -234,7 +183,6 @@ const CreateDatabase = ({ edit, setStep, appName }) => {
               type="password"
               color="grey"
               fontSize={3}
-              // required
               p={2}
               defaultValue={""}
               ref={register}
@@ -254,14 +202,7 @@ const CreateDatabase = ({ edit, setStep, appName }) => {
               {apiErr}
             </Span>
           )}
-          {/* <LButton
-                label="SIGN UP"
-                type="submit"
-                type="primary"
-                width="100%"
-                mt={4}
-                loading={loading}
-              /> */}
+
           <Button mt={4} width="100%" fontSize={18} type="submit">
             {edit ? "Update" : "Create"}
           </Button>

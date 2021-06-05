@@ -1,32 +1,14 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useGlobal } from "reactn";
-// import { setGlobal, useGlobal } from "reactn";
-import { NavLink } from "react-router-dom";
-import {
-  Box,
-  ResponsiveImage,
-  Image,
-  Button,
-  StyledLink,
-  Span,
-  MotionBox,
-  H2,
-  H5,
-  Input,
-  Label,
-  Para,
-} from "../../styles";
+import { Box, Button, Span, H5, Input, Label, Para } from "../../styles";
 import { BsPlusCircleFill } from "react-icons/bs";
 import { FaAws } from "react-icons/fa";
 import { AiOutlineDelete } from "react-icons/ai";
 import { Icon } from "@chakra-ui/react";
-import { SiAmazonaws, SiHeroku } from "react-icons/si";
-import { useQuery, useQueryClient } from "react-query";
-import { useToast, createStandaloneToast } from "@chakra-ui/react";
-import Api, { setHeader, APIURLS, ApiJwt } from "../../Api";
-import { useIsFetching } from "react-query";
-import Select from "react-select";
+import { useQueryClient } from "react-query";
+import { createStandaloneToast } from "@chakra-ui/react";
+import Api, { APIURLS } from "../../Api";
 import ClipLoader from "react-spinners/ClipLoader";
 
 const Aws = ({
@@ -37,16 +19,8 @@ const Aws = ({
   rdsConfig,
   ec2Config,
 }) => {
-  const [token] = useGlobal("token");
   const { handleSubmit, register, errors, reset } = useForm();
-  const [toggle, setToggle] = useState(true);
-  const [selectedApp, setSelectedApp] = useState();
   const [loading, setLoading] = useState(false);
-  const [provisionDb, setProvisionDb] = useState();
-  // const queryClient = useQueryClient();
-  const isFetching = useIsFetching();
-  const toast = createStandaloneToast();
-  const queryClient = useQueryClient();
 
   const [deviceList, setDeviceList] = useState([]);
   const [instanceType, setInstanceType] = useState();
@@ -80,24 +54,17 @@ const Aws = ({
     setDeleteOnTermination("");
     setVolumeSize("");
     setVolumeType("");
-
-    // setUserEmail("");
-    // reset();
   };
   const removeDeviceHandler = (index) => {
     let newDeviceList = [];
     for (let key in deviceList) {
-      console.log(deviceList[key], "key", key);
       if (key != index) {
         newDeviceList.push(deviceList[key]);
       }
     }
-    //  userList.slice(0, index).concat(userList.slice(-index));
-    console.log(newDeviceList);
+
     setDeviceList(newDeviceList);
-    // console.log(userList.splice(index, 1))
   };
-  console.log(ec2Config.ec2_config.BlockDeviceMappings[0].DeviceName, "here");
   async function handleSignup(params) {
     setLoading(true);
     try {
@@ -111,10 +78,6 @@ const Aws = ({
         config: {
           region_name: userCredential.config.region_name,
           signature_version: userCredential.config.signature_version,
-          //  "retries": {
-          //      "max_attempts":"string",
-          //      "mode": "string"
-          //      }
         },
         rds_config: {
           Engine: userCredential.rds_config.Engine,
@@ -129,15 +92,12 @@ const Aws = ({
           BlockDeviceMappings: deviceList,
           InstanceType: params.InstanceType,
           ImageId: params.ImageId,
-          // "ami-0885b1f6bd170450c"
         },
       };
-      console.log(obj);
       setUserCredential();
       let { data } = await Api.post(APIURLS.awsExport(), obj);
       setStep(5);
       setLoading(false);
-      //   let { data } = await Api.post(APIURLS.awsExport(), obj);
     } catch ({ response }) {
       setLoading(false);
     }
@@ -273,8 +233,6 @@ const Aws = ({
               </Box>
               <Box>
                 {deviceList.map((key, index) => {
-                  // let user = Object.keys(key)[0];
-                  console.log(index);
                   return (
                     <Box
                       boxShadow="card"
@@ -361,24 +319,6 @@ const Aws = ({
       </Box>
     </>
   );
-};
-
-const CARD_ELEMENT_OPTIONS = {
-  style: {
-    base: {
-      color: "#32325d",
-      fontFamily: '"Helvetica Neue", Helvetica, sans-serif',
-      fontSmoothing: "antialiased",
-      fontSize: "18px",
-      "::placeholder": {
-        color: "#aab7c4",
-      },
-    },
-    invalid: {
-      color: "#fa755a",
-      iconColor: "#fa755a",
-    },
-  },
 };
 
 export default Aws;

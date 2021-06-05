@@ -1,33 +1,22 @@
 import { useState } from "react";
-import { Box, H2, Button, Para } from "../../styles";
+import { Box, H2, Para } from "../../styles";
 import { Redirect } from "react-router-dom";
 import UserCredentials from "./UserCredentials";
 import UserConfig from "./UserConfig";
-
-import { setGlobal, useGlobal } from "reactn";
-import { useQuery, useQueryClient } from "react-query";
+import { useGlobal } from "reactn";
 import ClipLoader from "react-spinners/ClipLoader";
 import { useEffect } from "reactn";
-import { useIsFetching } from "react-query";
 import RdsConfig from "./RdsConfig";
-import AwsDeploy from "./AwsDeploy";
 import Aws from "./Aws";
 
 const Deploy = () => {
   const [step, setStep] = useState(1);
-  const [dash, setDash] = useState(false);
-  const [fetch, setFetch] = useState();
   const [deployProcessStatus, setdeployProcessStatus] = useGlobal("deploy");
-  const queryClient = useQueryClient();
-  const [connectionSelected, setConnectionSelected] = useState();
   const [userConfig, setUserConfig] = useState();
   const [userCredential, setUserCredential] = useState();
   const [rdsConfig, setRdsConfig] = useState();
   const [ec2Config, setEc2Config] = useState();
   const [onLoading, setOnLoading] = useState(false);
-  const isFetching = useIsFetching();
-  console.log("deployProcessStatus", deployProcessStatus);
-  const onCloseHandler = () => {};
 
   useEffect(() => {
     if (deployProcessStatus?.status === "COMPLETED") setdeployProcessStatus();
@@ -83,7 +72,6 @@ const Deploy = () => {
             deployProcessStatus?.status === "PROCESSING" ? (
               <>
                 <Box type="heading" textAlign="center">
-                  {/* <Span type="heading">{table}</Span> */}
                   <H2>Status: {deployProcessStatus?.status.toLowerCase()}</H2>
                   <br />
                   <Para>{deployProcessStatus?.message}</Para>
@@ -97,7 +85,6 @@ const Deploy = () => {
             ) : deployProcessStatus?.status === "ERROR" ? (
               <>
                 <Box type="heading" textAlign="center">
-                  {/* <Span type="heading">{table}</Span> */}
                   <H2>Status: {deployProcessStatus?.status.toLowerCase()}</H2>
                   <br />
                   <Para>{deployProcessStatus?.message}</Para>

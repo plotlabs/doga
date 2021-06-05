@@ -1,33 +1,10 @@
 import { useState } from "react";
-import { Box, H2, Button, Para, Span } from "../../styles";
-import {
-  Modal,
-  ModalOverlay,
-  ModalContent,
-  ModalHeader,
-  ModalFooter,
-  ModalBody,
-  ModalCloseButton,
-} from "@chakra-ui/react";
+import { Box, Button, Para, Span } from "../../styles";
 import Select from "react-select";
-import Api, { setHeader, APIURLS } from "../../Api";
+import { APIURLS } from "../../Api";
 import { useQuery } from "react-query";
-import {
-  Menu,
-  MenuButton,
-  MenuList,
-  MenuItem,
-  MenuItemOption,
-  MenuGroup,
-  MenuOptionGroup,
-  MenuIcon,
-  MenuCommand,
-  MenuDivider,
-} from "@chakra-ui/react";
 
 const ApplicationNext = ({ setStep, setConnectionSelected }) => {
-  // const [step, setStep] = useState(1);
-  const [classId, setClassId] = useState(null);
   const [loading, setLoading] = useState(false);
   const [showConnectionStep, setShowConnectionStep] = useState();
   const [dbTypeSelected, setDbTypeSelected] = useState();
@@ -36,13 +13,11 @@ const ApplicationNext = ({ setStep, setConnectionSelected }) => {
   const mysqlCreated = useQuery(APIURLS.dbInfo("mysql"));
   const sqliteCreated = useQuery(APIURLS.dbInfo("sqlite"));
   const postgresCreated = useQuery(APIURLS.dbInfo("postgres"));
-  //   console.log(sqliteCreated.data.result);
 
   let sqliteOptions = [];
   if (sqliteCreated?.data?.result) {
     {
       Object.entries(sqliteCreated?.data?.result).map(([prop, val]) => {
-        console.log(val);
         return sqliteOptions.push({ value: val, label: val });
       });
     }
@@ -51,7 +26,6 @@ const ApplicationNext = ({ setStep, setConnectionSelected }) => {
   if (mysqlCreated?.data?.result) {
     {
       Object.entries(mysqlCreated?.data?.result).map(([prop, val]) => {
-        console.log(val);
         return mysqlOptions.push({ value: val, label: val });
       });
     }
@@ -60,7 +34,6 @@ const ApplicationNext = ({ setStep, setConnectionSelected }) => {
   if (postgresCreated?.data?.result) {
     {
       Object.entries(postgresCreated?.data?.result).map(([prop, val]) => {
-        console.log(val);
         return postgresOptions.push({ value: val, label: val });
       });
     }

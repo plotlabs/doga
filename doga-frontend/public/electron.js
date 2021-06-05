@@ -12,8 +12,6 @@ let mainWindow;
 function createWindow() {
   pyshell.run("./doga/push_server.py", null, function (err, results) {
     if (err) throw err;
-    console.log("finished");
-    console.log("results: %j", results);
   });
 
   mainWindow = new BrowserWindow({ width: 900, height: 680 });

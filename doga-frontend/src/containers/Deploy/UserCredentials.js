@@ -1,29 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useGlobal } from "reactn";
-import { NavLink } from "react-router-dom";
-import {
-  Box,
-  ResponsiveImage,
-  Image,
-  Button,
-  StyledLink,
-  Span,
-  MotionBox,
-  H2,
-  H5,
-  Input,
-  Label,
-  Para,
-} from "../../styles";
-import { BsPlusCircleFill } from "react-icons/bs";
-import { FaAws } from "react-icons/fa";
-import { AiOutlineDelete } from "react-icons/ai";
-import { Icon } from "@chakra-ui/react";
-import { SiAmazonaws, SiHeroku } from "react-icons/si";
+import { Box, Button, Span, H5, Input, Label } from "../../styles";
 import { useQuery, useQueryClient } from "react-query";
-import { useToast, createStandaloneToast } from "@chakra-ui/react";
-import Api, { setHeader, APIURLS, ApiJwt } from "../../Api";
+import { createStandaloneToast } from "@chakra-ui/react";
+import Api, { APIURLS } from "../../Api";
 import { useIsFetching } from "react-query";
 import Select from "react-select";
 import ClipLoader from "react-spinners/ClipLoader";
@@ -31,14 +12,9 @@ import ClipLoader from "react-spinners/ClipLoader";
 const Deploy = ({ setStep, setUserConfig, setUserCredential }) => {
   const [token] = useGlobal("token");
   const { handleSubmit, register, errors } = useForm();
-  const [toggle, setToggle] = useState(true);
   const [selectedApp, setSelectedApp] = useState();
   const [loading, setLoading] = useState(false);
-  const [provisionDb, setProvisionDb] = useState();
-  // const queryClient = useQueryClient();
-  const isFetching = useIsFetching();
-  const toast = createStandaloneToast();
-  const queryClient = useQueryClient();
+
   const { data } = useQuery([APIURLS.getContentType], {
     enabled: !!token,
   });
@@ -54,7 +30,6 @@ const Deploy = ({ setStep, setUserConfig, setUserCredential }) => {
   }
 
   async function handleSignup(params) {
-    // setLoading(true);
     try {
       let obj = {
         app_name: selectedApp,
@@ -63,30 +38,15 @@ const Deploy = ({ setStep, setUserConfig, setUserCredential }) => {
         aws_access_key: params.aws_access_key,
       };
 
-      //   let { data } = await Api.post(APIURLS.awsExport(), obj);
       setUserCredential(obj);
       let { data } = await Api.post(APIURLS.getUserCongif(), {
         aws_username: params.aws_username,
         aws_secret_key: params.aws_secret_key,
         aws_access_key: params.aws_access_key,
       });
-      console.log(data);
       setUserConfig(data);
       setStep(2);
-
-      //   toast({
-      //     title: "Success",
-      //     description: data?.result,
-      //     status: "success",
-      //     duration: 9000,
-      //     isClosable: false,
-      //   });
-
-      //   setLoading(false);
-      //   onClose();
-    } catch ({ response }) {
-      //   setLoading(false);
-    }
+    } catch ({ response }) {}
   }
 
   return loading ? (

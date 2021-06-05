@@ -1,40 +1,32 @@
-import React, { useEffect, Suspense, useState } from "react";
-import { Route, Switch, withRouter, Redirect } from "react-router-dom";
+import React, { useEffect, Suspense } from "react";
+import { Route, Switch, Redirect } from "react-router-dom";
 import { setGlobal, useGlobal } from "reactn";
 import { setHeader, defaultQueryFn, setJwtHeader } from "./Api";
 import { ReactQueryDevtools } from "react-query/devtools";
-import { QueryClient, QueryClientProvider, useQuery } from "react-query";
-import { ChakraProvider } from "@chakra-ui/react";
+import { QueryClient, QueryClientProvider } from "react-query";
+import { ChakraProvider, createStandaloneToast } from "@chakra-ui/react";
 import Header from "./components/Header/Header";
 import Sidebar from "./components/Sidebar/Sidebar";
-import Footer from "./components/Footer/Footer";
 import { ThemeProvider } from "@emotion/react";
 import theme from "./styles/theme";
-import { Box, H1 } from "./styles";
+import { Box } from "./styles";
 import "./styles/globals.css";
 import ClipLoader from "react-spinners/ClipLoader";
 import { io } from "socket.io-client";
-import { useToast, createStandaloneToast } from "@chakra-ui/react";
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       queryFn: defaultQueryFn,
       refetchOnWindowFocus: false,
-      // suspense: true,
     },
   },
 });
-// const queryClient = new QueryClient();
 
 setGlobal({
   token: null,
   baseURL: {},
 });
-
-const myTheme = {
-  backgroundColor: "#F1EFF8",
-};
 
 const Login = React.lazy(() => {
   return import("./containers/Login/Login");
@@ -51,9 +43,7 @@ const CreateDatabase = React.lazy(() => {
 const Database = React.lazy(() => {
   return import("./containers/Database/Database");
 });
-const Mysql = React.lazy(() => {
-  return import("./containers/Mysql/Mysql");
-});
+
 const Content = React.lazy(() => {
   return import("./containers/Application/Content");
 });
@@ -83,17 +73,9 @@ const socket = io("http://127.0.0.1:8008", {
   query: `Authorization=${localStorage.getItem("token")}`,
 });
 
-// console.log(socket);
-
-// useEffect(() => {
-socket.on("connect", () => {
-  // socket.send("User has connected!");
-});
-// socket.send(localStorage.getItem("userEmail"));
-// }, [localStorage.getItem("userEmail")]);
+socket.on("connect", () => {});
 
 const App = (props) => {
-  console.log("app.jsss");
   const [token, setToken] = useGlobal("token");
   const [deployProcessStatus, setdeployProcessStatus] = useGlobal("deploy");
   const [html, setHtml] = useGlobal("html");
@@ -102,16 +84,12 @@ const App = (props) => {
 
   useEffect(() => {
     if (socket.disconnected) {
-      socket.on("connect", () => {
-        // socket.send("User has connected!");
-      });
+      socket.on("connect", () => {});
     }
   }, [socket]);
 
   React.useEffect(() => {
     socket.on("broadcast message", function (msg) {
-      console.log(msg, "MSG");
-
       if (msg.action_type === "deploy-app") {
         setdeployProcessStatus({
           status: msg.action_status,
@@ -159,7 +137,6 @@ const App = (props) => {
         <Route path="/Signup" render={(props) => <Signup />} />
         <Route path="/Dashboard" render={(props) => <Dashboard />} />
         <Route path="/create-db" render={(props) => <CreateDatabase />} />
-        <Route path="/mysql" render={(props) => <Mysql />} />
         <Route path="/database" render={(props) => <Database />} />
         <Route
           exact
@@ -187,22 +164,12 @@ const App = (props) => {
     <Box
       display="grid"
       gridTemplateColumns={{ _: "1fr", md: "220px auto" }}
-      gridTemplateAreas={
-        {
-          // _: "p-workspace__sidebar p-workspace__primary_view",
-        }
-      }
+      gridTemplateAreas={{}}
       maxHeight="100%"
-      height="calc(100vh )"
+      height="calc(100vh)"
     >
       <Sidebar />
-      <Box
-        // width={{ _: "100vw", md: "calc(100vw - 220px)" }}
-        width="auto"
-        // gridTemplateAreas={{ _: "p-workspace__primary_view_contents" }}
-        gridTemplateRows="auto"
-        backgroundColor="#ffffff"
-      >
+      <Box width="auto" gridTemplateRows="auto" backgroundColor="#ffffff">
         <Suspense
           fallback={
             <Box type="loader">
@@ -214,7 +181,6 @@ const App = (props) => {
           {routes}
         </Suspense>
       </Box>
-      {/* <Ads /> */}
     </Box>
   );
 
@@ -225,11 +191,7 @@ const App = (props) => {
           <ThemeProvider theme={theme}>
             <ReactQueryDevtools initialIsOpen={false} />
 
-            {/* <Box margin="auto" maxWidth="1400px"> */}
-            <Box>
-              {show}
-              {/* <Footer /> */}
-            </Box>
+            <Box>{show}</Box>
           </ThemeProvider>
         </ChakraProvider>
       </QueryClientProvider>

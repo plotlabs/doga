@@ -1,29 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useGlobal } from "reactn";
-import { NavLink } from "react-router-dom";
-import {
-  Box,
-  ResponsiveImage,
-  Image,
-  Button,
-  StyledLink,
-  Span,
-  MotionBox,
-  H2,
-  H5,
-  Input,
-  Label,
-  Para,
-} from "../../styles";
-import { BsPlusCircleFill } from "react-icons/bs";
-import { FaAws } from "react-icons/fa";
-import { AiOutlineDelete } from "react-icons/ai";
-import { Icon } from "@chakra-ui/react";
-import { SiAmazonaws, SiHeroku } from "react-icons/si";
-import { useQuery, useQueryClient } from "react-query";
-import { useToast, createStandaloneToast } from "@chakra-ui/react";
-import Api, { setHeader, APIURLS, ApiJwt } from "../../Api";
+import { Box, Button, Span, H5, Input, Label, Para } from "../../styles";
+import { useQueryClient } from "react-query";
+import { createStandaloneToast } from "@chakra-ui/react";
+import Api, { APIURLS } from "../../Api";
 import { useIsFetching } from "react-query";
 import Select from "react-select";
 import ClipLoader from "react-spinners/ClipLoader";
@@ -36,40 +17,11 @@ const RdsConfig = ({
   rdsConfig,
   setEc2Config,
 }) => {
-  const [token] = useGlobal("token");
   const { handleSubmit, register, errors } = useForm();
-  const [toggle, setToggle] = useState(true);
-  const [selectedApp, setSelectedApp] = useState();
+
   const [selectedRds, setSelectedRds] = useState();
   const [loading, setLoading] = useState(false);
-  const [provisionDb, setProvisionDb] = useState();
-  // const queryClient = useQueryClient();
-  const isFetching = useIsFetching();
-  const toast = createStandaloneToast();
-  const queryClient = useQueryClient();
-  //   const { data } = useQuery([APIURLS.getContentType], {
-  //     enabled: !!token,
-  //   });
 
-  console.log(userConfig.config, "userConfig");
-  const [deviceList, setDeviceList] = useState([]);
-  const [instanceType, setInstanceType] = useState();
-  const [imageId, setImageId] = useState();
-  const [deviceName, setDeviceName] = useState();
-  const [engineType, setEngineType] = useState();
-  const [volumeType, setVolumeType] = useState();
-  const [volumeSize, setVolumeSize] = useState();
-  const [deleteOnTermination, setDeleteOnTermination] = useState();
-  console.log(userCredential);
-  //   let selectAppName = [];
-  //   if (data) {
-  //     for (let key in data) {
-  //       selectAppName.push({
-  //         value: key,
-  //         label: key,
-  //       });
-  //     }
-  //   }
   let selectRds = [];
   if (rdsConfig.rds_config) {
     let data = rdsConfig.rds_config.Engine;
@@ -80,24 +32,6 @@ const RdsConfig = ({
       });
     }
   }
-  console.log("selectRegion", selectRds);
-  //   const columnTypes = useQuery(APIURLS.getColumnTypes);
-  //   const contentType = useQuery([APIURLS.getContentType], {
-  //     enabled: !!token,
-  //   });
-  //   const { data } = useQuery(
-  //     [APIURLS.getTableContentById({ app, table, editDataId }), basejwt],
-  //     {
-  //       enabled: !!token,
-  //     }
-  //   );
-  //   console.log(data?.result);
-  //   const [loading, setLoading] = useState(false);
-  //   const [success, setSuccess] = useState(false);
-  //   const [apiErr, setApiErr] = useState(null);
-  //   const queryClient = useQueryClient();
-  //   const toast = createStandaloneToast();
-  //   console.log(restrictByJwt);
 
   async function handleSignup(params) {
     setLoading(true);
@@ -112,10 +46,6 @@ const RdsConfig = ({
         config: {
           region_name: userCredential.config.region_name,
           signature_version: userCredential.config.signature_version,
-          //  "retries": {
-          //      "max_attempts":"string",
-          //      "mode": "string"
-          //      }
         },
         rds_config: {
           Engine: selectedRds,
@@ -127,18 +57,15 @@ const RdsConfig = ({
           MaxAllocatedStorage: parseInt(params.MaxAllocatedStorage),
         },
       };
-      console.log(obj);
       setUserCredential(obj);
       let { data } = await Api.post(APIURLS.getUserEc2Congif(), {
         aws_username: params.aws_username,
         aws_secret_key: params.aws_secret_key,
         aws_access_key: params.aws_access_key,
       });
-      console.log(data);
       setEc2Config(data);
       setStep(4);
       setLoading(false);
-      //   let { data } = await Api.post(APIURLS.awsExport(), obj);
     } catch ({ response }) {
       setLoading(false);
     }

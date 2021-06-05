@@ -1,35 +1,18 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useForm } from "react-hook-form";
-// import { useGlobal } from "reactn";
-import { NavLink } from "react-router-dom";
 import { useGlobal } from "reactn";
-import {
-  Box,
-  ResponsiveImage,
-  Image,
-  Button,
-  StyledLink,
-  Span,
-  MotionBox,
-  H2,
-  H1,
-  Input,
-  Label,
-} from "../../styles";
+import { Box, Button, Span, Input, Label } from "../../styles";
 import {
   Modal,
   ModalOverlay,
   ModalContent,
   ModalHeader,
-  ModalFooter,
   ModalBody,
   ModalCloseButton,
 } from "@chakra-ui/react";
-import { Icon } from "@chakra-ui/react";
-import { useQuery, useQueryClient } from "react-query";
-import { useToast, createStandaloneToast } from "@chakra-ui/react";
+import { useQueryClient } from "react-query";
+import { createStandaloneToast } from "@chakra-ui/react";
 import Api, { setJwtHeader, APIURLS } from "../../Api";
-import Select from "react-select";
 
 const BaseJwtLogin = ({ isOpen, onOpen, onClose, app, table, basejwt }) => {
   const [token] = useGlobal("token");
@@ -69,14 +52,12 @@ const BaseJwtLogin = ({ isOpen, onOpen, onClose, app, table, basejwt }) => {
   }
 
   async function handleSignup(params) {
-    console.log(params);
     try {
-      console.log("Here");
       let { data } = await Api.post(
         APIURLS.baseJwtLogin({ app, table }),
         params
       );
-      console.log(data);
+
       let jwtToken = data?.access_token;
 
       localStorage.setItem("jwtToken", jwtToken);
@@ -96,7 +77,6 @@ const BaseJwtLogin = ({ isOpen, onOpen, onClose, app, table, basejwt }) => {
         "jwt_info",
       ]);
       onClose();
-      console.log("there", data);
     } catch ({ response }) {
       toast({
         title: "An error occurred.",
@@ -105,7 +85,6 @@ const BaseJwtLogin = ({ isOpen, onOpen, onClose, app, table, basejwt }) => {
         duration: 9000,
         isClosable: true,
       });
-      console.log(response);
     }
   }
 
@@ -136,24 +115,6 @@ const BaseJwtLogin = ({ isOpen, onOpen, onClose, app, table, basejwt }) => {
       </Modal>
     </>
   );
-};
-
-const CARD_ELEMENT_OPTIONS = {
-  style: {
-    base: {
-      color: "#32325d",
-      fontFamily: '"Helvetica Neue", Helvetica, sans-serif',
-      fontSmoothing: "antialiased",
-      fontSize: "18px",
-      "::placeholder": {
-        color: "#aab7c4",
-      },
-    },
-    invalid: {
-      color: "#fa755a",
-      iconColor: "#fa755a",
-    },
-  },
 };
 
 export default BaseJwtLogin;

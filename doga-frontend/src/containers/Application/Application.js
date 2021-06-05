@@ -1,21 +1,15 @@
 import { useState } from "react";
-import { Box, H2, Button, Para } from "../../styles";
+import { Box } from "../../styles";
 import { Redirect } from "react-router-dom";
-import ApplicationNext from "./ApplicationNext";
 import CreateTable from "./CreateTable";
 import CreateAppName from "./CreateAppName";
 import CreateDatabase from "../CreateDatabase/CreateDatabase";
-import { useQuery, useQueryClient } from "react-query";
 import ClipLoader from "react-spinners/ClipLoader";
-import { useEffect } from "reactn";
 import { useIsFetching } from "react-query";
 import CreateTableName from "./CreateTableName";
 
 const Application = ({ isOpen, onOpen, onClose }) => {
   const [step, setStep] = useState(1);
-  const [dash, setDash] = useState(false);
-  const [fetch, setFetch] = useState();
-  const queryClient = useQueryClient();
   const [connectionSelected, setConnectionSelected] = useState();
   const [appName, setAppName] = useState();
   const [tableName, setTableName] = useState();
@@ -26,12 +20,6 @@ const Application = ({ isOpen, onOpen, onClose }) => {
 
   return (
     <>
-      {/* <Modal isOpen={isOpen} onClose={onCloseHandler} size={"full"}>
-        <ModalOverlay />
-        <ModalContent>
-          <ModalHeader></ModalHeader>
-          <ModalCloseButton />
-          <ModalBody> */}
       <Box width="100%">
         {step === 1 && (
           <CreateAppName setStep={setStep} setAppName={setAppName} />
@@ -69,9 +57,6 @@ const Application = ({ isOpen, onOpen, onClose }) => {
           </>
         )}
       </Box>
-      {/* </ModalBody>
-        </ModalContent>
-      </Modal> */}
     </>
   );
 };

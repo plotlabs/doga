@@ -1,21 +1,9 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useGlobal } from "reactn";
 import { NavLink } from "react-router-dom";
-import {
-  Box,
-  ResponsiveImage,
-  Image,
-  Button,
-  StyledLink,
-  Span,
-  MotionBox,
-  H2,
-  H1,
-  Input,
-  Label,
-} from "../../styles";
-import Api, { setHeader, APIURLS } from "../../Api";
+import { Box, Button, Span, MotionBox, H2, Input, Label } from "../../styles";
+import Api, { APIURLS } from "../../Api";
 import { Icon } from "@chakra-ui/react";
 import { FaUserAlt } from "react-icons/fa";
 import { MdEmail } from "react-icons/md";
@@ -31,29 +19,16 @@ const Signup = () => {
 
   async function handleSignup(params) {
     try {
-      //   setApiErr(null);
       setLoading(true);
       let { data } = await Api.post(APIURLS.signup, {
         ...params,
       });
 
-      //   let token = data?.data.user?.accessToken;
-      //   let userId = data?.data.user?.id;
-      //   localStorage.setItem("token", token);
-      //   localStorage.setItem("userId", userId);
-      //   setHeader(token);
-      //   setToken(token);
-      //   router.push("/onboarding");
       setLoading(false);
       setSuccess(true);
-
-      console.log("data", data);
     } catch ({ response }) {
-      console.log(response);
-      //   setApiErr(response?.data?.message);
       setLoading(false);
     }
-    console.log(params);
   }
 
   return (
@@ -61,7 +36,6 @@ const Signup = () => {
       <Box
         style={{
           height: "100vh",
-
           backgroundColor: "#382e6c",
         }}
       >
@@ -86,13 +60,12 @@ const Signup = () => {
             justifyContent="center"
             style={{
               width: "30%",
-              // padding: "50px",
+
               borderRadius: "10px",
               boxShadow: "#161617 0px 2px 4px -1px",
               backgroundColor: "#ffffff",
             }}
           >
-            {/* <Image src="doga_login.png" width="80px"></Image> */}
             {success ? (
               <MotionBox
                 mt={6}
@@ -132,7 +105,6 @@ const Signup = () => {
                         required
                         fontSize={3}
                         p={2}
-                        //   placeholder=""
                         width="100%"
                         ref={register}
                         mb={2}
@@ -159,7 +131,6 @@ const Signup = () => {
                         required
                         fontSize={3}
                         p={2}
-                        //   placeholder=""
                         width="100%"
                         ref={register}
                         mb={2}
