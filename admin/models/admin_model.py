@@ -11,8 +11,9 @@ from admin.models.base_model_ import Model
 
 
 class Admin(Model):
-
-    def __init__(self, email: str = None, password: str = None, name: str = None):  # noqa: E501
+    def __init__(
+        self, email: str = None, password: str = None, name: str = None
+    ):  # noqa: E501
         """Admin
 
         :param email: The email of this Admin.
@@ -25,16 +26,12 @@ class Admin(Model):
         :type  name: str
         """
 
-        self.param_types = {
-            'email': str,
-            'password': str,
-            'name': str
-        }
+        self.param_types = {"email": str, "password": str, "name": str}
 
         self.attribute_map = {
-            'email': 'email',
-            'password': 'password',
-            'name': 'name'
+            "email": "email",
+            "password": "password",
+            "name": "name",
         }
 
         self._email = email
@@ -42,7 +39,7 @@ class Admin(Model):
         self._name = name
 
     @classmethod
-    def from_dict(cls, dikt) -> 'Admin':
+    def from_dict(cls, dikt) -> "Admin":
         """Returns the dict as a model
 
         :param dikt: A dict.
@@ -72,13 +69,16 @@ class Admin(Model):
         :param email: The email of this Admin.
         :type email: str
         """
-        email_regex = "([a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+)"  # noqa 401
+        email_regex = (
+            "([a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+)"  # noqa 401
+        )
 
         if email is None:
             raise ValueError("Invalid value for `email`, must not be `None`.")
         if not re.match(email_regex, email):
-            raise ValueError("Invalid email id, please re-enter a valid email "
-                             "address")
+            raise ValueError(
+                "Invalid email id, please re-enter a valid email address"
+            )
 
         self._email = email
 
@@ -103,14 +103,19 @@ class Admin(Model):
         :type password: str
         """
         if password is None:
-            raise ValueError("Invalid value for `password`, must not be `None`"
-                             ".")
+            raise ValueError(
+                "Invalid value for `password`, must not be `None`."
+            )
         if password is not None and len(password) > 32:
-            raise ValueError("Invalid value for `password`, length must be"
-                             " less than or equal to `32`.")
+            raise ValueError(
+                "Invalid value for `password`, length must be"
+                " less than or equal to `32`."
+            )
         if password is not None and len(password) < 6:
-            raise ValueError("Invalid value for `password`, length must be "
-                             "greater than or equal to `6`.")
+            raise ValueError(
+                "Invalid value for `password`, length must be "
+                "greater than or equal to `6`."
+            )
 
         self._password = password
 
@@ -135,13 +140,16 @@ class Admin(Model):
         :type name: str
         """
         if name is None:
-            raise ValueError("Invalid value for `name`, must not be `None`"
-                             ".")
+            raise ValueError("Invalid value for `name`, must not be `None`.")
         if name is not None and len(name) > 32:
-            raise ValueError("Invalid value for `name`, length must be less. "
-                             "than or equal to `32`")
+            raise ValueError(
+                "Invalid value for `name`, length must be less. "
+                "than or equal to `32`"
+            )
         if name is not None and len(name) < 4:
-            raise ValueError("Invalid value for `name`, length must be greater"
-                             " than or equal to `4`.")
+            raise ValueError(
+                "Invalid value for `name`, length must be greater"
+                " than or equal to `4`."
+            )
 
         self._name = name

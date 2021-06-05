@@ -1,13 +1,10 @@
 import json
-from flask import Blueprint, request, jsonify
+from flask import Blueprint
 from flask_restful import Api, Resource
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.utils import verify_jwt
 
-import boto3
-from botocore.config import Config
 from boto3.session import Session
-from botocore.exceptions import ClientError
 
 from admin.models import Admin
 from admin.utils import *
@@ -23,10 +20,11 @@ class DBDefaults(Resource):
     """
     Return default host and port for all doga databases
     """
+
     def get(self):
         DEFAULT_HOST = {}
         for key, value in DEFAULT_PORTS.items():
-            DEFAULT_HOST[key] = 'localhost'
+            DEFAULT_HOST[key] = "localhost"
 
         return {"host": DEFAULT_HOST, "port": DEFAULT_PORTS}
 
@@ -35,12 +33,14 @@ class AWSFormHelper(Resource):
     """
     Endpoint to provide default values and info regarding the aws exports
     """
+
     @jwt_required
     def post(self, section=None):
 
         if not verify_jwt(get_jwt_identity(), Admin):
-            return {"result": "JWT authorization invalid, user does not"
-                    " exist."}
+            return {
+                "result": "JWT authorization invalid, user does not exist."
+            }
 
         """
         Credentials required by AWS to establish the request it is receiving is
@@ -51,8 +51,8 @@ class AWSFormHelper(Resource):
         RDS and EC2 instances as well as send commands over SSM.
         provide the aws:
         "aws_username": "username",
-        "aws_secret_key": "VIe9NUuoBPZPCnOxYiiI/F9HMtWIqutP8owANHoi",
-        "aws_access_key": "AKIA3YRTROEPRKTEPORTKEPOR"
+        "aws_secret_key": "XxxX/xxxx",
+        "aws_access_key": "XXXXXX"
         """
         # no defaults
 
@@ -62,16 +62,19 @@ class AWSFormHelper(Resource):
         #       will be created in, please ensure you choose a region that has
         #       SSM, RDS and EC2 services.
         #       Detialed information of the services can be found
-        # (on amazons webpage)[https://aws.amazon.com/about-aws/global-infrastructure/regional-product-services/]  # noqa E401
+        #       (on amazons webpage)[https://aws.amazon.com/about-aws/gl
+        #       obal-infrastructure/regional-product-services/]
         s = Session()
-        aws_region_names = s.get_available_regions('ssm')
+        aws_region_names = s.get_available_regions("ssm")
 
         #   signature_version
         #       this outlines the method used by AWS for authenticating
         #       requests. Version 4 is the most stable and reccomended
         #       protocol.
-        #       For mode details refer to (how aws signs api requests.)[https://docs.aws.amazon.com/general/latest/gr/signing_aws_api_requests.html] # noqa E401
-        signature_version = 'v4'
+        #       For mode details refer to (how aws signs api requests.)
+        #       [https://docs.aws.amazon.com/general/latest/gr/signing_
+        #       aws_api_requests.html]
+        signature_version = "v4"
 
         #   retries:
         retries = {}
@@ -79,11 +82,11 @@ class AWSFormHelper(Resource):
         #       In case the calls to AWS services fail due to unexpected issues
         #       This field allows users to specify the maximum attempts he
         #       would like to resend the request.
-        retries['max_attempts'] = 10
+        retries["max_attempts"] = 10
 
         #       mode
         #       This indicates the retry handler you would like to use
-        retries['mode'] = 'standard'
+        retries["mode"] = "standard"
 
         """
         Relational Data Service (RDS) configuration
@@ -93,7 +96,7 @@ class AWSFormHelper(Resource):
         A few basic configurations are:
         """
         rds_config = {}
-        rds_config["Engine"] = ["MySQL", "PostgreSQL"]
+        rds_config["Engine"] = ["MySQL", "postgres"]
 
         # Name of the DB to be given by the user the default should be app name
         rds_config["DBInstanceIdentifier"] = ""
@@ -102,9 +105,10 @@ class AWSFormHelper(Resource):
         # depending on the region and the engine chosen, AWS will allow users
         # chose form an array different machines with different hardware
         # configurations.
-        # Refer to (this)[https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Concepts.DBInstanceClass.html] # noqa E401
+        # Refer to (this)[https://docs.aws.amazon.com/AmazonRDS/latest/Us
+        # erGuide/Concepts.DBInstanceClass.html]
         # doc for further details
-        rds_config['DBInstanceClass'] = "db.t2.micro"
+        rds_config["DBInstanceClass"] = "db.t2.micro"
 
         # Minimum storage allocated in GB s
         # minimum is 20
@@ -147,7 +151,8 @@ class AWSFormHelper(Resource):
 
         # *VolumeType* can be one of gp3, gp2 for General purpose SSD and
         #   one of io2, io1 for a Provisioned IOPS SSD, more information can
-        #   be found [at](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ebs-volume-types.html)  # noqa E401
+        #   be found [at](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/
+        #   ebs-volume-types.html)
 
         ec2_config["BlockDeviceMappings"] = [
             {
@@ -155,9 +160,10 @@ class AWSFormHelper(Resource):
                 "Ebs": {
                     "DeleteOnTermination": True,
                     "VolumeSize": 8,
-                    "VolumeType": "gp2"
+                    "VolumeType": "gp2",
                 },
-            }]
+            }
+        ]
 
         response = {
             "config": {
@@ -172,46 +178,11 @@ class AWSFormHelper(Resource):
         try:
             return {section: response[section]}, 200
         except KeyError:
-            return {'error': 'The section ' +
-                    section + ' does not exist.'}, 400
+            return (
+                {"error": "The section " + section + " does not exist."},
+                400,
+            )
 
 
-# TODO: fix this
-class AWSEC2info(Resource):
-    @jwt_required
-    def post(self):
-        user_credentials = request.get_json()
-        required_params = ["aws_access_key", "aws_secret_key", "region_name"]
-        if user_credentials is None:
-            return {"result": "Error user_credentials cannot none",
-                    "missing_parameters": required_params}, 400
-
-        if set(required_params) - set(user_credentials) != set():
-            return {"result": "Missing parameters", "missing_parameters": list(
-                set(required_params) - set(user_credentials))}, 400
-
-        try:
-            ec2_client = boto3.client('ec2',
-                                      aws_access_key_id=user_credentials['aws_access_key'],  # noqa 401
-                                      aws_secret_access_key=user_credentials['aws_secret_key'],  # noqa 401
-                                      region_name=user_credentials['region_name'],  # noqa 401
-                                      config=Config())
-        except ClientError as e:
-            raise EC2CreationError("Error connecting to EC2 with given kwags ",
-                                   str(e))
-
-        images = ec2_client.describe_images()
-        print(images)
-        image_dict = images['Images']
-        image_frame = pd.DataFrame.from_dict(image_dict).dropna(axis=1)
-
-        platform = 'other'
-        platforms = ['amazon linux', 'centos', 'debian', 'fedora', 'ubuntu']
-
-        print(platform)
-        return json.loads()
-
-
-# api_utils.add_resource(AWSEC2info, '/aws/ec2')
-api_utils.add_resource(AWSFormHelper, '/aws/form/<string:section>')
-api_utils.add_resource(DBDefaults, '/defaults/db')
+api_utils.add_resource(AWSFormHelper, "/aws/form/<string:section>")
+api_utils.add_resource(DBDefaults, "/defaults/db")

@@ -5,11 +5,16 @@ import subprocess
 from threading import Thread
 
 from typing import Dict, Tuple
+from time import sleep
 
 from flask import Blueprint, request, jsonify
 from flask_restful import Api, Resource
-from flask_jwt_extended import (jwt_required, create_access_token,
-                                create_refresh_token, get_jwt_identity)
+from flask_jwt_extended import (
+    jwt_required,
+    create_access_token,
+    create_refresh_token,
+    get_jwt_identity,
+)
 
 from sqlalchemy.exc import UnsupportedCompilationError
 
@@ -26,12 +31,20 @@ from admin.models.sms_notifications import Sms_Notify
 
 
 from admin.utils import *
-from admin.validators import (column_types, column_validation, nullable_check,
-                              foreign_key_options)
+from admin.validators import (
+    column_types,
+    column_validation,
+    nullable_check,
+    foreign_key_options,
+    relationship_validation,
+)
 
 from admin.export.utils import *
-from admin.export.exportapp import (create_app_dir, check_if_exist,
-                                    write_to_deployments)
+from admin.export.exportapp import (
+    create_app_dir,
+    check_if_exist,
+    write_to_deployments,
+)
 
 from admin.resource_helper import *
 
@@ -59,31 +72,73 @@ class AdminApi(Resource):
     Methods
     -------
         get(self,email):
-            Defines responses for the `/admin/admin_adminprofile/<email-id>`
+            Defines responses for the `/admin/admin_profile/<email-id>`
             endpoint
 
         post(self):
-            Defines responses for the `/admin/admin_adminprofile endpoint
+            Defines responses for the `/admin/admin_profile endpoint
 
     """
 
     @jwt_required
     def get(self, email=None) -> Tuple[Dict[str, str], int]:
         """
-        Defines responses for the `/admin/admin_adminprofile/<email-id>`
+        Defines responses for the `/admin/admin_profile/<email-id>`
         endpoint
+
+        Parameters:
+        ----------
+        - name:
+          in: path
+          type: string
+          format: email
+          required: true
+          description: e-mail address corresponding to the admin user, of
+                       which data is being retrieved.
 
         Returns:
         -------
-            json serializeable dict
-            integer response code
+            json serializeable dict, integer response code
+
+            responses:
+                - 200
+                  description: Admin successfully found.
+                  body:
+                    type: json
+                  schema:
+                    - name:
+                      type: string
+                      description: Name registered against the e-mail.
+                    - email:
+                      type: string
+                      format: email
+                      description: email passed in the url parameter
+                    - id
+                      type: integer
+                    - create_dt
+                      type: string
+                      format: datetime YYYY-MM-DD HH:MM:SS.SSS
+                - 400
+                  description: Error occurred
+                  schema:
+                    - result:
+                      type: string
+                - 401
+                  description: Invalid JWT token.
+                - 500:
+                  description: Server Error
         """
         if not verify_jwt(get_jwt_identity(), Admin):
-            return {"result": "JWT authorization invalid, user does not"
-                    " exist."}, 401
+            return (
+                {
+                    "result": "JWT authorization invalid, user does not"
+                    " exist."
+                },
+                401,
+            )
 
         if email is None:
-            return {"result": "Please add admin`email` parameter to path"}, 404
+            return {"result": "Please add admin`email` parameter to path"}, 400
 
         # access the Admin db defined for the app instance
         admin = Admin.query.filter_by(email=email).first()
@@ -91,51 +146,107 @@ class AdminApi(Resource):
             user_obj = json.dumps(admin, cls=AlchemyEncoder)
             return {"result": json.loads(user_obj)}, 200
 
-        return {"result": "Admin does not exist."}, 404
+        return {"result": "Admin does not exist."}, 400
 
-    def post(self):
+    def post(self) -> Tuple[Dict[str, str], int]:
         """
-        Defines responses for the `/admin/admin_adminprofile/<email-id>`
+        Defines responses for the `/admin/admin_adminprofile`
         endpoint
         It creates a Admin object from the request body it receives,
         checking if all values satisfy the model constraints and then writing
         data to the `amin` database.
 
+        Parameters:
+        ----------
+        - name:
+          in: json body
+          type: string
+          required: true
+          description: Name of the Admin User
+
+        - email:
+          in: json body
+          type: string
+          format: email
+          required: true
+          description: E-mail id (unique) corresponding to the user
+
+        - password:
+          in : json body
+          type: string
+          format: length
+          required: true
+
         Returns:
         -------
             json serializeable dict
             integer response code
+
+            responses:
+            - 200
+              description: Success registering admin
+              schema:
+                type: json
+                parameters:
+                - result
+                  type: string
+                - id
+                  type: integer
+                - email
+                  type: string
+                  format: email
+            - 400
+              description: Error message
+              schema:
+              type: json
+              parameters:
+              - result
+                type: string
+                description: Error messag
+            - 403
+              description: Admin already registered
         """
         json_request = request.get_json()
         if json_request is None:
-            return {"result": "Error json body cannot be None."}, 500
+            return {"result": "Error json body cannot be None."}, 400
 
         required_keys = {"name", "email", "password"}
 
         missed_keys = required_keys.difference(json_request.keys())
 
         if len(missed_keys) != 0:
-            return {
-                "result": "Values for fields cannot be null",
-                "required values": list(missed_keys)
-            }, 500
+            return (
+                {
+                    "result": "Values for fields cannot be null",
+                    "required values": list(missed_keys),
+                },
+                400,
+            )
 
         try:
             admin = AdminObject.from_dict(json_request)
         except ValueError as err:
-            return {"result": "Error: ".join(err.args)}, 500
+            return {"result": "Error: ".join(err.args)}, 400
 
-        admin_exists = Admin.query.filter_by(email=admin.email.lower(
-        )).first()
+        admin_exists = Admin.query.filter_by(email=admin.email.lower()).first()
         if admin_exists is None:
             password_hash = ALGORITHM.hash(admin.password)
-            admin = Admin(email=admin.email.lower(),
-                          password=password_hash, name=admin.name,
-                          create_dt=dt.now())
+            admin = Admin(
+                email=admin.email.lower(),
+                password=password_hash,
+                name=admin.name,
+                create_dt=dt.now(),
+            )
             db.session.add(admin)
             db.session.commit()
-            return {"result": "Admin created successfully.",
-                    "id": admin.id, "email": admin.email}, 200
+            return (
+                {
+                    "result": "Admin created successfully.",
+                    "id": admin.id,
+                    "email": admin.email,
+                },
+                200,
+            )
 
         else:
             return {"result": "Admin already exists."}, 403
@@ -144,7 +255,48 @@ class AdminApi(Resource):
 class Login(Resource):
     """API to login admin."""
 
-    def post(self):
+    def post(self) -> Tuple[Dict[str, str], int]:
+        """
+        Defines responses for the `/admin/login/` endpoint.
+        It allows a registered Admin user to login and receive a jwt, that can
+        be used to access the other restricted endpoints.
+
+        Parameters:
+        -----------
+        - email:
+          in: json body
+          required: true
+          type: string
+          format: email
+
+        - password
+          in: json body
+          required: true
+          type: string
+
+        Returns:
+        -------
+            json serializeable dict, integer response code
+            responses:
+            - 200
+              type: json
+              parameters:
+              - result
+                type: string
+              - email
+                type: string
+                format: email
+              - name
+                type: string
+              - id
+                type: integer
+              - access_token
+                type: string
+                description: the jwt token required by doga to access
+                             restricted endpoint.
+              - refresh_token
+                type: string
+        """
         data = request.get_json()
         try:
             admin = Admin.query.filter_by(email=data["email"]).first()
@@ -158,15 +310,17 @@ class Login(Resource):
                 else:
                     filter_keys = {key: data[key] for key in jwt_filter_keys}
                     access_token = create_access_token(
-                        identity=filter_keys, expires_delta=expiry_time)
-                    refresh_token = create_refresh_token(
-                        identity=filter_keys)
-                    return {"result": "Successfully logged in", "email":
-                            admin.email,
-                            "name": admin.name,
-                            "id": admin.id,
-                            'access_token': access_token,
-                            'refresh_token': refresh_token}
+                        identity=filter_keys, expires_delta=expiry_time
+                    )
+                    refresh_token = create_refresh_token(identity=filter_keys)
+                    return {
+                        "result": "Successfully logged in",
+                        "email": admin.email,
+                        "name": admin.name,
+                        "id": admin.id,
+                        "access_token": access_token,
+                        "refresh_token": refresh_token,
+                    }
         except KeyError as e:
             return {"result": "Key error", "error": str(e)}, 500
 
@@ -194,6 +348,7 @@ class ContentType(Resource):
         delete
 
     """
+
     @jwt_required
     def get(self, db_name=None, content_type=None):
         """
@@ -206,27 +361,37 @@ class ContentType(Resource):
             integer response code
         """
         if not verify_jwt(get_jwt_identity(), Admin):
-            return {"result": "JWT authorization invalid, user does not"
-                    " exist."}
+            return {
+                "result": "JWT authorization invalid, user does not exist."
+            }
         table_list = []
         app_table_columns = {}
         # Iterate though the tables stored using FlaskSqlAlchemy
         for table in metadata.sorted_tables:
             # if content is not specified then return a list of all tables in
             # if content_type has not been specified in the URL path
-            current_db = extract_database_name(table.info['bind_key'])
+            current_db = extract_database_name(table.info["bind_key"])
 
             if content_type is None:
                 if table.name in ["alembic_version"]:
                     continue
 
-                if table.name in ["jwt", "admin", "restricted_by_jwt",
-                                  "deployments", "relationships",
-                                  "notifications"] and\
-                        table.info['bind_key'] == "default":
+                if (
+                    table.name
+                    in [
+                        "jwt",
+                        "admin",
+                        "restricted_by_jwt",
+                        "deployments",
+                        "relationships",
+                        "assets_table",
+                        "notifications",
+                    ]
+                    and table.info["bind_key"] == "default"
+                ):
                     continue
 
-                if 'generatedAssociation' in table.name:
+                if "generatedAssociation" in table.name:
                     continue
 
                 column_list = []
@@ -235,8 +400,8 @@ class ContentType(Resource):
                     continue
 
                 for column in table.columns:
-                    foreign_col = ''
-                    if column.name in ['id', 'create_dt']:
+                    foreign_col = ""
+                    if column.name in ["id", "create_dt"]:
                         continue
                     default = str(column.default)
                     if column.server_default is not None:
@@ -244,26 +409,39 @@ class ContentType(Resource):
                     try:
                         column_type = str(column.type)
                     except UnsupportedCompilationError as error:
-                        if 'JSON' in ''.join(error.args).upper():
-                            column_type = 'JSON'
+                        if "JSON" in "".join(error.args).upper():
+                            column_type = "JSON"
                         else:
-                            raise ValueError('Cannot infer column type.')
+                            raise ValueError("Cannot infer column type.")
                     foreign_key = str(column.foreign_keys)
                     if foreign_key != set():
                         foreign_key = foreign_key[
-                            foreign_key.find("(") + 1:foreign_key.find(")")
+                            foreign_key.find("(") + 1: foreign_key.find(")")
                         ].replace("'", "")
                     try:
                         default = int(str(default))
                     except ValueError:
                         pass
-                    if column_type == 'BOOLEAN':
+                    if column_type == "BOOLEAN":
                         default = str(default)
 
-                    if 'ColumnDefault' in str(default):
+                    if column_type == "BLOB":
+                        model_path = (
+                            "/".join(os.path.dirname(__file__).split("/")[:-1])
+                            + "/app/"
+                            + table.info["bind_key"]
+                            + "/"
+                            + table.name
+                            + "/models.py"
+                        )
+                        models = open(model_path, "r").read()
+                        if "ImageType" in models:
+                            column_type = "ImageType"
+
+                    if "ColumnDefault" in str(default):
                         default = default[
-                                default.find("(") + 1:default.find(")")
-                            ].replace("'", "")
+                            default.find("(") + 1: default.find(")")
+                        ].replace("'", "")
 
                     col = {
                         "name": column.name,
@@ -271,11 +449,11 @@ class ContentType(Resource):
                         "nullable": str(bool(column.nullable)).lower(),
                         "unique": str(bool(column.unique)).lower(),
                         "default": default,
-                        "foreign_key": foreign_key
+                        "foreign_key": foreign_key,
                     }
                     column_list.append(col)
 
-                app_name = table.info['bind_key']
+                app_name = table.info["bind_key"]
                 try:
                     app_table_columns[app_name][table.name] = column_list
                 except KeyError:
@@ -287,69 +465,101 @@ class ContentType(Resource):
                 if table.name in ["alembic_version"]:
                     continue
 
-                current_db = extract_database_name(table.info['bind_key'])
+                current_db = extract_database_name(table.info["bind_key"])
 
                 if table.name == content_type and db_name == current_db:
                     column_list = []
                     for column in table.columns:
-                        if column.name in ['id', 'create_dt']:
+                        if column.name in ["id", "create_dt"]:
                             continue
                         default = str(column.default)
                         if column.default is not None:
                             default = default[
-                                default.find("(") + 1:default.find(")")
+                                default.find("(") + 1: default.find(")")
                             ].replace("'", "")
                         try:
                             column_type = str(column.type)
                         except UnsupportedCompilationError as error:
-                            if 'JSON' in ''.join(error.args).upper():
-                                column_type = 'JSON'
+                            if "JSON" in "".join(error.args).upper():
+                                column_type = "JSON"
                             else:
-                                raise ValueError('Cannot infer column type.')
+                                raise ValueError("Cannot infer column type.")
                         foreign_key = str(column.foreign_keys)
                         if column.foreign_keys != "":
                             foreign_key = foreign_key[
-                                foreign_key.find(
-                                    "(") + 1:foreign_key.find(")")
+                                foreign_key.find("(")
+                                + 1: foreign_key.find(")")
                             ].replace("'", "")
                             if foreign_key != "":
                                 foreign_key = foreign_key.split(".")[0].title()
                         if foreign_key != "":
-                            column_type = str(column.foreign_keys).split("}")[0][1:]  # noqa 501
+                            column_type = str(column.foreign_keys).split("}")[
+                                0
+                            ][
+                                1:
+                            ]  # noqa 501
+
+                        if column_type == "BLOB":
+                            model_path = (
+                                "/".join(
+                                    os.path.dirname(__file__).split("/")[:-1]
+                                )
+                                + " /app/"
+                                + table.info["bind_key"]
+                                + "/"
+                                + table.name
+                                + "/models.py"
+                            )
+                            models = open(model_path, "rb").read()
+                            if "ImageType" in models:
+                                column_type = "ImageType"
+
                         obj = {
                             "name": column.name,
                             "type": column_type,
                             "nullable": str(bool(column.nullable)).lower(),
                             "unique": str(bool(column.unique)).lower(),
                             "default": default,
-                            "foreign_key": foreign_key
+                            "foreign_key": foreign_key,
                         }
                         column_list.append(obj)
-                    table_list.append({'table_name': table.name,
-                                       'connection_name': table.info[
-                                           'bind_key'], 'columns': column_list
-                                       })
+                    table_list.append(
+                        {
+                            "table_name": table.name,
+                            "connection_name": table.info["bind_key"],
+                            "columns": column_list,
+                        }
+                    )
 
         if table_list == []:
-            return {"result": "No apps and content created yet."}, 200
+            empty_apps = set(DB_DICT.keys())
+            empty_apps = empty_apps - {"default"}
+            if empty_apps != {}:
+                table_list = {}
+                for app in list(empty_apps):
+                    table_list[app] = {}
+            if table_list == []:
+                return {"result": "No apps and content created yet."}, 200
 
         for bind_key, _ in table_list.items():
             jwt_base = JWT.query.filter_by(connection_name=bind_key).first()
             if jwt_base is not None:
-                table_list[bind_key]['jwt_info'] = {
-                    'base_table': jwt_base.table,
-                    'filter_keys': jwt_base.filter_keys.split(",")
+                table_list[bind_key]["jwt_info"] = {
+                    "base_table": jwt_base.table,
+                    "filter_keys": jwt_base.filter_keys.split(","),
                 }
 
                 restricted_tables = Restricted_by_JWT.query.filter_by(
-                    connection_name=bind_key).first()
+                    connection_name=bind_key
+                ).first()
 
                 if restricted_tables is not None:
-                    table_list[bind_key]['jwt_info']['restricted_tables'] = \
-                        restricted_tables.restricted_tables.split(",")
+                    table_list[bind_key]["jwt_info"][
+                        "restricted_tables"
+                    ] = restricted_tables.restricted_tables.split(",")
 
         empty_apps = set(DB_DICT.keys()) - set(table_list.keys())
-        empty_apps = empty_apps - {'default'}
+        empty_apps = empty_apps - {"default"}
         if empty_apps != {}:
             for app in list(empty_apps):
                 table_list[app] = {}
@@ -369,8 +579,9 @@ class ContentType(Resource):
         """
         admin_jwt = get_jwt_identity()
         if not verify_jwt(admin_jwt, Admin):
-            return {"result": "JWT authorization invalid, user does not"
-                    " exist."}
+            return {
+                "result": "JWT authorization invalid, user does not exist."
+            }
         data = request.get_json()
         # sample data
         # data = {
@@ -409,32 +620,36 @@ class ContentType(Resource):
 
         required_keys = {"table_name", "app_name", "columns"}
 
-        notification = Notifications(user=admin_jwt['email'],
-                                     app_name=data['app_name'],
-                                     action_status='INITIATED',
-                                     message='Request Processing'
-                                     )
+        notification = Notifications(
+            user=admin_jwt["email"],
+            app_name=data["app_name"],
+            action_status="INITIATED",
+            action_type="create-content-tables",
+            message="Request Processing",
+        )
 
         missed_keys = required_keys.difference(data)
         if len(missed_keys) != 0:
-            notification.action_status = 'ERROR'
+            notification.action_status = "ERROR"
             notification.completed_action_at = dt.now()
             db.session.add(notification)
             db.session.commit()
             triggerSocketioNotif(
-                admin_jwt['email'], "", notification.create_dict())
-            return {
-                "result": "Values for fields cannot be null.",
-                "required values": list(missed_keys)
-            }, 500
+                admin_jwt["email"], "", notification.create_dict()
+            )
+            return (
+                {
+                    "result": "Values for fields cannot be null.",
+                    "required values": list(missed_keys),
+                },
+                500,
+            )
 
-        data['connection_name'] = data['app_name'].lower()
+        data["connection_name"] = data["app_name"].lower()
         try:
             Table = TableModel.from_dict(request.get_json())
         except ValueError as err:
             return {"result": "Error: " + "".join(err.args)}, 400
-
-        # database_name = extract_database_name(data["connection_name"])
 
         base_jwt = data.get("base_jwt", False)
         restrict_by_jwt = data.get("restrict_by_jwt", False)
@@ -443,69 +658,126 @@ class ContentType(Resource):
             db.session.add(notification)
             db.session.commit()
             return {"result": "Module with this name is already present."}, 400
-        if Table.table_name in ["admin", "jwt", "restricted_by_jwt"] and \
-                Table.connection_name == "default":
-            return {"result": "Table with name {} is not allowed since it "
-                              "is used to manage admin login internally."
-                              .format(Table.table_name)}, 400
+        if (
+            Table.table_name in ["admin", "jwt", "restricted_by_jwt"]
+            and Table.connection_name == "default"
+        ):
+            return (
+                {
+                    "result": "Table with name {} is not allowed since it "
+                    "is used to manage admin login internally.".format(
+                        Table.table_name
+                    )
+                },
+                400,
+            )
 
         try:
-            valid, msg = column_validation(data["columns"],
-                                           Table.connection_name)
+            valid, msg, data["columns"] = relationship_validation(
+                data["columns"], Table.connection_name
+            )
         except KeyError as err:
-            print(err)
-            return {
-                "result": "Error, column is missing required property.",
-                "property": err.args
-            }, 500
+            return (
+                {
+                    "result": "Error, relationship definition incomplete."
+                    + " Please add required property.",
+                    "property": err.args,
+                },
+                500,
+            )
+
+        if valid is False:
+            return {"result": msg}, 400
+
+        try:
+            valid, msg = column_validation(
+                data["columns"], Table.connection_name
+            )
+        except KeyError as err:
+            return (
+                {
+                    "result": "Error, column is missing required property.",
+                    "property": err.args,
+                },
+                500,
+            )
         if valid is False:
             return {"result": msg}, 400
 
         if base_jwt and restrict_by_jwt:
-            return {
-                "response": "Table cannot be both jwt_base and restricted by "
-                "jwt."
-            }, 400
+            return (
+                {
+                    "response": "Table cannot be both jwt_base and restricted "
+                    "by jwt."
+                },
+                400,
+            )
 
         if base_jwt is True:
 
             if check_jwt_present(Table.connection_name):
-                return {"result": "Only one table is allowed to set jwt per"
-                                  "database connection."}, 400
+                return (
+                    {
+                        "result": "Only one table is allowed to set jwt per"
+                        "database connection."
+                    },
+                    400,
+                )
 
-            if (data.get("filter_keys") is None or
-                    len(data.get("filter_keys", [])) == 0):
+            if (
+                data.get("filter_keys") is None
+                or len(data.get("filter_keys", [])) == 0
+            ):
                 data["filter_keys"] = ["id"]
 
-            if validate_filter_keys_names(
-                    data["filter_keys"], data["columns"]) is False:
-                return {"result": "Only column names are allowed"
-                                  " in filter keys."}, 400
+            if (
+                validate_filter_keys_names(
+                    data["filter_keys"], data["columns"]
+                )
+                is False
+            ):
+                return (
+                    {
+                        "result": "Only column names are allowed"
+                        " in filter keys."
+                    },
+                    400,
+                )
 
-            if validate_filter_keys_jwt(
-                    data["filter_keys"], data["columns"]) is False:
-                return {"result": "Atleast one of the filter_keys"
-                                  " should be unique and not null."}, 400
+            if (
+                validate_filter_keys_jwt(data["filter_keys"], data["columns"])
+                is False
+            ):
+                return (
+                    {
+                        "result": "At least one of the filter_keys"
+                        " should be unique and not null."
+                    },
+                    400,
+                )
 
             msg, valid, data["expiry"] = set_expiry(data.get("expiry", {}))
 
             if valid is False:
                 return {"result": msg}, 400
 
-            set_jwt_flag(Table.connection_name, Table.table_name,  # noqa 501
-                         ",".join(data["filter_keys"]))
+            set_jwt_flag(
+                Table.connection_name,
+                Table.table_name,
+                ",".join(data["filter_keys"]),
+            )
 
-        if restrict_by_jwt and check_jwt_present(Table.connection_name) is None:  # noqa 501, 701
+        if (
+            restrict_by_jwt
+            and check_jwt_present(Table.connection_name) is None
+        ):
             return {"result": "JWT is not configured."}, 400
 
         Thread(
             target=create_contet_thread(
-                data,
-                admin_jwt,
-                Table,
-                base_jwt,
-                restrict_by_jwt,
-                notification)).start()
+                data, admin_jwt, Table, base_jwt, restrict_by_jwt, notification
+            )
+        ).start()
         return {"result": "Successfully created module."}, 200
 
     @jwt_required
@@ -540,10 +812,11 @@ class ContentType(Resource):
             return {"result": "JSON body cannot be empty."}
 
         if not verify_jwt(get_jwt_identity(), Admin):
-            return {"result": "JWT authorization invalid, user does not"
-                    " exist."}
+            return {
+                "result": "JWT authorization invalid, user does not exist."
+            }
         try:
-            data['connection_name'] = data['app_name']
+            data["connection_name"] = data["app_name"]
             Table = TableModel.from_dict(data)
 
         except ValueError as err:
@@ -556,73 +829,114 @@ class ContentType(Resource):
         restrict_by_jwt = data.get("restrict_by_jwt", False)
 
         if base_jwt and restrict_by_jwt:
-            return {"result:" "Module cannot be both base_jwt and"
-                    " restricted_by_jwt."}, 400
+            return (
+                {
+                    "result:"
+                    "Module cannot be both base_jwt and"
+                    " restricted_by_jwt."
+                },
+                400,
+            )
 
         if not check_table(Table.table_name, Table.connection_name):
-            return {
-                "result": "Module with this name not present. Please choose a"
-                " an existing one to edit."
-            }, 400
+            return (
+                {
+                    "result": "Module with this name not present. Please "
+                    "choose an existing one to edit."
+                },
+                400,
+            )
 
-        valid, msg = column_validation(data["columns"],
-                                       Table.connection_name)
+        valid, msg = column_validation(data["columns"], Table.connection_name)
         if valid is False:
             return {"result": msg}, 400
 
         # check if the table that will be edited is the JWT restricted table
-        isJWT = JWT.query.filter_by(connection_name=Table.connection_name,
-                                    table=Table.table_name).first()
+        isJWT = JWT.query.filter_by(
+            connection_name=Table.connection_name, table=Table.table_name
+        ).first()
 
         if isJWT is None and base_jwt is True:
-            return {"result": "Only one table is allowed to set jwt per"
-                              "database connection."}, 400
+            return (
+                {
+                    "result": "Only one table is allowed to set jwt per"
+                    "database connection."
+                },
+                400,
+            )
 
         associatedTables = Restricted_by_JWT.query.filter_by(
-            connection_name=Table.connection_name)
+            connection_name=Table.connection_name
+        )
 
         if isJWT != None and base_jwt == False:  # noqa 711
             associatedTables = Restricted_by_JWT.query.filter_by(
-                connection_name=Table.connection_name).first()
+                connection_name=Table.connection_name
+            ).first()
             # regenerate all the endpoints that previously required JWT
             for table in associatedTables.restricted_tables.split(","):
                 dir_path = "app/" + database_name + "/" + Table.table_name
                 create_model(dir_path, data)
-                create_resources(database_name + "." + Table.table_name,
-                                 Table.connection_name,
-                                 dir_path,
-                                 base_jwt,
-                                 data.get("expiry", {}),
-                                 restrict_by_jwt,
-                                 data.get("filter_keys", []))
+                create_resources(
+                    database_name + "." + Table.table_name,
+                    Table.connection_name,
+                    dir_path,
+                    base_jwt,
+                    data.get("expiry", {}),
+                    restrict_by_jwt,
+                    data.get("filter_keys", []),
+                )
 
-            # delete this entry from the jwt table
+                # delete this entry from the jwt table
                 delete_jwt(Table.connection_name)
                 delete_restricted_by_jwt(Table.connection_name)
 
         check = nullable_check(data)
         if check:
-            return {"result": "Since data is already present in the table, "
-                              "new datetime column should be nullable."}, 400
+            return (
+                {
+                    "result": "Since data is already present in the table, "
+                    "new datetime column should be nullable."
+                },
+                400,
+            )
 
         if restrict_by_jwt:
             add_jwt_list(Table.connection_name, Table.table_name)
 
         if base_jwt:
 
-            if (data.get("filter_keys") is None or
-                    len(data.get("filter_keys", [])) == 0):
+            if (
+                data.get("filter_keys") is None
+                or len(data.get("filter_keys", [])) == 0
+            ):
                 data["filter_keys"] = ["id"]
 
-            if validate_filter_keys_names(
-                    data["filter_keys"], data["columns"]) is False:
-                return {"result": "Only column names are allowed"
-                                  " in filter keys."}, 400
+            if (
+                validate_filter_keys_names(
+                    data["filter_keys"], data["columns"]
+                )
+                is False
+            ):
+                return (
+                    {
+                        "result": "Only column names are allowed"
+                        " in filter keys."
+                    },
+                    400,
+                )
 
-            if validate_filter_keys_jwt(
-                    data["filter_keys"], data["columns"]) is False:
-                return {"result": "Atleast one of the filter_keys"
-                                  " should be unique and not null."}, 400
+            if (
+                validate_filter_keys_jwt(data["filter_keys"], data["columns"])
+                is False
+            ):
+                return (
+                    {
+                        "result": "Atleast one of the filter_keys"
+                        " should be unique and not null."
+                    },
+                    400,
+                )
 
             msg, valid, data["expiry"] = set_expiry(data.get("expiry", {}))
 
@@ -630,21 +944,29 @@ class ContentType(Resource):
                 return {"result": msg}, 400
 
             delete_jwt(Table.connection_name)
-            set_jwt_flag(Table.connection_name, Table.table_name,  # noqa 501
-                         ",".join(data["filter_keys"]))
+            set_jwt_flag(
+                Table.connection_name,
+                Table.table_name,
+                ",".join(data["filter_keys"]),
+            )
 
-        if restrict_by_jwt and check_jwt_present(Table.connection_name) is None:  # noqa 501, 701
+        if (
+            restrict_by_jwt
+            and check_jwt_present(Table.connection_name) is None
+        ):
             return {"result": "JWT is not configured."}, 400
 
-        dir_path = 'app/' + database_name + "/" + Table.table_name
+        dir_path = "app/" + database_name + "/" + Table.table_name
         create_model(dir_path, data)
-        create_resources(database_name + "." + Table.table_name,
-                         Table.connection_name,
-                         dir_path,
-                         base_jwt,
-                         data.get("expiry", {}),
-                         restrict_by_jwt,
-                         data.get("filter_keys", []))
+        create_resources(
+            database_name + "." + Table.table_name,
+            Table.connection_name,
+            dir_path,
+            base_jwt,
+            data.get("expiry", {}),
+            restrict_by_jwt,
+            data.get("filter_keys", []),
+        )
 
         remove_alembic_versions()
         move_migration_files()
@@ -654,30 +976,37 @@ class ContentType(Resource):
     def delete(self, db_name, content_type):
         """Delete a content type"""
         if not verify_jwt(get_jwt_identity(), Admin):
-            return {"result": "JWT authorization invalid, user does not"
-                    " exist."}, 401
+            return (
+                {
+                    "result": "JWT authorization invalid, user does not"
+                    " exist."
+                },
+                401,
+            )
         tables_list = []
         for table in metadata.sorted_tables:
-            f = (table.__dict__['foreign_keys'])
-            db = extract_database_name(table.info['bind_key'])
+            f = table.__dict__["foreign_keys"]
+            db = extract_database_name(table.info["bind_key"])
             for s in f:
                 table_name = s.column.table
                 if str(table_name) == content_type.lower() and db_name == db:
                     tables_list.append(table.name)
 
         if len(tables_list) > 0:
-            return {
-                "result": "The table {} is linked to another table(s). "
-                          "Delete table(s) {} first.".format(
-                              content_type, ', '.join(tables_list))
-            }, 400
+            return (
+                {
+                    "result": "The table {} is linked to another table(s). "
+                    "Delete table(s) {} first.".format(
+                        content_type, ", ".join(tables_list)
+                    )
+                },
+                400,
+            )
 
         try:
             shutil.rmtree(
-                'app/' +
-                db_name.lower() +
-                '/' +
-                content_type.lower())
+                "app/" + db_name.lower() + "/" + content_type.lower()
+            )
         except FileNotFoundError:
             return {"result": "Module does not exist."}, 400
 
@@ -685,11 +1014,20 @@ class ContentType(Resource):
             lines = f.readlines()
         with open("app/blueprints.py", "w") as f:
             for line in lines:
-                if line.strip("\n") != "from app." + db_name + "." + \
-                        content_type \
-                        + ".resources import mod_model" and line.strip("\n") \
-                        != "app.register_blueprint(mod_model, url_prefix='/" \
-                        + db_name.lower() + "/" + content_type.lower() + "')":
+                if (
+                    line.strip("\n")
+                    != "from app."
+                    + db_name
+                    + "."
+                    + content_type
+                    + ".resources import mod_model"
+                    and line.strip("\n")
+                    != "app.register_blueprint(mod_model, url_prefix='/"
+                    + db_name.lower()
+                    + "/"
+                    + content_type.lower()
+                    + "')"
+                ):
                     f.write(line)
         remove_alembic_versions()
         move_migration_files()
@@ -704,8 +1042,9 @@ class ColumnRelations(Resource):
     @jwt_required
     def post(self):
         if not verify_jwt(get_jwt_identity(), Admin):
-            return {"result": "JWT authorization invalid, user does not"
-                    " exist."}
+            return {
+                "result": "JWT authorization invalid, user does not exist."
+            }
 
         data = request.get_json()
 
@@ -716,33 +1055,41 @@ class ColumnRelations(Resource):
 
         missed_keys = required_keys.difference(data)
         if len(missed_keys) != 0:
-            return {
-                "result": "Values for fields cannot be null.",
-                "required values": list(missed_keys)
-            }, 500
+            return (
+                {
+                    "result": "Values for fields cannot be null.",
+                    "required values": list(missed_keys),
+                },
+                500,
+            )
 
         try:
             result = foreign_key_options(data["app_name"], data["type"])
 
         except ValueError:
-            return {"result": "Error while fetching app data, make sure there"
-                              "is a connection for the app."}, 500
+            return (
+                {
+                    "result": "Error while fetching app data, make sure there"
+                    "is a connection for the app."
+                },
+                500,
+            )
 
         return result, 200
 
 
 class DatabaseInit(Resource):
-
     @jwt_required
     def get(self):
         """Get properties of all connections"""
         if not verify_jwt(get_jwt_identity(), Admin):
-            return {"result": "JWT authorization invalid, user does not"
-                    " exist."}
+            return {
+                "result": "JWT authorization invalid, user does not exist."
+            }
         connection_list = []
         for key, value in DB_DICT.items():
             if value.startswith("sqlite"):
-                database_name = value.split("/")[-1].rstrip('.db')
+                database_name = value.split("/")[-1].rstrip(".db")
                 database_type = "sqlite"
                 host = "local"
                 port = None
@@ -763,15 +1110,17 @@ class DatabaseInit(Resource):
                 username = value.split("@")[0].split("/")[-1].split(":")[0]
                 password = value.split("@")[0].split("/")[-1].split(":")[1]
 
-            connection_list.append({
-                "connection_name": key,
-                "database_type": database_type,
-                "database_name": database_name,
-                "host": host,
-                "port": port,
-                "username": username,
-                "password": password
-            })
+            connection_list.append(
+                {
+                    "connection_name": key,
+                    "database_type": database_type,
+                    "database_name": database_name,
+                    "host": host,
+                    "port": port,
+                    "username": username,
+                    "password": password,
+                }
+            )
 
         return connection_list, 200
 
@@ -789,25 +1138,33 @@ class DatabaseInit(Resource):
         #     "database_name": "database_name",
         # }
         if not verify_jwt(get_jwt_identity(), Admin):
-            return {"result": "JWT authorization invalid, user does not"
-                    " exist."}
+            return {
+                "result": "JWT authorization invalid, user does not exist."
+            }
 
         json_request = request.get_json()
 
         if json_request is None:
             return {"result": "Error, request body cannot be empty."}, 500
 
-        required_keys = {"database_type", "username",
-                         "password", "database_name"}
+        required_keys = {
+            "database_type",
+            "username",
+            "password",
+            "database_name",
+        }
         missed_keys = required_keys.difference(json_request)
 
         if len(missed_keys) != 0:
-            return {
-                "result": "Values for fields cannot be null",
-                "required values": list(missed_keys)
-            }, 500
+            return (
+                {
+                    "result": "Values for fields cannot be null",
+                    "required values": list(missed_keys),
+                },
+                500,
+            )
 
-        json_request['connection_name'] = json_request['database_name']
+        json_request["connection_name"] = json_request["database_name"]
 
         try:
             database = DatabaseObject.from_dict(json_request)
@@ -818,10 +1175,13 @@ class DatabaseInit(Resource):
         string = database.db_string()
 
         if string == "":
-            return {
-                "result": "Please provide all parameters to connect/create "
-                " db instance."
-            }, 500
+            return (
+                {
+                    "result": "Please provide all parameters to connect/create"
+                    " db instance."
+                },
+                500,
+            )
 
         try:
             engine = create_engine(string)
@@ -830,8 +1190,11 @@ class DatabaseInit(Resource):
             engine.dispose()
             db_created = ""
         except OperationalError as err:
-            if "unknown database" or database.database_name + \
-               "does not exist" in str(err).lower():
+            if (
+                "unknown database"
+                or database.database_name + "does not exist"
+                in str(err).lower()
+            ):
                 try:
                     string = re.split(database.database_name, string)[0]
                     engine = create_engine(string)
@@ -840,32 +1203,44 @@ class DatabaseInit(Resource):
                     conn.execute("CREATE DATABASE " + database.database_name)
                     conn.invalidate()
                     engine.dispose()
-                    db_created = " New database " + database.database_name +\
-                        " created."
+                    db_created = (
+                        " New database " + database.database_name + " created."
+                    )
                 except OperationalError:
-                    return {
-                        "result": "Could not create database,"
-                        " connection not valid."}, 400
+                    return (
+                        {
+                            "result": "Could not create database,"
+                            " connection not valid."
+                        },
+                        400,
+                    )
             else:
-                return {
-                    "result": "The database credentials are not valid."
-                }, 400
+                return (
+                    {"result": "The database credentials are not valid."},
+                    400,
+                )
 
-        with open('dbs.py', 'r') as f:
+        with open("dbs.py", "r") as f:
             lines = f.readlines()
 
-        with open('dbs.py', 'w+') as f:
+        with open("dbs.py", "w+") as f:
             for i, line in enumerate(lines):
-                if line.startswith('}'):
-                    line = '    "' + database.connection_name + '": "' + \
-                        database.db_string() + '",\n' + line
+                if line.startswith("}"):
+                    line = (
+                        '    "'
+                        + database.connection_name
+                        + '": "'
+                        + database.db_string()
+                        + '",\n'
+                        + line
+                    )
                 f.write(line)
 
         add_new_db(database.database_name)
 
         return {
-            "result": "Successfully created database connection string." +
-            db_created
+            "result": "Successfully created database connection string."
+            + db_created
         }
 
     @jwt_required
@@ -882,58 +1257,78 @@ class DatabaseInit(Resource):
         # }
 
         if not verify_jwt(get_jwt_identity(), Admin):
-            return {"result": "JWT authorization invalid, user does not"
-                    " exist."}
-
-        data['connection_name'] = data['database_name'].lower()
-
-        if data['connection_name'] not in DB_DICT:
             return {
-                "result": "No connection with name: {} is present.".format(
-                    data['connection_name'])}, 400
+                "result": "JWT authorization invalid, user does not exist."
+            }
 
-        db_type = DB_DICT[data['connection_name']].split(':')[0]
+        data["connection_name"] = data["database_name"].lower()
+
+        if data["connection_name"] not in DB_DICT:
+            return (
+                {
+                    "result": "No connection with name: {} is present.".format(
+                        data["connection_name"]
+                    )
+                },
+                400,
+            )
+
+        db_type = DB_DICT[data["connection_name"]].split(":")[0]
         try:
-            db_type = db_type.split('+')[0]
+            db_type = db_type.split("+")[0]
         except KeyError:
             pass
 
-        if db_type != data['database_type']:
-            return {
-                "result": "The type of database string cannot be "
-                          "changed. Create a new connection or choose the "
-                          "correct type."}, 400
+        if db_type != data["database_type"]:
+            return (
+                {
+                    "result": "The type of database string cannot be "
+                    "changed. Create a new connection or choose the "
+                    "correct type."
+                },
+                400,
+            )
 
         # check if content exists in old or new database:
-        old_db = extract_database_name(data['connection_name'].lower())
-        new_db = data['database_name']
+        old_db = extract_database_name(data["connection_name"].lower())
+        new_db = data["database_name"]
 
-        path = 'app/' + old_db
+        path = "app/" + old_db
 
         try:
             if len(os.listdir(path)) != 0:
                 # str(len(os.listdir(path))/2)
-                return {"result": "Found  content in the old database"
+                return (
+                    {
+                        "result": "Found  content in the old database"
                         " connection"
-                        " please remove them first."}, 400
+                        " please remove them first."
+                    },
+                    400,
+                )
 
         except FileNotFoundError:
             pass
 
-        string = ''
-        if data['database_type'] == 'mysql':
-            string = 'mysql://{}:{}@{}:3306/{}?charset=utf8mb4'.format(
-                data['username'], data['password'], data['host'],
-                data['database_name'])
+        string = ""
+        if data["database_type"] == "mysql":
+            string = "mysql://{}:{}@{}:3306/{}?charset=utf8mb4".format(
+                data["username"],
+                data["password"],
+                data["host"],
+                data["database_name"],
+            )
 
-        if data['database_type'] == 'postgresql':
-            string = 'postgresql+psycopg2://{}:{}@{}/{}'.format(
-                data['username'], data['password'], data['host'],
-                data['database_name'])
+        if data["database_type"] == "postgresql":
+            string = "postgresql+psycopg2://{}:{}@{}/{}".format(
+                data["username"],
+                data["password"],
+                data["host"],
+                data["database_name"],
+            )
 
-        if data['database_type'] == 'sqlite':
-            string = 'sqlite:////tmp/{}.db'.format(
-                data['database_name'])
+        if data["database_type"] == "sqlite":
+            string = "sqlite:////tmp/{}.db".format(data["database_name"])
 
         try:
             engine = create_engine(string)
@@ -943,39 +1338,65 @@ class DatabaseInit(Resource):
         except OperationalError:
             return {"result": "The database credentials are not valid."}, 400
 
-        with open('dbs.py', 'r') as f:
+        with open("dbs.py", "r") as f:
             lines = f.readlines()
 
-        with open('dbs.py', 'w') as f:
+        with open("dbs.py", "w") as f:
             for i, line in enumerate(lines):
-                if line.startswith('    "' + data['connection_name'].lower()):
-                    line = line.replace(line, '    "' + data[
-                        'connection_name'] + '": "' + string + '",\n')
+                if line.startswith('    "' + data["connection_name"].lower()):
+                    line = line.replace(
+                        line,
+                        '    "'
+                        + data["connection_name"]
+                        + '": "'
+                        + string
+                        + '",\n',
+                    )
                 f.write(line)
 
         remove_alembic_versions()
         move_migration_files()
-        return {
-            "result": "Successfully edited database connection string."
-        }, 200
+        return (
+            {"result": "Successfully edited database connection string."},
+            200,
+        )
 
 
 class ColumnType(Resource):
-
     def get(self):
         """Get a list of all valid column types available."""
 
         available_types = column_types()
-        for i in ['INT', 'INTEGER', 'ARRAY', 'BOOLEAN', 'TEXT', 'CLOB',
-                  'TIMESTAMP', 'Interval', 'CHAR', 'NCHAR', 'NVARCHAR',
-                  'Concatenable', 'BINARY', 'FLOAT', 'BLOB',
-                  'REAL', 'NUMERIC', 'DATETIME', 'TIME', 'DATE',
-                  'BIGINT', 'SMALLINT', 'SmallInteger']:
+        for i in [
+            "INT",
+            "INTEGER",
+            "ARRAY",
+            "BOOLEAN",
+            "TEXT",
+            "CLOB",
+            "TIMESTAMP",
+            "Interval",
+            "CHAR",
+            "NCHAR",
+            "NVARCHAR",
+            "Concatenable",
+            "BINARY",
+            "FLOAT",
+            "BLOB",
+            "REAL",
+            "NUMERIC",
+            "DATETIME",
+            "TIME",
+            "DATE",
+            "BIGINT",
+            "SMALLINT",
+            "SmallInteger",
+            "Indexable",
+        ]:
             available_types.remove(i)
 
-        return {
-            "result": available_types
-        }, 200
+        available_types.append("ImageType")
+        return {"result": available_types}, 200
 
 
 class ExportApp(Resource):
@@ -987,216 +1408,291 @@ class ExportApp(Resource):
     def post(self, platform):
 
         if not verify_jwt(get_jwt_identity(), Admin):
-            return {"result": "JWT authorization invalid, user does not"
-                    " exist."}, 400
+            return (
+                {
+                    "result": "JWT authorization invalid, user does not"
+                    " exist."
+                },
+                400,
+            )
 
         json_request = request.get_json()
         if json_request is None:
-            return {
-                "result": "Request body cannot be empty"
-            }, 400
+            return {"result": "Request body cannot be empty"}, 400
         missing_keys = {}
 
         try:
-            app_name = json_request['app_name']
+            app_name = json_request["app_name"]
         except KeyError as error:
-            missing_keys['app_name'] = list(error.args)[0]
+            missing_keys["app_name"] = list(error.args)[0]
 
         try:
             check_if_exist(app_name)
         except DogaAppNotFound as error:
-            return {
-                "result": "Given app " + app_name + " doesn't exit.",
-                "request": request.get_json()
-            }, 500
+            return (
+                {
+                    "result": "Given app " + app_name + " doesn't exit.",
+                    "request": request.get_json(),
+                },
+                500,
+            )
 
-        if platform == 'aws':
+        if platform == "aws":
             admin_jwt = get_jwt_identity()
-            notification = Notifications(user=admin_jwt['email'],
-                                         app_name=json_request['app_name'],
-                                         action_status='INITIATED',
-                                         message='AWS Export'
-                                         )
+            notification = Notifications(
+                user=admin_jwt["email"],
+                app_name=json_request["app_name"],
+                action_type="deploy-app",
+                action_status="INITIATED",
+                message="AWS Export",
+            )
             db.session.add(notification)
             db.session.commit()
             triggerSocketioNotif(
-                admin_jwt['email'], "", notification.create_dict())
+                admin_jwt["email"], "", notification.create_dict()
+            )
             try:
                 user_credentials = create_user_credentials(
-                    **json_request['user_credentials'])
-                missing_keys['user_credentials'] = []
+                    **json_request["user_credentials"]
+                )
+                missing_keys["user_credentials"] = []
             except KeyError as error:
-                missing_keys['user_credentials'] = list(error.args)[0]
+                missing_keys["user_credentials"] = list(error.args)[0]
 
-            required_rds_keys = {'MasterUsername', 'MasterUserPassword',
-                                 'DBInstanceIdentifier', 'MaxAllocatedStorage',
-                                 'AllocatedStorage'}
+            required_rds_keys = {
+                "MasterUsername",
+                "MasterUserPassword",
+                "DBInstanceIdentifier",
+                "MaxAllocatedStorage",
+                "AllocatedStorage",
+            }
             required_ec2_keys = {
-                'BlockDeviceMappings',
-                'ImageId',
-                'InstanceType'}
+                "BlockDeviceMappings",
+                "ImageId",
+                "InstanceType",
+            }
 
-            missing_keys['ec2_config'] = list(
-                required_ec2_keys.difference(
-                    json_request['ec2_config'].keys()))
-            missing_keys['rds_config'] = list(
-                required_rds_keys.difference(
-                    json_request['rds_config'].keys()))
+            missing_keys["ec2_config"] = list(
+                required_ec2_keys.difference(json_request["ec2_config"].keys())
+            )
+            missing_keys["rds_config"] = list(
+                required_rds_keys.difference(json_request["rds_config"].keys())
+            )
 
-            if missing_keys['user_credentials'] != [] or missing_keys[
-                    'ec2_config'] != [] or missing_keys['rds_config'] != []:
-                return {
-                    "result": "Please Provide the following details: ",
-                    "required fields": missing_keys,
-                    "request": json_request
-                }, 500
-                notification.action_status = 'ERROR'
+            if (
+                missing_keys["user_credentials"] != []
+                or missing_keys["ec2_config"] != []
+                or missing_keys["rds_config"] != []
+            ):
+                return (
+                    {
+                        "result": "Please Provide the following details: ",
+                        "required fields": missing_keys,
+                        "request": json_request,
+                    },
+                    500,
+                )
+                notification.action_status = "ERROR"
                 notification.completed_action_at = dt.now()
-                notification.message = 'Cannot process export missing ' \
-                                       'parameters: ' + missing_keys
+                notification.message = (
+                    "Cannot process export missing "
+                    "parameters: " + missing_keys
+                )
                 db.session.add(notification)
                 db.session.commit()
                 triggerSocketioNotif(
-                    admin_jwt['email'], "", notification.create_dict())
+                    admin_jwt["email"], "", notification.create_dict()
+                )
 
             try:
-                config = create_aws_config(**json_request['config'])
+                config = create_aws_config(**json_request["config"])
             except ValueError as error:
-                return {
-                    "result": "Error creating config",
-                    "error": str(error),
-                    "request": request.get_json()
-                }, 400
-                notification.action_status = 'ERROR'
+                return (
+                    {
+                        "result": "Error creating config",
+                        "error": str(error),
+                        "request": request.get_json(),
+                    },
+                    400,
+                )
+                notification.action_status = "ERROR"
                 notification.completed_action_at = dt.now()
                 notification.message = str(error)
                 db.session.add(notification)
                 db.session.commit()
                 triggerSocketioNotif(
-                    admin_jwt['email'], "", notification.create_dict())
+                    admin_jwt["email"], "", notification.create_dict()
+                )
 
-            Thread(target=create_aws_deployment_thread, kwargs={
-                "user_credentials": user_credentials,
-                "config": config,
-                "app_name": app_name,
-                "json_request": json_request,
-                "notification": notification,
-                "admin_jwt": admin_jwt,
-                "platform": platform,
-                }).start()
-            return {
-                "result": "Registered export request to " + platform + "."
-            }, 200
-        elif platform == 'heroku':
+            Thread(
+                target=create_aws_deployment_thread,
+                kwargs={
+                    "user_credentials": user_credentials,
+                    "config": config,
+                    "app_name": app_name,
+                    "json_request": json_request,
+                    "notification": notification,
+                    "admin_jwt": admin_jwt,
+                    "platform": platform,
+                },
+            ).start()
+            return (
+                {"result": "Registered export request to " + platform + "."},
+                200,
+            )
+        elif platform == "heroku":
 
             try:
-                provision_db = json_request['provision_db']
+                provision_db = json_request["provision_db"]
             except KeyError as error:
-                missing_keys['provision_db'] = list(error.args)[0]
+                missing_keys["provision_db"] = list(error.args)[0]
 
-            deploy = json_request.get('provision_db', True)
+            deploy = json_request.get("provision_db", True)
 
             if deploy is True:
                 try:
-                    tier = json_request['tier']
+                    tier = json_request["tier"]
                 except KeyError as error:
-                    missing_keys['tier'] = list(error.args)[0]
+                    missing_keys["tier"] = list(error.args)[0]
 
             if len(missing_keys) != 0:
-                return {
-                    "result": "Please Provide the following details: ",
-                    "required fields": missing_keys,
-                    "request": json_request
-                }, 400
+                return (
+                    {
+                        "result": "Please Provide the following details: ",
+                        "required fields": missing_keys,
+                        "request": json_request,
+                    },
+                    400,
+                )
 
             # TO create the app json file for heroku
             app_json = {
                 "name": "DOGA created deployment for " + app_name,
-                        "description": "App: " + app_name + " with in Python"
-                                       " using Flask",
-                        "repository": "",
-                        "keywords": ["python", "flask", "DOGA"]
+                "description": "App: " + app_name + " with in Python"
+                " using Flask",
+                "repository": "",
+                "keywords": ["python", "flask", "DOGA"],
             }
 
             try:
-                create_app_dir(app_name,
-                               rds=None,
-                               user_credentials=None,
-                               config=None,
-                               platform=platform,
-                               **{'deploy_db': deploy}
-                               )
+                create_app_dir(
+                    app_name,
+                    rds=None,
+                    user_credentials=None,
+                    config=None,
+                    platform=platform,
+                    **{"deploy_db": deploy}
+                )
             except DogaHerokuDeploymentError as error:
-                return {
-                    "response": "Could not create app for Heroku.",
-                    "error": str(error),
-                    "request": json_request
-                }, 400
+                return (
+                    {
+                        "response": "Could not create app for Heroku.",
+                        "error": str(error),
+                        "request": json_request,
+                    },
+                    400,
+                )
 
             file_location = os.sep.join(__file__.split(os.sep)[:-1])
 
             random_string = create_random_string(4)
-            app_deployed = app_name + random_string
+            app_deployed = app_name + "-" + random_string
+            # needs to start with a letter, end with a letter or digit and can
+            # only contain lowercase letters, digits and dashes.
+            app_deployed = app_deployed.replace("_", "-")
 
             if deploy:
-                db_name = 'pgsql' + app_name + random_string
-                subprocess.call(['sh',
-                                 file_location + '/export/heroku_postgres.sh',
-                                 app_deployed.lower(),
-                                 db_name.lower(),
-                                 tier])
+                db_name = "pgsql" + app_name + random_string
+                subprocess.call(
+                    [
+                        "sh",
+                        file_location + "/export/heroku_postgres.sh",
+                        app_deployed.lower(),
+                        db_name.lower(),
+                        tier,
+                    ]
+                )
 
             else:
-                subprocess.call(['sh', file_location +
-                                 '/export/heroku_deploy.sh',
-                                 app_deployed.lower()])
+                subprocess.call(
+                    [
+                        "sh",
+                        file_location + "/export/heroku_deploy.sh",
+                        app_deployed.lower(),
+                    ]
+                )
 
+            app_info = subprocess.Popen(
+                ["heroku", "apps:info", "-a", app_deployed.lower()],
+                stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+
+            out, err = app_info.communicate()
+
+            url_regex = "(https?:\\/\\/(?:www\\.|(?!www))[a-zA-Z0-9][a-zA-Z0-9""-]+[a-zA-Z0-9]\\.[^\\s]{2,}|www\\.[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\\.[^\\s]{2,}|https?:\\/\\/(?:www\\.|(?!www))[a-zA-Z0-9]+\\.[^\\s]{2,}|www\\.[a-zA-Z0-9]+\\.[^\\s]{2,})"  # noqa 401
+            deployment_url = re.findall(url_regex, str(out))[1]
+            deployment_url = deployment_url.split(".com")[0] + '.com/'
+            write_to_deployments(app_name, platform, deployment_url)
             return {"response": "heroku app deployed."}, 200
 
-        elif platform == 'local':
+        elif platform == "local":
             if len(missing_keys) != 0:
-                return {
-                    "result": "Please Provide the following details: ",
-                    "required fields": missing_keys,
-                    "request": json_request
-                }, 400
+                return (
+                    {
+                        "result": "Please Provide the following details: ",
+                        "required fields": missing_keys,
+                        "request": json_request,
+                    },
+                    400,
+                )
 
             try:
                 check_if_exist(app_name)
             except DogaAppNotFound as error:
-                return {
-                    "result": "Given app " + app_name + " doesn't exit.",
-                    "request": request.get_json()
-                }, 400
+                return (
+                    {
+                        "result": "Given app " + app_name + " doesn't exit.",
+                        "request": request.get_json(),
+                    },
+                    400,
+                )
 
             try:
-                path = json_request['path']
+                path = json_request["path"]
             except KeyError as err:
                 path = None
 
-            create_app_dir(app_name,
-                           rds=None,
-                           user_credentials='none',
-                           config=None,
-                           platform='local',
-                           **{'path': path}
-                           )
+            create_app_dir(
+                app_name,
+                rds=None,
+                user_credentials="none",
+                config=None,
+                platform="local",
+                **{"path": path}
+            )
 
-        if platform == 'local':
+        if platform == "local":
             if path is None:
-                path = '/'.join(__file__.split('/')[:-2]) + '/exported_app/'
+                path = "/".join(__file__.split("/")[:-2]) + "/exported_app/"
 
-            write_to_deployments(app_name, platform)
-            return {
-                "result": "App exported & to " + platform + " at " + path
-                + "."
-            }, 200
+            write_to_deployments(app_name, platform, None)
+            return (
+                {
+                    "result": "App exported & to "
+                    + platform
+                    + " at "
+                    + path
+                    + "."
+                },
+                200,
+            )
 
-        write_to_deployments(app_name, platform)
-
-        return {
-            "result": "Registered export request to " + platform + "."
-        }, 200
+        return (
+            {"result": "Registered export request to " + platform + "."},
+            200,
+        )
 
 
 class CreateNotifications(Resource):
@@ -1208,23 +1704,22 @@ class CreateNotifications(Resource):
     def post(self, platform):
 
         if not verify_jwt(get_jwt_identity(), Admin):
-            return {"result": "JWT authorization invalid, user does not"
-                    " exist."}
+            return {
+                "result": "JWT authorization invalid, user does not exist."
+            }
 
         json_request = request.get_json()
         if json_request is None:
-            return {
-                "result": "Request body cannot be empty"
-            }
+            return {"result": "Request body cannot be empty"}
 
-        if platform.lower() == 'email':
+        if platform.lower() == "email":
             Email_Obj = Email_Notify.from_dict(json_request)
 
             result, code = Email_Obj.return_result()
 
             return dict(result, **{"request": json_request}), code
 
-        elif platform.lower() == 'sms':
+        elif platform.lower() == "sms":
             Sms_Obj = Sms_Notify.from_dict(json_request)
 
             result, code = Sms_Obj.return_result()
@@ -1232,29 +1727,34 @@ class CreateNotifications(Resource):
             return dict(result, **{"request": json_request}), code
 
         else:
-            return {
-                "response": 'Currently we only create scripts for SMS '
-                            'notifications though Twilio and E-mail though'
-                            ' SendGrid.'
-            }, 400
+            return (
+                {
+                    "response": "Currently we only create scripts for SMS "
+                    "notifications though Twilio and E-mail though"
+                    " SendGrid."
+                },
+                400,
+            )
 
 
 class AdminDashboardStats(Resource):
     """
     Endpoint to return information that should be displayed to the Admin
     """
+
     @jwt_required
     def get(self, section, filter=None):
 
         if not verify_jwt(get_jwt_identity(), Admin):
-            return {"result": "JWT authorization invalid, user does not"
-                    " exist."}
+            return {
+                "result": "JWT authorization invalid, user does not exist."
+            }
 
         result = {}
         if section.lower() == "db":
             for connection_name, connection_string in DB_DICT.items():
                 db_name = extract_database_name(connection_name)
-                engine = connection_string.split(':')[0]
+                engine = connection_string.split(":")[0]
 
                 if engine == "postgresql+psycopg2":
                     engine = "postgres"
@@ -1269,15 +1769,13 @@ class AdminDashboardStats(Resource):
                     if engine == filter:
                         result[db_name] = connection_name
 
-            return {
-                "result": result
-            }, 200
+            return {"result": result}, 200
 
         elif section.lower() == "app":
 
             tables = {}
             for table in metadata.sorted_tables:
-                bind_key = table.info['bind_key']
+                bind_key = table.info["bind_key"]
                 try:
                     tables[bind_key].append(table)
                 except KeyError:
@@ -1285,128 +1783,143 @@ class AdminDashboardStats(Resource):
 
             if filter in tables.keys():
                 app_info = {}
-                app_type = 'basic'
+                app_type = "basic"
 
-                jwt_base = JWT.query.filter_by(
-                    connection_name=filter).first()
+                jwt_base = JWT.query.filter_by(connection_name=filter).first()
 
                 if jwt_base is not None:
-                    app_info['jwt_info'] = {
-                        'base_table': jwt_base.table,
-                        'filter_keys': jwt_base.filter_keys.split(","),
+                    app_info["jwt_info"] = {
+                        "base_table": jwt_base.table,
+                        "filter_keys": jwt_base.filter_keys.split(","),
                     }
-                    app_type = 'JWT'
+                    app_type = "JWT"
                 restricted_tables = Restricted_by_JWT.query.filter_by(
                     connection_name=filter
                 ).first()
 
                 if restricted_tables is not None:
-                    restricted_tables = restricted_tables.\
-                        restricted_tables.split(",")
-                    app_info['jwt_info']['restricted_tables'] = \
+                    restricted_tables = restricted_tables.restricted_tables.\
+                        split(",")
+                    app_info["jwt_info"][
+                        "restricted_tables"
+                    ] = restricted_tables
+                    app_info["jwt_info"]["no_restricted_tables"] = len(
                         restricted_tables
-                    app_info['jwt_info']['no_restricted_tables'] = \
-                        len(restricted_tables)
+                    )
 
-                app_info['tables'] = []
+                app_info["tables"] = []
                 for table in tables[filter]:
                     table_d = {}
-                    table_d['table_name'] = table.name
-                    table_d['no_fields'] = len(table.columns)
-                    table_d['columns'] = table.columns.keys()
-                    app_info['tables'].append(table_d)
+                    table_d["table_name"] = table.name
+                    table_d["no_fields"] = len(table.columns)
+                    table_d["columns"] = table.columns.keys()
+                    app_info["tables"].append(table_d)
 
-                deployment_info = Deployments.query.filter_by(app_name=filter
-                                                              ).first()
+                deployment_info = Deployments.query.filter_by(
+                    app_name=filter
+                ).first()
 
                 if deployment_info is not None:
-                    timestamp = '{DD}-{M}-{YY} {HH}:{MM}:{SS}'.format(
+                    timestamp = "{DD}-{M}-{YY} {HH}:{MM}:{SS}".format(
                         DD=deployment_info.create_dt.day,
                         M=deployment_info.create_dt.month,
                         YY=deployment_info.create_dt.year,
                         HH=deployment_info.create_dt.hour,
                         MM=deployment_info.create_dt.minute,
-                        SS=deployment_info.create_dt.second)
-                    app_info['deployment_info'] = {
+                        SS=deployment_info.create_dt.second,
+                    )
+                    app_info["deployment_info"] = {
                         "most_recent_deployment": timestamp,
-                        "platform": deployment_info.platfrom,
-                        "total_no_exports": deployment_info.exports
+                        "platform": deployment_info.platform.split(","),
+                        "deployment_url": deployment_info.deployment_url.split(
+                            ","
+                        ),
+                        "total_no_exports": deployment_info.exports,
                     }
                 else:
-                    app_info['deployment_info'] = {
+                    app_info["deployment_info"] = {
                         "most_recent_deployment": None,
+                        "deployment_url": None,
                         "platform": None,
-                        "total_no_exports": 0
+                        "total_no_exports": 0,
                     }
 
-                relationship = Relationship.query.filter_by(app_name=filter).all()  # noqa 501
+                relationship = Relationship.query.filter_by(
+                    app_name=filter
+                ).all()  # noqa 501
 
                 if relationship is not None:
                     r = []
                     for rel in relationship:
                         relation = {}
-                        relation['relation_type'] = rel.relationship
-                        relation['relation_from'] = {
-                            "table_name": rel.table1_column.split(',')[0],
-                            "column_name": rel.table1_column.split(',')[1]
+                        relation["relation_type"] = rel.relationship
+                        relation["relation_from"] = {
+                            "table_name": rel.table1_column.split(",")[0],
+                            "column_name": rel.table1_column.split(",")[1],
                         }
-                        relation['relation_to'] = {
-                            "table_name": rel.table2_column.split(',')[0],
-                            "column_name": rel.table2_column.split(',')[1]
+                        relation["relation_to"] = {
+                            "table_name": rel.table2_column.split(",")[0],
+                            "column_name": rel.table2_column.split(",")[1],
                         }
                         r.append(relation)
-                    app_info['relationships'] = r
+                    app_info["relationships"] = r
                 else:
-                    app_info['relationships'] = None
+                    app_info["relationships"] = None
 
-                app_info['db_type'] = extract_engine_or_fail(filter)
-                app_info['number_of_tables'] = len(tables[filter])
-                app_info['type'] = app_type
+                app_info["db_type"] = extract_engine_or_fail(filter)
+                app_info["number_of_tables"] = len(tables[filter])
+                app_info["type"] = app_type
                 return app_info
 
             if filter not in [None, "", "all"]:
-                return {
-                    "result": "Error, filters are not available for this "
-                              "resource"
-                }, 400
+                return (
+                    {
+                        "result": "Error, filters are not available for this "
+                        "resource"
+                    },
+                    400,
+                )
 
             else:
                 tables = {}
                 for table in metadata.sorted_tables:
-                    bind_key = table.info['bind_key']
+                    bind_key = table.info["bind_key"]
                     try:
                         tables[bind_key].append(table)
                     except KeyError:
                         tables[bind_key] = [table]
                 tables = set(tables.keys())
-                tables.remove('default')
+                tables.remove("default")
                 return {"number_of_apps": len(tables)}, 200
 
         else:
-            return {
-                "result": "Error resource not created yet."
-            }, 400
+            return {"result": "Error resource not created yet."}, 400
 
 
-api_admin.add_resource(AdminApi, '/admin_profile',
-                       '/admin_profile/<string:email>')
-api_admin.add_resource(Login, '/login')
+api_admin.add_resource(
+    AdminApi, "/admin_profile", "/admin_profile/<string:email>"
+)
+api_admin.add_resource(Login, "/login")
 
-api_admin.add_resource(DatabaseInit, '/dbinit',
-                       '/dbinit/types/<string:content_type>')
+api_admin.add_resource(
+    DatabaseInit, "/dbinit", "/dbinit/types/<string:content_type>"
+)
 
 
-api_admin.add_resource(ContentType, '/content/types',
-                       '/content/types/<string:db_name>/<string:content_type>')
+api_admin.add_resource(
+    ContentType,
+    "/content/types",
+    "/content/types/<string:db_name>/<string:content_type>",
+)
 
-api_admin.add_resource(ColumnType, '/columntypes')
+api_admin.add_resource(ColumnType, "/columntypes")
 
-api_admin.add_resource(ColumnRelations, '/content/relations')
+api_admin.add_resource(ColumnRelations, "/content/relations")
 
-api_admin.add_resource(ExportApp, '/export/<string:platform>')
+api_admin.add_resource(ExportApp, "/export/<string:platform>")
 
-api_admin.add_resource(CreateNotifications, '/notify/<string:platform>')
+api_admin.add_resource(CreateNotifications, "/notify/<string:platform>")
 
-api_admin.add_resource(AdminDashboardStats,
-                       '/dashboard/stats/<string:section>/<string:filter>'
-                       )
+api_admin.add_resource(
+    AdminDashboardStats, "/dashboard/stats/<string:section>/<string:filter>"
+)

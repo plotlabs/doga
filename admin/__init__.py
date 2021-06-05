@@ -7,9 +7,9 @@ import subprocess
 
 @app.before_first_request
 def run_db_function():
-    subprocess.run(['flask', 'db', 'init', '--multidb'])
-    subprocess.run(['flask', 'db', 'migrate'])
-    subprocess.run(['flask', 'db', 'upgrade'])
+    subprocess.run(["flask", "db", "init", "--multidb"])
+    subprocess.run(["flask", "db", "migrate"])
+    subprocess.run(["flask", "db", "upgrade"])
 
 
 @app.teardown_request

@@ -9,10 +9,12 @@ from dbs import DB_DICT
 
 for connection_name in DB_DICT:
     connection_string = DB_DICT[connection_name]
-    db_type = connection_string.split(':')[0]
+    db_type = connection_string.split(":")[0]
     db = extract_database_name(connection_name)
-    choice = input("Do you want to delete " + db_type + " database " + db + " Y/N")  # noqa 401
-    if choice.lower() == 'y':
+    choice = input(
+        "Do you want to delete " + db_type + " database " + db + " Y/N"
+    )
+    if choice.lower() == "y":
         try:
             engine = create_engine(connection_string)
             conn = engine.connect()
@@ -22,6 +24,7 @@ for connection_name in DB_DICT:
         except OperationalError as err:
             print("Could not delete " + db_type + " database " + db)
             import traceback
+
             traceback.print_exc()
             continue
 

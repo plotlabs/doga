@@ -1,6 +1,4 @@
-#!/usr/bin/env bash
-
-flask db init --multidb
-flask db migrate
-flask db upgrade
-python runserver.py & python push_server.py && fg
+python3 -m venv venv
+source venv/bin/activate
+python setup.py install
+honcho start

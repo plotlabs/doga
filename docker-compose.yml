@@ -1,0 +1,21 @@
+version: "0.1"
+
+services:
+
+    doga-server:
+        image: plotlabs/doga:latest
+        environment:
+            - DOGA_HOST_URL=http://localhost:8080
+            - DOGA_NOTIFICATION_URL=http://localhost:8008
+
+            doga-notification-server:
+        image: plotlabs/doga-notofications:latest
+        ports:
+            - "8080:80"
+
+    doga-notification-server:
+        image: plotlabs/doga-notofications:latest
+        depends-on:
+            - doga-server
+        ports:
+            - "8008:80"

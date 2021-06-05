@@ -246,7 +246,7 @@ paths:
                   - $ref: '#/components/schemas/AWSConfig'
                   - $ref: '#/components/schemas/AWSrdsConfig'
                   - $ref: '#/components/schemas/AWSEC2Config'
-      secutiry:
+      security:
         - Bearer: []
   /defaults/db:
     get:
@@ -961,8 +961,17 @@ components:
           - 'PROCESSING'
           - 'ERROR'
           - 'SUCCESS'
+        action_type:
+          type: string
+          enum:
+          - 'create-content-tables'
+          - 'app-deployment'
+          - 'delete-content-tables'
         message:
           type: string
+        fill_notif:
+          type: string
+          description: Formatted notification info
         completed_action_at:
           type: string
           format: date-time

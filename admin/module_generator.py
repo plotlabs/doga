@@ -17,7 +17,7 @@ from app import db
 
 def create_dir(model_name):
     """Function to create an empty directory for the module"""
-    dir_path = 'app/' + model_name
+    dir_path = "app/" + model_name
 
     if not os.path.exists(dir_path):
         os.makedirs(dir_path, mode=0o777)
@@ -32,7 +32,7 @@ def create_model(dir_path, data):
     It add all columns, connections, and relationships associated.
     """
 
-    shutil.copy2('templates/models.py', dir_path)
+    shutil.copy2("templates/models.py", dir_path)
 
     if "connection_name" in data:
         conn_name = data["connection_name"]
@@ -53,38 +53,41 @@ def create_model(dir_path, data):
         o.write("    id = Column(Integer, primary_key=True)\n")
     else:
         o.write("    id = Column(BigInteger, primary_key=True)\n")
-    o.write("    create_dt = Column(DateTime(), server_default=text("
-            "'CURRENT_TIMESTAMP'))\n")
+    o.write(
+        "    create_dt = Column(DateTime(), server_default=text("
+        "'CURRENT_TIMESTAMP'))\n"
+    )
 
-    for col in data['columns']:
+    for col in data["columns"]:
         if col["name"] == "id":
             pass
 
-        if col['type'].upper() in ['TEXT', 'BLOB', 'ENUM', 'VARCHAR'] and \
-                engine in ['mysql']:
+        if col["type"].upper() in [
+            "TEXT",
+            "BLOB",
+            "ENUM",
+            "VARCHAR",
+        ] and engine in ["mysql"]:
             col = modify_related_type(app_name, col)
 
         try:
-            relation = col['relationship']
-            relation_type = relation['relationship_type']
+            relation = col["relationship"]
+            relation_type = relation["relationship_type"]
 
-            relations = ['one-one', 'many-one', 'many-many', 'one-many']
-            if relation_type not in relations:
-                return {"result": "Relation type for column" +
-                                  col["name"] +
-                                  "must be of type " +
-                                  ','.join(relations)}
-
-            if relation_type in ['one-one', 'one-many']:
+            if relation_type in ["one-one", "many-one", "many-many"]:
                 # TODO: what if user has their own foreign key too
                 # deal with a list of foreign keys
-                col["foreign_key"] = relation['related_table'].lower() + "." +\
-                    relation['related_field'].lower()
+                col["foreign_key"] = (
+                    relation["related_table"].lower()
+                    + "."
+                    + relation["related_field"].lower()
+                )
 
             try:
-                table1_column = data['table_name'] + ',' + col['name']
-                table2_column = relation['related_table'] + ',' + \
-                    relation['related_field']
+                table1_column = data["table_name"] + "," + col["name"]
+                table2_column = (
+                    relation["related_table"] + "," + relation["related_field"]
+                )
 
                 relationships_t = Relationship.query.filter(
                     and_(
@@ -98,41 +101,42 @@ def create_model(dir_path, data):
                                 Relationship.table2_column == table1_column,
                             ),
                         ),
-                        Relationship.app_name == app_name
+                        Relationship.app_name == app_name,
                     )
                 ).all()
                 if relationships_t == []:
                     relation_obj = Relationship(
                         app_name=app_name,
                         table1_column=table1_column,
-                        relationship=relation['relationship_type'],
-                        table2_column=table2_column
+                        relationship=relation["relationship_type"],
+                        table2_column=table2_column,
                     )
                     db.session.add(relation_obj)
                     db.session.commit()
                     relationships = create_relationsips(
                         app_name,
                         relation_type,
-                        relation['related_table'],
-                        relation['related_field'],
-                        data['table_name'],
+                        relation["related_table"],
+                        relation["related_field"],
+                        data["table_name"],
                         col["name"],
-                        col['type'],
+                        col["type"],
                         relationships,
-                        False)
+                        False,
+                    )
                 else:
                     # if exits check
                     relationships = create_relationsips(
                         app_name,
                         relation_type,
-                        relation['related_table'],
-                        relation['related_field'],
-                        data['table_name'],
+                        relation["related_table"],
+                        relation["related_field"],
+                        data["table_name"],
                         col["name"],
-                        col['type'],
+                        col["type"],
                         relationships,
                         True,
-                        **{'relation': relationships_t}
+                        **{"relation": relationships_t}
                     )
 
             except RelatedContentNotFound as err:
@@ -142,7 +146,7 @@ def create_model(dir_path, data):
             relation_type = None
 
         try:
-            if col["type"].upper() == 'BINARY':
+            if col["type"].upper() == "BINARY":
                 col["default"] = ""
             if col["type"].upper() == "ENUM":
                 try:
@@ -150,115 +154,207 @@ def create_model(dir_path, data):
                     enums = []
                     try:
                         for i in col["enum"]:
-                            enums.append(i['value'])
-                    except KeyError:
+                            enums.append(i["value"])
+                    except TypeError:
                         enums = col["enum"]
                     engine_specific = ", name='" + col["name"].lower() + "s'"
                     if col["default"] != "":
-                        line = "    " + col["name"] + " = Column(Enum(" + \
-                            str(enums).strip('[').rstrip(
-                            ']') + engine_specific + ')' + ", nullable=" + \
-                            str(col["nullable"]).title() + ", unique=" + \
-                            str(col["unique"]).title() + ", default='" +\
-                            col["default"] + "')\n"
+                        line = (
+                            "    "
+                            + col["name"]
+                            + " = Column(Enum("
+                            + str(enums).strip("[").rstrip("]")
+                            + engine_specific
+                            + ")"
+                            + ", nullable="
+                            + str(col["nullable"]).title()
+                            + ", unique="
+                            + str(col["unique"]).title()
+                            + ", default='"
+                            + col["default"]
+                            + "')\n"
+                        )
                     else:
-                        line = "    " + col["name"] + " = Column(Enum(" + \
-                            str(enums).strip('[').rstrip(
-                            ']') + engine_specific + ')' + ", nullable=" + \
-                            str(col["nullable"]).title() + ", unique=" + \
-                            str(col["unique"]).title() + ")\n"
+                        line = (
+                            "    "
+                            + col["name"]
+                            + " = Column(Enum("
+                            + str(enums).strip("[").rstrip("]")
+                            + engine_specific
+                            + ")"
+                            + ", nullable="
+                            + str(col["nullable"]).title()
+                            + ", unique="
+                            + str(col["unique"]).title()
+                            + ")\n"
+                        )
                 except KeyError as error:
-                    return {
-                        "error": "Missing key {} for column {}. ".format(
-                            error.args[0], col["name"])}, 400
+                    return (
+                        {
+                            "error": "Missing key {} for column {}. ".format(
+                                error.args[0], col["name"]
+                            )
+                        },
+                        400,
+                    )
                 except ValueError:
                     return {"result": "Incorrect format for ENUM value."}, 400
                 col["default"] = ""
             elif col["type"].upper() == "JSON":
                 try:
-                    line = "    " + col["name"] + " = Column(JSON" + \
-                        ", nullable=" + str(col["nullable"]).title() + \
-                        ", unique=" + str(col["unique"]).title() + \
-                        ", default=" + str(col["default"]) + ')'
+                    line = (
+                        "    "
+                        + col["name"]
+                        + " = Column(JSON"
+                        + ", nullable="
+                        + str(col["nullable"]).title()
+                        + ", unique="
+                        + str(col["unique"]).title()
+                        + ", default="
+                        + str(col["default"])
+                        + ")"
+                    )
                 except KeyError as error:
-                    return {
-                        "error": "Missing key {} for column {}. ".format(
-                            error.args[0], col["name"])}, 400
+                    return (
+                        {
+                            "error": "Missing key {} for column {}. ".format(
+                                error.args[0], col["name"]
+                            )
+                        },
+                        400,
+                    )
                 except ValueError:
                     return {"result": "Incorrect format for ENUM value."}, 400
                 col["default"] = ""
             else:
-                line = "    " + col["name"] + " = Column(" + col["type"] \
-                       + ", nullable=" + str(col["nullable"]).title() \
-                       + ", unique=" + str(col["unique"]).title()
+                line = (
+                    "    "
+                    + col["name"]
+                    + " = Column("
+                    + col["type"]
+                    + ", nullable="
+                    + str(col["nullable"]).title()
+                    + ", unique="
+                    + str(col["unique"]).title()
+                )
                 if col["foreign_key"] != "":
-                    line = "    " + col["name"] + " = Column(" + col["type"] \
-                        + ", ForeignKey('" + col["foreign_key"].lower() + "')"\
-                        + ", nullable=" + str(col["nullable"]).title() \
-                        + ", unique=" + str(col["unique"]).title()
+                    line = (
+                        "    "
+                        + col["name"]
+                        + " = Column("
+                        + col["type"]
+                        + ", ForeignKey('"
+                        + col["foreign_key"].lower()
+                        + "')"
+                        + ", nullable="
+                        + str(col["nullable"]).title()
+                        + ", unique="
+                        + str(col["unique"]).title()
+                    )
 
             if col["default"] == "" and col["type"].upper() not in [
-                    'ENUM', 'JSON']:
+                "ENUM",
+                "JSON",
+            ]:
                 line = line + ")\n"
-            elif col["type"].upper() in ['ENUM', 'JSON']:
+            elif col["type"].upper() in ["ENUM", "JSON"]:
                 pass
             else:
                 done = False
                 if isinstance(col["default"], str):
                     if col["default"].lower() == "current":
                         col["default"] = "CURRENT_TIMESTAMP"
-                        line = line + ", server_default=text('" + str(
-                            col["default"]) + "'))\n"
+                        line = (
+                            line
+                            + ", server_default=text('"
+                            + str(col["default"])
+                            + "'))\n"
+                        )
                         done = True
-                    if 'VARCHAR' in col["type"].upper():
-                        line = line + ", default='" + str(col["default"]) + \
-                            "')\n"
+                    if "VARCHAR" in col["type"].upper():
+                        line = (
+                            line + ", default='" + str(col["default"]) + "')\n"
+                        )
                         done = True
                 if col["type"].upper() == "BOOLEAN":
-                    line = line + ", server_default=text('" + str(
-                        col["default"]) + "'))\n"
+                    line = (
+                        line
+                        + ", default=text('"
+                        + str(col["default"])
+                        + "'))\n"
+                    )
+                    done = True
+                if col["type"].upper() == "TEXT":
+                    line = line + ", default='" + str(col["default"]) + "')\n"
+                    done = True
+                if "STRING" in col["type"].upper():
+                    line = line + ", default='" + str(col["default"]) + "')\n"
                     done = True
                 if isinstance(col["default"], list):
-                    if col['type'].upper() == 'ARRAY':
+                    if col["type"].upper() == "ARRAY":
                         try:
-                            line = line + ", server_default=" + \
-                                str(col["default"]) + "')\n"
+                            line = (
+                                line
+                                + ", default="
+                                + str(col["default"])
+                                + "')\n"
+                            )
                         except ValueError:
-                            return {"result": "Incorrect format for "
-                                              "Array value."}, 400
+                            return (
+                                {
+                                    "result": "Incorrect format for "
+                                    "Array value."
+                                },
+                                400,
+                            )
                         done = True
                 if done is False:
-                    line = line + ", server_default=text('" + str(
-                        col["default"]) + "'))\n"
+                    line = (
+                        line
+                        + ", default=text('"
+                        + str(col["default"])
+                        + "'))\n"
+                    )
         except KeyError as error:
-            return {
-                "result": "Missing parameters for columns",
-                "parameters": error.args
-            }, 500
-
+            return (
+                {
+                    "result": "Missing parameters for columns",
+                    "parameters": error.args,
+                },
+                500,
+            )
         o.write(line)
     o.write(relationships)
     o.close()
 
 
-def create_resources(model_name, connection_name, dir_path, base_jwt,
-                     expiry, restrict_by_jwt, filter_keys=""):
+def create_resources(
+    model_name,
+    connection_name,
+    dir_path,
+    base_jwt,
+    expiry,
+    restrict_by_jwt,
+    filter_keys="",
+):
     """Function to create the CRUD Restful APIs for the module"""
     o = open(dir_path + "/resources.py", "w")
 
     if base_jwt in [True, "True", "true"]:
         for line in open("templates/jwt_resource.py"):
             line = line.replace("modulename", model_name)
-            line = line.replace("module_endp", model_name.title().split('.')[0])  # noqa E401
-            line = line.replace("modelname", model_name.title().split('.')[1])
+            line = line.replace(
+                "module_endp", model_name.title().split(".")[0]
+            )  # noqa E401
+            line = line.replace("modelname", model_name.title().split(".")[1])
             line = line.replace("bname", '"' + model_name.lower() + '"')
             line = line.replace("jwt_key", str(filter_keys))
-            line = line.replace("expiry_unit", expiry['unit'])
-            line = line.replace("expiry_value", str(expiry['value']))
+            line = line.replace("expiry_unit", expiry["unit"])
+            line = line.replace("expiry_value", str(expiry["value"]))
             line = line.replace("endpoint", '"/"')
             line = line.replace("param", '"/<int:id>"')
             line = line.replace("param", '"/<int:id>"')
-            line = line.replace("REPLACE_IF_JWT", '')
+            line = line.replace("REPLACE_IF_JWT", "")
             o.write(line)
 
     else:
@@ -267,56 +363,70 @@ def create_resources(model_name, connection_name, dir_path, base_jwt,
             if restrict_by_jwt in [True, "True"]:
 
                 base_jwt = JWT.query.filter_by(
-                    connection_name=connection_name).first()
+                    connection_name=connection_name
+                ).first()
                 base_table = base_jwt.table
                 db_name = base_jwt.connection_name
 
                 # fix import statements
 
-                if line == 'from flask_jwt_extended import jwt_required\n':
-                    line = 'from flask_jwt_extended import (jwt_required, create_access_token, create_refresh_token, get_jwt_identity)\n'  # noqa 501
+                if line == "from flask_jwt_extended import jwt_required\n":
+                    line = "from flask_jwt_extended import (jwt_required, create_access_token, create_refresh_token, get_jwt_identity)\n"  # noqa 501
 
-                if line == 'from app.utils import AlchemyEncoder\n':
-                    line = 'from app.utils import AlchemyEncoder, verify_jwt\n'
+                if line == "from app.utils import AlchemyEncoder\n":
+                    line = "from app.utils import AlchemyEncoder, verify_jwt\n"
 
-                verify_jwt = '        if not verify_jwt(get_jwt_identity(), ' \
-                             + base_table.title() + '):\n'
+                verify_jwt = (
+                    "        if not verify_jwt(get_jwt_identity(), "
+                    + base_table.title()
+                    + "):\n"
+                )
                 condn = '            return {"result": "JWT authorization invalid, entry does not exist."}  # noqa E401'
 
                 line = line.replace(
                     "def post(self):",
-                    "@jwt_required\n    def post(self):\n" +
-                    verify_jwt +
-                    condn)
+                    "@jwt_required\n    def post(self):\n"
+                    + verify_jwt
+                    + condn,
+                )
                 line = line.replace(
                     "def get(self, id=None):",
-                    "@jwt_required\n    def get(self, id=None):\n" + verify_jwt
-                    + condn)
+                    "@jwt_required\n    def get(self, id=None):\n"
+                    + verify_jwt
+                    + condn,
+                )
                 line = line.replace(
                     "def put(self, id):",
-                    "@jwt_required\n    def put(self, id):\n" + verify_jwt
-                    + condn)
+                    "@jwt_required\n    def put(self, id):\n"
+                    + verify_jwt
+                    + condn,
+                )
                 line = line.replace(
                     "def delete(self, id):",
-                    "@jwt_required\n    def delete(self, id):\n" + verify_jwt
-                    + condn)
+                    "@jwt_required\n    def delete(self, id):\n"
+                    + verify_jwt
+                    + condn,
+                )
                 line = line.replace("param", '"/<int:id>"')
                 line = line.replace(
                     "REPLACE_IF_JWT",
-                    'from app.' +
-                    db_name +
-                    '.' +
-                    base_table +
-                    '.models import ' +
-                    base_table.title())
+                    "from app."
+                    + db_name
+                    + "."
+                    + base_table
+                    + ".models import "
+                    + base_table.title(),
+                )
 
             else:
-                line = line.replace("\nREPLACE_IF_JWT", '')
-                line = line.replace("REPLACE_IF_JWT", '')
+                line = line.replace("\nREPLACE_IF_JWT", "")
+                line = line.replace("REPLACE_IF_JWT", "")
             line = line.replace("modulename", model_name)
-            line = line.replace("module_endp_lower", model_name.split('.')[0])
-            line = line.replace("module_endp", model_name.title().split('.')[0])  # noqa E401
-            line = line.replace("modelname", model_name.title().split('.')[1])
+            line = line.replace("module_endp_lower", model_name.split(".")[0])
+            line = line.replace(
+                "module_endp", model_name.title().split(".")[0]
+            )  # noqa E401
+            line = line.replace("modelname", model_name.title().split(".")[1])
             line = line.replace("bname", '"' + model_name.lower() + '"')
             line = line.replace("endpoint", '"/"')
             line = line.replace("param", '"/<int:id>"')
@@ -331,25 +441,27 @@ def append_blueprint(model_name):
     o = open("app/blueprints.py", "a")
     o.write("from app." + model_name + ".resources import mod_model\n")
     o.write(
-        "app.register_blueprint(mod_model, url_prefix='/" +
-        model_name.replace('.', '/') + "')\n\n")
+        "app.register_blueprint(mod_model, url_prefix='/"
+        + model_name.replace(".", "/")
+        + "')\n\n"
+    )
     o.close()
 
 
-def check_table(table_name, connection_name=''):
+def check_table(table_name, connection_name=""):
     """Checks if the table exists or not"""
     exist = False
     for sorted_table in metadata.sorted_tables:
         if sorted_table.name == table_name.lower():
-            if connection_name != '':
-                if sorted_table.info['bind_key'] == connection_name:
+            if connection_name != "":
+                if sorted_table.info["bind_key"] == connection_name:
                     exist = True
             else:
                 exist = True
     return exist
 
 
-def check_column(table_name, column_name, column_type, connection_name=''):
+def check_column(table_name, column_name, column_type, connection_name=""):
     """Checks if the table exists or not"""
     allowed_foreign_keys = [
         "BIGINT",
@@ -379,13 +491,22 @@ def check_column(table_name, column_name, column_type, connection_name=''):
         if sorted_table.name.lower() == table_name.lower():
             for column_ in sorted_table.columns:
                 if column_name.lower() == column_.name.lower():
+                    if (
+                        "BIGINT" in column_type.upper()
+                        and "BIGINT" in str(column_.type).upper()
+                    ):
+                        return True
                     if str(column_.type) not in allowed_foreign_keys:
-                        raise TypeError("Foreign key can only be allowed"
-                                        " types", allowed_foreign_keys)
-                    if column_type != str(column_.type):
-                        raise TypeError("Foreign key and column must have "
-                                        "same type.")
-                    exist = True
+                        raise TypeError(
+                            "Foreign key can only be allowed types",
+                            allowed_foreign_keys,
+                        )
+                    elif column_type != str(column_.type):
+                        raise TypeError(
+                            "Foreign key and column must have same type."
+                        )
+                    else:
+                        exist = True
     return exist
 
 
@@ -418,20 +539,31 @@ def add_alembic_model(conn_name):
     to_write = to_write + conn_name + " = SQLAlchemy(app)\n"
     to_write = to_write + base + " = " + conn_name + ".Model\n"
     to_write = to_write + column_name + " = " + conn_name + ".Column\n\n\n"
-    to_write = to_write + "class AlembicVersion" + \
-        conn_name.title() + "(" + base + "):\n"
+    to_write = (
+        to_write
+        + "class AlembicVersion"
+        + conn_name.title()
+        + "("
+        + base
+        + "):\n"
+    )
     to_write = to_write + "    __tablename__ = 'alembic_version'\n"
     to_write = to_write + "    __bind_key__ = '" + conn_name + "'\n"
-    to_write = to_write + "    version_num = " + \
-        column_name + "(String(32), primary_key=True)\n\n"
+    to_write = (
+        to_write
+        + "    version_num = "
+        + column_name
+        + "(String(32), primary_key=True)\n\n"
+    )
 
-    f = open('dbs.py', 'r+')
+    f = open("dbs.py", "r+")
     lines = f.readlines()
     lines_to_write = ""
     for i, line in enumerate(lines):
-        if line.startswith(']'):
-            line = '    "AlembicVersion' + str(conn_name).title() + \
-                '",\n' + line
+        if line.startswith("]"):
+            line = (
+                '    "AlembicVersion' + str(conn_name).title() + '",\n' + line
+            )
         lines_to_write = lines_to_write + line
 
     f.seek(0)
@@ -452,7 +584,7 @@ def move_migration_files():
         for file_name in version_files:
             full_file_name = os.path.join(dir_migration_versions, file_name)
             if os.path.isfile(full_file_name):
-                shutil.move(full_file_name, 'old_migrations/')
+                shutil.move(full_file_name, "old_migrations/")
 
 
 def add_new_db(conn_name):
@@ -465,8 +597,7 @@ def add_new_db(conn_name):
 
 def check_jwt_present(connection_name):
     # check if JWT is already linked to the given database and connection
-    jwt_obj = JWT.query.filter_by(
-        connection_name=connection_name).first()
+    jwt_obj = JWT.query.filter_by(connection_name=connection_name).first()
     return jwt_obj
 
 
@@ -474,7 +605,7 @@ def validate_filter_keys_names(filter_keys, columns):
     # check if filter keys given are are valid columns
     if "id" in filter_keys:
         return True
-    column_names = [col['name'] for col in columns]
+    column_names = [col["name"] for col in columns]
     return set(filter_keys).issubset(set(column_names))
 
 
@@ -484,38 +615,47 @@ def validate_filter_keys_jwt(filter_keys, columns):
         return True
     for col in columns:
         if col["name"] in filter_keys:
-            if str(col["unique"]).lower() == 'true' and \
-                    str(col["nullable"]).lower() == 'false':
+            if (
+                str(col["unique"]).lower() == "true"
+                and str(col["nullable"]).lower() == "false"
+            ):
                 return True
     return False
 
 
 def set_expiry(expiry):
-    msg = ''
+    msg = ""
     valid = True
-    units = ['days', 'seconds', 'microseconds',
-             'milliseconds', 'minutes', 'hours', 'weeks']
+    units = [
+        "days",
+        "seconds",
+        "microseconds",
+        "milliseconds",
+        "minutes",
+        "hours",
+        "weeks",
+    ]
     try:
         if bool(expiry):
             if expiry["unit"] == "":
-                expiry["unit"] = 'hours'
-            elif expiry['unit'] not in units:
-                msg = "Unit of expiry time for JWT token is not" \
-                    " a valid one."
+                expiry["unit"] = "hours"
+            elif expiry["unit"] not in units:
+                msg = (
+                    "Unit of expiry time for JWT token is not a valid one."
+                )
                 valid = False
                 return msg, valid, expiry
             if expiry["value"] == "":
                 expiry["value"] = 4
             if type(expiry["value"]) not in [int, float]:
-                msg = 'Value of expiry time for JWT token should' \
-                    ' be an integer.'
+                msg = (
+                    "Value of expiry time for JWT token should"
+                    " be an integer."
+                )
                 valid = False
                 return msg, valid, expiry
         else:
-            expiry = {
-                "unit": 'hours',
-                "value": 4
-            }
+            expiry = {"unit": "hours", "value": 4}
         return msg, valid, expiry
     except KeyError as e:
         return {"result": "Key error", "error": str(e)}, 500
@@ -525,10 +665,12 @@ def set_jwt_flag(connection_name, table_name, filter_keys):
     """Function to add the base_jwt for a connection to JWT table in default db
     """
     try:
-        jwt_obj = JWT(jwt_flag=True,
-                      connection_name=connection_name,
-                      table=table_name,
-                      filter_keys=filter_keys)
+        jwt_obj = JWT(
+            jwt_flag=True,
+            connection_name=connection_name,
+            table=table_name,
+            filter_keys=filter_keys,
+        )
         db.session.add(jwt_obj)
         db.session.commit()
     except Exception as e:
@@ -537,7 +679,9 @@ def set_jwt_flag(connection_name, table_name, filter_keys):
 
 def delete_jwt(connection_name):
     try:
-        db.session.query(JWT).filter(JWT.connection_name == connection_name).delete()  # noqa 501
+        db.session.query(JWT).filter(
+            JWT.connection_name == connection_name
+        ).delete()
         db.session.commit()
     except Exception as e:
         return {"result": e}, 500
@@ -547,7 +691,9 @@ def delete_restricted_by_jwt(connection_name):
     """Delete the from the jwt database if the datavase jwt is removed
     """
     try:
-        db.session.query(Restricted_by_JWT).filter(Restricted_by_JWT.connection_name == connection_name).delete()  # noqa 501
+        db.session.query(Restricted_by_JWT).filter(
+            Restricted_by_JWT.connection_name == connection_name
+        ).delete()
         db.session.commit()
     except Exception as e:
         return {"result": e}, 500
@@ -558,11 +704,13 @@ def add_jwt_list(connection_name, table_name):
     restrict_by_JWT table in the dafault connection
     """
     restricted_tables = Restricted_by_JWT.query.filter_by(
-        connection_name=connection_name).first()
+        connection_name=connection_name
+    ).first()
     if restricted_tables is None:
         try:
-            restricted_jwt = Restricted_by_JWT(connection_name=connection_name,
-                                               restricted_tables=table_name)
+            restricted_jwt = Restricted_by_JWT(
+                connection_name=connection_name, restricted_tables=table_name
+            )
             db.session.add(restricted_jwt)
             db.session.commit()
         except Exception as error:
@@ -575,7 +723,9 @@ def add_jwt_list(connection_name, table_name):
             if table_name in restricted_tables.restricted_tables:
                 return
 
-            restricted_tables.restricted_tables = restricted_tables.restricted_tables + "," + table_name  # noqa E401
+            restricted_tables.restricted_tables = (
+                restricted_tables.restricted_tables + "," + table_name
+            )  # noqa E401
             try:
                 db.session.commit()
             except Exception as error:
@@ -585,23 +735,37 @@ def add_jwt_list(connection_name, table_name):
             pass
 
 
-def create_relationsips(app_name, relation_type, related_table, related_field,
-                        current_table, current_field, col_type,
-                        present_relationships="", related_before=False,
-                        **kwargs):
+def create_relationsips(
+    app_name,
+    relation_type,
+    related_table,
+    related_field,
+    current_table,
+    current_field,
+    col_type,
+    present_relationships="",
+    related_before=False,
+    **kwargs
+):
 
-    directory = '/'.join(__file__.split('/')[:-2])
+    directory = "/".join(__file__.split("/")[:-2])
 
     try:
-        if relation_type == 'one-many':
-            present_relationships = present_relationships + '    ' + \
-                'parent = relationship("' + \
-                related_table.title() + \
-                '" , backref="' + \
-                current_table.lower() + \
-                '")\n'
+        if relation_type == "many-one":
+            present_relationships = (
+                present_relationships
+                + "    "
+                + 'parent = relationship("'
+                + related_table.title()
+                + '" , backref="'
+                + current_table.lower()
+                + 's", foreign_keys =['
+                + current_field
+                + "])\n"
+            )
 
-        if relation_type == 'many-many':
+        """
+        if relation_type == 'c':
             class_name = related_table.title() + \
                 current_table.title() + \
                 related_field.title()
@@ -626,99 +790,138 @@ def create_relationsips(app_name, relation_type, related_table, related_field,
                      current_table.lower() +
                      '/models.py', 'a')
             f.write(assoc_string)
+        """
+        if relation_type in ["one-one", "many-many"]:
 
-        if relation_type == 'one-one':
-
-            f = open(directory + '/app/' + app_name + '/' + related_table +
-                     '/models.py', "r+")
+            f = open(
+                directory
+                + "/app/"
+                + app_name
+                + "/"
+                + related_table
+                + "/models.py",
+                "r+",
+            )
             f.seek(0)
             contents = f.readlines()
-            contents.append(present_relationships + '    ' +
-                            'relation_' + related_field + ' = relationship("' +
-                            related_table.title() +
-                            '" ,secondary="' +
-                            current_table.lower() +
-                            '" , backref="' +
-                            current_table.lower() +
-                            '")\n')
+            contents.append(
+                present_relationships
+                + "    "
+                + "relation_"
+                + related_field
+                + ' = relationship("'
+                + related_table.title()
+                + '" ,secondary="'
+                + current_table.lower()
+                + '" , backref="'
+                + current_table.lower()
+                + '")\n'
+            )
             f.seek(0)
-            f.write(''.join(contents))
+            f.write("".join(contents))
 
-        if relation_type == 'many-one':
+        if relation_type == "one-many":
 
-            f = open(directory + '/app/' + app_name + '/' +
-                     related_table + '/models.py', 'r+')
+            f = open(
+                directory
+                + "/app/"
+                + app_name
+                + "/"
+                + related_table
+                + "/models.py",
+                "r+",
+            )
 
             f.seek(0)
             lines = f.readlines()
             f.seek(0)
 
-            related_key = related_table.lower() + "." + related_field
+            # related_key = related_table.lower() + "." + related_field
             current_key = current_table.lower() + "." + current_field
+
+            # create back_populates on the child
+            relationship = (
+                "    "
+                + "relation_"
+                + current_field.lower()
+                + ' = relationship("'
+                + current_table.title()
+                + '", backref ='
+                + '"'
+                + current_table.lower()
+                + 's", foreign_keys = ['
+                + related_field
+                + "])\n"
+            )
 
             for line in lines:
                 if related_field + " =" in line:
-                    f_key_ = " ForeignKey('" + current_key + "'" + ')'
-                    split_line = line.split(',')
+                    f_key_ = " ForeignKey('" + current_key + "'" + ")"
+                    split_line = line.split(",")
                     if f_key_ in split_line:
                         pass
                     else:
                         split_line[1:1] = [f_key_]
-                        line = ','.join(split_line)
+                        line = ",".join(split_line)
                 f.write(line)
-            # create back_populates on the child
-            present_relationships = present_relationships + '    ' + \
-                'relation_' + current_field.lower() + ' = relationship("' + \
-                related_table.title() + \
-                '", backref =' + '"' + \
-                current_table.lower() + '")\n'
+            f.write(relationship)
+
     except KeyError as err:
-        raise RelatedContentNotFound("The table " +
-                                     str(list(err.args)[0]) +
-                                     " was not found.")
+        raise RelatedContentNotFound(
+            "The table " + str(list(err.args)[0]) + " was not found."
+        )
 
     return present_relationships
 
 
 def modify_related_type(app_name, col):
 
-    directory = '/'.join(__file__.split('/')[:-2])
+    directory = "/".join(__file__.split("/")[:-2])
     found = False
     try:
-        related_table, related_field = col['foreign_key'].split('.')
+        related_table, related_field = col["foreign_key"].split(".")
         found = True
     except ValueError:
         pass
 
     try:
-        related_table, related_field = col['relationship']['related_table'],\
-            col['relationship']['related_field']
+        related_table, related_field = (
+            col["relationship"]["related_table"],
+            col["relationship"]["related_field"],
+        )
         found = True
     except KeyError:
         pass
 
     if found:
-        col['length'] = 255
-        col['type'] = 'VARCHAR(' + str(col["length"]) + ')'
+        col["length"] = 255
+        col["type"] = "VARCHAR(" + str(col["length"]) + ")"
 
-        f = open(directory + '/app/' + app_name + '/' +
-                 related_table + '/models.py', 'r+')
+        f = open(
+            directory
+            + "/app/"
+            + app_name
+            + "/"
+            + related_table
+            + "/models.py",
+            "r+",
+        )
         lines = f.readlines()
         f.seek(0)
         for line in lines:
             if related_field + " =" in line:
                 new_type = "VARCHAR(255)"
-                split_line = line.split(',')
-                if 'VARCHAR' in line:
+                split_line = line.split(",")
+                if "VARCHAR" in line:
                     pass
                 else:
-                    update_type = split_line[0].split('(')[:]
+                    update_type = split_line[0].split("(")[:]
                     update_type.insert(1, new_type)
-                    split_line[0] = '('.join(update_type)
-                    line = ','.join(split_line)
+                    split_line[0] = "(".join(update_type)
+                    line = ",".join(split_line)
             f.write(line)
 
-    if col['type'] == 'VARCHAR':
-        col['length'] = 255
-        col['type'] = 'VARCHAR(' + str(col["length"]) + ')'
+    if col["type"] == "VARCHAR":
+        col["length"] = 255
+        col["type"] = "VARCHAR(" + str(col["length"]) + ")"
     return col
