@@ -5,7 +5,7 @@ from app import db
 from admin.export.utils import *
 from admin.export.errors import DogaHerokuDeploymentError, DogaAppNotFound
 
-from admin.models import JWT, Deployments
+from admin.models import JWT, Restricted_by_JWT, Deployments
 
 from config import PORT
 

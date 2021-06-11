@@ -1,4 +1,8 @@
 import re
+
+from datetime import datetime as dt
+from datetime import timedelta
+
 import subprocess
 from threading import Thread
 
@@ -297,7 +301,7 @@ class Login(Resource):
                 return {"result": "Admin does not exist."}, 404
             else:
                 match = ALGORITHM.verify(data["password"], admin.password)
-                expiry_time = datetime.timedelta(hours=4)
+                expiry_time = timedelta(hours=4)
                 if not match:
                     return {"result": "Invalid password."}, 401
                 else:
