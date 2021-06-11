@@ -9,7 +9,6 @@ services:
             - DOGA_NOTIFICATION_URL=http://localhost:8008
 
             doga-notification-server:
-        image: plotlabs/doga-notofications:latest
         ports:
             - "8080:80"
 

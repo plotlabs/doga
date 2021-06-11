@@ -1,5 +1,3 @@
-import json
-
 from sendgrid.helpers.mail import Mail, PlainTextContent
 from sendgrid import SendGridAPIClient
 

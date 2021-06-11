@@ -11,8 +11,10 @@ message = REPLACE_WITH_MESSAGE
 
 
 def send_sms(
-    account_sid, auth_token, from_="", to=[], message="Doga event occured"
+    account_sid, auth_token, from_="", to=None, message="Doga event occured"
 ):
+    if to is None:
+        to = []
     client = Client(account_sid, auth_token)
 
     for number in to:

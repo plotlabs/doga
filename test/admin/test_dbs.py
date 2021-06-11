@@ -38,8 +38,8 @@ class Test_DBinit:
 
         response = client.post(endpoints['db_init'], json=dbinit_sqlite,
                                headers=headers)
-        assert b'Connection with name: tmp is already present. '
-        b'Use a different name.' in response.data
+        assert b'Connection with name: tmp is already present. Use a ' \
+               b'different name.' in response.data
 
     def test_dbinit_repeatedDB(self, client):
 

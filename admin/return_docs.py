@@ -50,12 +50,9 @@ class ListDocs(Resource):
 
         tables = tables[app_name]
 
-        result = {}
-        result["app_name"] = app_name
-        result["app_type"] = app_type
-        result["unrestricted_tables"] = []
-        result["locked_tables"] = []
-        result["base_table"] = []
+        result = {"app_name": app_name, "app_type": app_type,
+                  "unrestricted_tables": [], "locked_tables": [],
+                  "base_table": []}
 
         if app_type == "JWT Authenticated":
             base_table = tables[jwt_configured.table]
@@ -388,7 +385,7 @@ class ListDocs(Resource):
             )
         result["unrestricted_tables"].append(ur_tables)
 
-        if result["base_table"] != []:
+        if result["base_table"]:
             result["Authorization"] = {
                 "in": "header",
                 "type": "jwt",

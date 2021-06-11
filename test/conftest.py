@@ -1,8 +1,5 @@
 import pytest
-import pytest_alembic
 import subprocess
-
-from pytest_postgresql import factories
 
 from app import app as flaskapp
 from app.utils import migrate as run_migration

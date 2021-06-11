@@ -1,10 +1,8 @@
 from __future__ import absolute_import
 
-from datetime import date, datetime  # noqa: F401
-
 import re
 
-from typing import List, Dict  # noqa: F401
+from typing import List  # noqa: F401
 
 from admin import utils
 from admin.models.base_model_ import Model

@@ -10,9 +10,7 @@ sys.path.append(
 )   # noqa E402
 
 from flask import Flask, request
-from flask_socketio import SocketIO, send, emit, join_room
-from flask_cors import CORS, cross_origin
-
+from flask_socketio import SocketIO, join_room
 
 from config import NOTIF_HOST, NOTIF_PORT, JWT_SECRET_KEY
 

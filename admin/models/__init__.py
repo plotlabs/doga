@@ -4,6 +4,9 @@ from sqlalchemy.schema import UniqueConstraint
 from app import db
 from app.types import ImageType
 
+from datetime import datetime
+import humanize
+
 Base = db.Model
 Column = db.Column
 ForeignKey = db.ForeignKey

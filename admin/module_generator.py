@@ -102,7 +102,7 @@ def create_model(dir_path, data):
                         Relationship.app_name == app_name,
                     )
                 ).all()
-                if relationships_t == []:
+                if not relationships_t:
                     relation_obj = Relationship(
                         app_name=app_name,
                         table1_column=table1_column,

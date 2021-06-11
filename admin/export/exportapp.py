@@ -63,7 +63,7 @@ def create_export_files(
     is_jwt = JWT.query.filter_by(connection_name=app_name).first()
 
     if is_jwt is None:
-        is_jwt is False
+        is_jwt = False
 
     if dest_dir is None:
         dest_dir = parent_dir
@@ -620,7 +620,7 @@ def create_docs(
         )
     result["unrestricted_tables"].append(ur_tables)
 
-    if result["base_table"] != []:
+    if result["base_table"]:
         result["Authorization"] = {
             "in": "header",
             "type": "jwt",

@@ -32,7 +32,7 @@ class ListAllNotifs(Resource):
             )
 
         notifications = Notifications.query.filter_by(user=admin["email"])
-        if notifications != []:
+        if notifications:
             obj = []
             for notif in notifications:
                 obj.extend([notif.create_dict()])

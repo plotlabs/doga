@@ -1,7 +1,7 @@
 import os
 
 import random
-from requests import get
+import requests
 import shutil
 import string
 from time import sleep
@@ -31,7 +31,7 @@ SG_GROUP_NAME = "sg_doga"
 
 
 def create_random_string(length: int) -> str:
-    """ Returns a unique string of given lenth
+    """ Returns a unique string of given length
     """
     random_string = "".join(
         random.choice(string.ascii_uppercase + string.digits)
@@ -41,9 +41,9 @@ def create_random_string(length: int) -> str:
 
 
 def get_current_ip() -> str:
-    """ Retrun a string containing the current IP address
+    """ Return a string containing the current IP address
     """
-    ip = get("https://api.ipify.org").text
+    ip = requests.get("https://api.ipify.org").text
     return ip
 
 
@@ -86,7 +86,7 @@ def create_requirements(
 def create_dockerfile(port, platform, target_dir):
     """Uses the template Dockerfile to create the same at the target_directory
 
-      Paratemers:
+      Parameters:
       ----------
       port: string,int
             This should be the port address that the application Dockerfile
@@ -163,7 +163,7 @@ def create_dbs_file(app_name, destination, rds_instance):
        destination: string
                     path of the file to be created.
       rds_instance: rds instance object
-                    The RDS instace object returned by boto3
+                    The RDS instance object returned by boto3
     """
     to_write = open(destination, "a+")
 
@@ -241,7 +241,7 @@ def create_aws_config(**kwargs):
          type: string
          example: 'v4'
          description: Outlines the method used by AWS for authenticating
-                      request. ( version 4 is most stable and reccomended)
+                      request. ( version 4 is most stable and recommended)
        - retries:
          type: integer
          example:4
@@ -297,7 +297,7 @@ def validate_ec2_instance_id(user_credentials, aws_config, image_id) -> str:
         )
     except ClientError as e:
         raise EC2CreationError(
-            "Error connecting to EC2 with given kwags ", str(e)
+            "Error connecting to EC2 with given kwargs ", str(e)
         )
 
     images = ec2_client.describe_instances(InstanceIds=[image_id])
@@ -335,12 +335,12 @@ def validate_ec2_instance_id(user_credentials, aws_config, image_id) -> str:
 
 
 def create_and_store_keypair(ec2_instance, key_name=KEY_NAME) -> str:
-    """To access a ec2 isntance, we must ensure that the ssh key file is
-       accessable to DOGA. This function creates and stores a unique keypair
+    """To access a ec2 instance, we must ensure that the ssh key file is
+       accessible to DOGA. This function creates and stores a unique key pair
        within DOGA's directory.
        Parameters:
        ----------
-       - ec2_isntance:
+       - ec2_instance:
          type: boto3 ec2 instance
          required: true
          description: The ec2 instance that the new key should be attached to

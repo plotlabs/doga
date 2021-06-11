@@ -86,7 +86,7 @@ class Email_Notify(Model):
 
         The email-id that will be used to send emails
 
-        :type email: str
+        :type _from: str
         """
         email_regex = (
             r"([a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+)"

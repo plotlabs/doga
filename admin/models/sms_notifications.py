@@ -1,9 +1,6 @@
 from __future__ import absolute_import
 
 import os
-import re
-
-from typing import List, Dict  # noqa: F401
 
 from admin import utils
 from admin.models.base_model_ import Model
@@ -71,7 +68,7 @@ class Sms_Notify(Model):
 
         The phone number that will be used to send emails
 
-        :type number: str
+        :type _from: str
         """
         # phone_regex =   # noqa 401
 
@@ -97,7 +94,7 @@ class Sms_Notify(Model):
     def account_sid(self, account_sid: str):
         """Sets the account_sid of the user..
 
-        :type api_key: str
+        :type account_sid: str
         """
         if account_sid is None or "":
             self.errors["account_sid"] = (
