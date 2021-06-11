@@ -1,18 +1,13 @@
 import requests
-from requests.exceptions import ConnectionError
 import jwt
 import json
-import sys
-from time import sleep
 
 from datetime import datetime as dt
 
 from admin.module_generator import *
 from admin.models import Notifications
-from admin.export.errors import *
 from admin.export.exportapp import (
     create_app_dir,
-    check_if_exist,
     write_to_deployments,
 )
 from admin.export.utils import *
@@ -20,7 +15,7 @@ from admin.export.utils import *
 from config import NOTIF_HOST, NOTIF_PORT, JWT_SECRET_KEY
 
 
-def triggerSocketioNotif(admin_id, token, notification):
+def triggerSocketioNotif(admin_id, notification):
 
     token = jwt.encode({"email": admin_id}, JWT_SECRET_KEY, algorithm="HS256")
 
@@ -69,7 +64,7 @@ def create_contet_thread(
     notification.completed_action_at = dt.now()
     db.session.add(notification)
     db.session.commit()
-    triggerSocketioNotif(admin_jwt["email"], "", notification.create_dict())
+    triggerSocketioNotif(admin_jwt["email"], notification.create_dict())
 
 
 def create_aws_deployment_thread(
@@ -97,7 +92,7 @@ def create_aws_deployment_thread(
             db.session.add(notification)
             db.session.commit()
             triggerSocketioNotif(
-                admin_jwt["email"], "", notification.create_dict()
+                admin_jwt["email"], notification.create_dict()
             )
             break
 
@@ -112,7 +107,7 @@ def create_aws_deployment_thread(
         db.session.add(notification)
         db.session.commit()
         triggerSocketioNotif(
-            admin_jwt["email"], "", notification.create_dict()
+            admin_jwt["email"], notification.create_dict()
         )
 
         try:
@@ -130,7 +125,7 @@ def create_aws_deployment_thread(
             db.session.add(notification)
             db.session.commit()
             triggerSocketioNotif(
-                admin_jwt["email"], "", notification.create_dict()
+                admin_jwt["email"], notification.create_dict()
             )
             break
 
@@ -145,7 +140,7 @@ def create_aws_deployment_thread(
         db.session.add(notification)
         db.session.commit()
         triggerSocketioNotif(
-            admin_jwt["email"], "", notification.create_dict()
+            admin_jwt["email"], notification.create_dict()
         )
 
         try:
@@ -161,7 +156,7 @@ def create_aws_deployment_thread(
             db.session.add(notification)
             db.session.commit()
             triggerSocketioNotif(
-                admin_jwt["email"], "", notification.create_dict()
+                admin_jwt["email"], notification.create_dict()
             )
             break
 
@@ -180,7 +175,7 @@ def create_aws_deployment_thread(
         db.session.add(notification)
         db.session.commit()
         triggerSocketioNotif(
-            admin_jwt["email"], "", notification.create_dict()
+            admin_jwt["email"], notification.create_dict()
         )
 
         try:
@@ -211,7 +206,7 @@ def create_aws_deployment_thread(
             db.session.add(notification)
             db.session.commit()
             triggerSocketioNotif(
-                admin_jwt["email"], "", notification.create_dict()
+                admin_jwt["email"], notification.create_dict()
             )
             break
 
@@ -226,7 +221,7 @@ def create_aws_deployment_thread(
         db.session.add(notification)
         db.session.commit()
         triggerSocketioNotif(
-            admin_jwt["email"], "", notification.create_dict()
+            admin_jwt["email"], notification.create_dict()
         )
 
         write_to_deployments(app_name, "aws", ec2.public_dns_name)
@@ -242,6 +237,6 @@ def create_aws_deployment_thread(
         db.session.add(notification_f)
         db.session.commit()
         triggerSocketioNotif(
-            admin_jwt["email"], "", notification_f.create_dict()
+            admin_jwt["email"], notification_f.create_dict()
         )
         return

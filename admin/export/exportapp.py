@@ -309,6 +309,7 @@ def write_to_deployments(app_name, platform, url=""):
     else:
         url = "localhost"
         deployment_url = "localexport"
+        return
 
     if old_entry is None:
         app_deployed = Deployments(

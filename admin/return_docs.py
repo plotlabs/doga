@@ -1,5 +1,5 @@
 from collections import defaultdict
-from flask import Blueprint, request
+from flask import Blueprint
 from flask_restful import Api, Resource
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.utils import verify_jwt

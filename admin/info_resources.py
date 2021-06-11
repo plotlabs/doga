@@ -4,7 +4,6 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.utils import verify_jwt
 
 from admin.models import Admin, Notifications, Deployments
-from admin.utils import *
 
 from app import db
 

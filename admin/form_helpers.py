@@ -1,4 +1,3 @@
-import json
 from flask import Blueprint
 from flask_restful import Api, Resource
 from flask_jwt_extended import jwt_required, get_jwt_identity
@@ -7,7 +6,6 @@ from app.utils import verify_jwt
 from boto3.session import Session
 
 from admin.models import Admin
-from admin.utils import *
 from admin.default_values import DEFAULT_PORTS
 
 

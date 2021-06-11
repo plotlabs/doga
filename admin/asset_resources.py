@@ -10,13 +10,7 @@ from sqlalchemy.exc import IntegrityError
 from app.utils import verify_jwt
 
 
-from admin.models import (
-    Admin,
-    JWT,
-    Restricted_by_JWT,
-    Notifications,
-    Assets_Table,
-)
+from admin.models import Admin, Assets_Table
 
 from app import db
 
@@ -45,10 +39,10 @@ class ListAssets(Resource):
                 401,
             )
 
-        assets = Assets_Table.query.filter_by(asset_type=asset_type)
-        if assets != []:
+        assets_ = Assets_Table.query.filter_by(asset_type=asset_type)
+        if assets_:
             obj = []
-            for asset in assets:
+            for asset in assets_:
                 obj.extend([asset.create_dict()])
             return obj, 200
         else:

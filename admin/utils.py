@@ -3,7 +3,6 @@ import random
 import secrets
 import six
 import string
-import typing
 
 from dbs import DB_DICT
 from config import JWTSET

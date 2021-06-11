@@ -1,8 +1,6 @@
 import os
-import re
 import shutil
 
-from sqlalchemy import or_, and_
 from sqlalchemy.exc import OperationalError, ProgrammingError
 
 from admin.version_models import *
@@ -139,7 +137,7 @@ def create_model(dir_path, data):
                         **{"relation": relationships_t}
                     )
 
-            except RelatedContentNotFound as err:
+            except RelatedContentNotFound:
                 pass
 
         except KeyError as error:

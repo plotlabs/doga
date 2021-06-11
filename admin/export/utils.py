@@ -1,10 +1,8 @@
 import os
-from collections import defaultdict
-from requests import get
+
 import random
 import shutil
 import string
-import subprocess
 from time import sleep
 
 import boto3

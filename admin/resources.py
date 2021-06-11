@@ -1,11 +1,7 @@
-from datetime import datetime as dt
-import json
 import re
-import subprocess
 from threading import Thread
 
 from typing import Dict, Tuple
-from time import sleep
 
 from flask import Blueprint, request, jsonify
 from flask_restful import Api, Resource
@@ -20,9 +16,8 @@ from sqlalchemy.exc import UnsupportedCompilationError
 
 from passlib.handlers.sha2_crypt import sha512_crypt
 
-from admin.module_generator import *
 
-from admin.models import Admin, Deployments, Notifications
+from admin.models import Admin, Deployments
 from admin.models.admin_model import Admin as AdminObject
 from admin.models.table_model import Table as TableModel
 from admin.models.database_model import Database as DatabaseObject
@@ -39,11 +34,8 @@ from admin.validators import (
     relationship_validation,
 )
 
-from admin.export.utils import *
 from admin.export.exportapp import (
-    create_app_dir,
     check_if_exist,
-    write_to_deployments,
 )
 
 from admin.resource_helper import *
@@ -179,7 +171,7 @@ class AdminApi(Resource):
 
         Returns:
         -------
-            json serializeable dict
+            json serializable dict
             integer response code
 
             responses:
@@ -276,7 +268,7 @@ class Login(Resource):
 
         Returns:
         -------
-            json serializeable dict, integer response code
+            json serializable dict, integer response code
             responses:
             - 200
               type: json
@@ -320,7 +312,7 @@ class Login(Resource):
                         "id": admin.id,
                         "access_token": access_token,
                         "refresh_token": refresh_token,
-                    }
+                    }, 200
         except KeyError as e:
             return {"result": "Key error", "error": str(e)}, 500
 
@@ -357,7 +349,7 @@ class ContentType(Resource):
         content or content that matches the parameters given in path
 
         Returns:
-            json serializeable dict
+            json serializable dict
             integer response code
         """
         if not verify_jwt(get_jwt_identity(), Admin):
@@ -635,7 +627,7 @@ class ContentType(Resource):
             db.session.add(notification)
             db.session.commit()
             triggerSocketioNotif(
-                admin_jwt["email"], "", notification.create_dict()
+                admin_jwt["email"], notification.create_dict()
             )
             return (
                 {
@@ -932,7 +924,7 @@ class ContentType(Resource):
             ):
                 return (
                     {
-                        "result": "Atleast one of the filter_keys"
+                        "result": "At least one of the filter_keys"
                         " should be unique and not null."
                     },
                     400,
@@ -1449,7 +1441,7 @@ class ExportApp(Resource):
             db.session.add(notification)
             db.session.commit()
             triggerSocketioNotif(
-                admin_jwt["email"], "", notification.create_dict()
+                admin_jwt["email"], notification.create_dict()
             )
             try:
                 user_credentials = create_user_credentials(
@@ -1484,14 +1476,7 @@ class ExportApp(Resource):
                 or missing_keys["ec2_config"] != []
                 or missing_keys["rds_config"] != []
             ):
-                return (
-                    {
-                        "result": "Please Provide the following details: ",
-                        "required fields": missing_keys,
-                        "request": json_request,
-                    },
-                    500,
-                )
+
                 notification.action_status = "ERROR"
                 notification.completed_action_at = dt.now()
                 notification.message = (
@@ -1501,12 +1486,29 @@ class ExportApp(Resource):
                 db.session.add(notification)
                 db.session.commit()
                 triggerSocketioNotif(
-                    admin_jwt["email"], "", notification.create_dict()
+                    admin_jwt["email"], notification.create_dict()
+                )
+
+                return (
+                    {
+                        "result": "Please Provide the following details: ",
+                        "required fields": missing_keys,
+                        "request": json_request,
+                    },
+                    500,
                 )
 
             try:
                 config = create_aws_config(**json_request["config"])
             except ValueError as error:
+                notification.action_status = "ERROR"
+                notification.completed_action_at = dt.now()
+                notification.message = str(error)
+                db.session.add(notification)
+                db.session.commit()
+                triggerSocketioNotif(
+                    admin_jwt["email"], notification.create_dict()
+                )
                 return (
                     {
                         "result": "Error creating config",
@@ -1514,14 +1516,6 @@ class ExportApp(Resource):
                         "request": request.get_json(),
                     },
                     400,
-                )
-                notification.action_status = "ERROR"
-                notification.completed_action_at = dt.now()
-                notification.message = str(error)
-                db.session.add(notification)
-                db.session.commit()
-                triggerSocketioNotif(
-                    admin_jwt["email"], "", notification.create_dict()
                 )
 
             Thread(
