@@ -140,7 +140,7 @@ def create_model(dir_path, data):
             except RelatedContentNotFound:
                 pass
 
-        except KeyError as error:
+        except KeyError:
             relation_type = None
 
         try:

@@ -697,8 +697,8 @@ class ContentType(Resource):
         if base_jwt and restrict_by_jwt:
             return (
                 {
-                    "response": "table_ cannot be both jwt_base and restricted "
-                                "by jwt."
+                    "response": "Table_cannot be both jwt_base and "
+                                "restricted by jwt."
                 },
                 400,
             )
@@ -766,7 +766,8 @@ class ContentType(Resource):
 
         Thread(
             target=create_contet_thread(
-                data, admin_jwt, table_, base_jwt, restrict_by_jwt, notification
+                data, admin_jwt, table_, base_jwt, restrict_by_jwt,
+                notification
             )
         ).start()
         return {"result": "Successfully created module."}, 200
@@ -863,7 +864,8 @@ class ContentType(Resource):
         if is_jwt is not None and base_jwt == False:  # noqa 711
             # regenerate all the endpoints that previously required JWT
             for table_assoc in associated_tables.restricted_tables.split(","):
-                dir_path = "app/" + database_name + "/" + table_assoc.table_name
+                dir_path = "app/" + database_name + "/" + \
+                           table_assoc.table_name
                 create_model(dir_path, data)
                 create_resources(
                     database_name + "." + table_assoc.table_name,
@@ -1185,7 +1187,8 @@ class DatabaseInit(Resource):
                     in str(err).lower()
             ):
                 try:
-                    database_string = re.split(database.database_name, database_string)[0]
+                    database_string = re.split(database.database_name,
+                                               database_string)[0]
                     engine = create_engine(database_string)
                     conn = engine.connect()
                     conn.execute("commit")
@@ -1302,7 +1305,8 @@ class DatabaseInit(Resource):
 
         database_string = ""
         if data["database_type"] == "mysql":
-            database_string = "mysql://{}:{}@{}:3306/{}?charset=utf8mb4".format(
+            database_string = \
+                "mysql://{}:{}@{}:3306/{}?charset=utf8mb4".format(
                 data["username"],
                 data["password"],
                 data["host"],
@@ -1318,7 +1322,8 @@ class DatabaseInit(Resource):
             )
 
         if data["database_type"] == "sqlite":
-            database_string = "sqlite:////tmp/{}.db".format(data["database_name"])
+            database_string = "sqlite:////tmp/{}.db".format(
+                data["database_name"])
 
         try:
             engine = create_engine(database_string)
