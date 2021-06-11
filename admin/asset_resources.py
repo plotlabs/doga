@@ -9,8 +9,7 @@ from sqlalchemy.exc import IntegrityError
 
 from app.utils import verify_jwt
 
-
-from admin.models import Admin, AssetsTable
+from admin.models import Admin, Assets_Table
 
 from app import db
 
@@ -25,7 +24,6 @@ class ListAssets(Resource):
     """
     Endpoint to list available assets
     """
-
     @jwt_required
     def get(self, asset_type):
         admin = get_jwt_identity()
@@ -39,7 +37,7 @@ class ListAssets(Resource):
                 401,
             )
 
-        assets_ = AssetsTable.query.filter_by(asset_type=asset_type)
+        assets_ = Assets_Table.query.filter_by(asset_type=asset_type)
         if assets_:
             obj = []
             for asset in assets_:
@@ -57,7 +55,6 @@ class UploadAssets(Resource):
         - POST
         - DELETE
     """
-
     @jwt_required
     def post(self, asset_type):
         """Allows for a file to be uploaded to the DOGA's assets database,
@@ -83,10 +80,8 @@ class UploadAssets(Resource):
               description: Server Error
         """
 
-        dest = (
-                    "/".join(path.dirname(__file__).split("/")[:-1])
-                    + "/doga-frontend/public/uploads/"
-                )
+        dest = ("/".join(path.dirname(__file__).split("/")[:-1]) +
+                "/doga-frontend/public/uploads/")
 
         admin = get_jwt_identity()
 
@@ -102,7 +97,9 @@ class UploadAssets(Resource):
         if asset_type == "image":
             if "image" not in request.files:
                 return (
-                    {"result": "Error, please attach file with request."},
+                    {
+                        "result": "Error, please attach file with request."
+                    },
                     400,
                 )
             img = request.files["image"]
@@ -131,7 +128,8 @@ class UploadAssets(Resource):
             except IntegrityError:
                 return (
                     {
-                        "result": "Please upload a different asset, "
+                        "result":
+                        "Please upload a different asset, "
                         "assset with this "
                         "name is already present."
                     },
@@ -158,10 +156,8 @@ class UploadAssets(Resource):
 
         admin = get_jwt_identity()
 
-        dest = (
-                    "/".join(path.dirname(__file__).split("/")[:-1])
-                    + "/doga-frontend/public/uploads/"
-                )
+        dest = ("/".join(path.dirname(__file__).split("/")[:-1]) +
+                "/doga-frontend/public/uploads/")
 
         if not verify_jwt(admin, Admin):
             return (
@@ -184,8 +180,7 @@ class UploadAssets(Resource):
             try:
                 db.session.query(AssetsTable).filter(
                     AssetsTable.asset_name == image_name,
-                    AssetsTable.asset_type == "Image"
-                    ).delete()
+                    AssetsTable.asset_type == "Image").delete()
                 db.session.commit()
             except Exception as e:
                 return {"result": e}, 500

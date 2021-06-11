@@ -38,8 +38,7 @@ from admin.validators import (
 )
 
 from admin.export.exportapp import (
-    check_if_exist,
-)
+    check_if_exist, )
 
 from admin.resource_helper import *
 
@@ -73,7 +72,6 @@ class AdminApi(Resource):
             Defines responses for the `/admin/admin_profile endpoint
 
     """
-
     @jwt_required
     def get(self, email=None) -> Tuple[Dict[str, str], int]:
         """
@@ -126,7 +124,7 @@ class AdminApi(Resource):
             return (
                 {
                     "result": "JWT authorization invalid, user does not"
-                              " exist."
+                    " exist."
                 },
                 401,
             )
@@ -248,7 +246,6 @@ class AdminApi(Resource):
 
 class Login(Resource):
     """API to login admin."""
-
     def post(self) -> Tuple[Dict[str, str], int]:
         """
         Defines responses for the `/admin/login/` endpoint.
@@ -304,17 +301,16 @@ class Login(Resource):
                 else:
                     filter_keys = {key: data[key] for key in jwt_filter_keys}
                     access_token = create_access_token(
-                        identity=filter_keys, expires_delta=expiry_time
-                    )
+                        identity=filter_keys, expires_delta=expiry_time)
                     refresh_token = create_refresh_token(identity=filter_keys)
                     return {
-                               "result": "Successfully logged in",
-                               "email": admin.email,
-                               "name": admin.name,
-                               "id": admin.id,
-                               "access_token": access_token,
-                               "refresh_token": refresh_token,
-                           }, 200
+                        "result": "Successfully logged in",
+                        "email": admin.email,
+                        "name": admin.name,
+                        "id": admin.id,
+                        "access_token": access_token,
+                        "refresh_token": refresh_token,
+                    }, 200
         except KeyError as e:
             return {"result": "Key error", "error": str(e)}, 500
 
@@ -342,7 +338,6 @@ class ContentType(Resource):
         delete
 
     """
-
     @jwt_required
     def get(self, db_name=None, content_type=None):
         """
@@ -370,13 +365,10 @@ class ContentType(Resource):
                 if table_.name in ["alembic_version"]:
                     continue
 
-                if (
-                        table_.name
-                        in ["jwt", "admin", "restricted_by_jwt", 
-                            "deployments", "relationships", "assets_table", 
-                            "notifications"]
-                        and table_.info["bind_key"] == "default"
-                ):
+                if (table_.name in [
+                        "jwt", "admin", "restricted_by_jwt", "deployments",
+                        "relationships", "assets_table", "notifications"
+                ] and table_.info["bind_key"] == "default"):
                     continue
 
                 if "generatedAssociation" in table_.name:
@@ -403,10 +395,9 @@ class ContentType(Resource):
                             raise ValueError("Cannot infer column type.")
                     foreign_key = str(column_.foreign_keys)
                     if foreign_key != set():
-                        foreign_key = foreign_key[
-                                      foreign_key.find(
-                                          "(") + 1: foreign_key.find(")")
-                                      ].replace("'", "")
+                        foreign_key = foreign_key[foreign_key.find("(") +
+                                                  1:foreign_key.
+                                                  find(")")].replace("'", "")
                     try:
                         default = int(str(default))
                     except ValueError:
@@ -415,23 +406,18 @@ class ContentType(Resource):
                         default = str(default)
 
                     if column_type == "BLOB":
-                        model_path = (
-                                "/".join(
-                                    os.path.dirname(__file__).split("/")[:-1])
-                                + "/app/"
-                                + table_.info["bind_key"]
-                                + "/"
-                                + table_.name
-                                + "/models.py"
-                        )
+                        model_path = ("/".join(
+                            os.path.dirname(__file__).split("/")[:-1]) +
+                                      "/app/" + table_.info["bind_key"] + "/" +
+                                      table_.name + "/models.py")
                         models = open(model_path, "r").read()
                         if "ImageType" in models:
                             column_type = "ImageType"
 
                     if "ColumnDefault" in str(default):
-                        default = default[
-                                  default.find("(") + 1: default.find(")")
-                                  ].replace("'", "")
+                        default = default[default.find("(") +
+                                          1:default.find(")")].replace(
+                                              "'", "")
 
                     col = {
                         "name": column_.name,
@@ -464,9 +450,9 @@ class ContentType(Resource):
                             continue
                         default = str(column_.default)
                         if column_.default is not None:
-                            default = default[
-                                      default.find("(") + 1: default.find(")")
-                                      ].replace("'", "")
+                            default = default[default.find("(") +
+                                              1:default.find(")")].replace(
+                                                  "'", "")
                         try:
                             column_type = str(column_.type)
                         except UnsupportedCompilationError as error:
@@ -476,31 +462,21 @@ class ContentType(Resource):
                                 raise ValueError("Cannot infer column type.")
                         foreign_key = str(column_.foreign_keys)
                         if column_.foreign_keys != "":
-                            foreign_key = foreign_key[
-                                          foreign_key.find("(")
-                                          + 1: foreign_key.find(")")
-                                          ].replace("'", "")
+                            foreign_key = foreign_key[foreign_key.find("(") +
+                                                      1:foreign_key.
+                                                      find(")")].replace(
+                                                          "'", "")
                             if foreign_key != "":
                                 foreign_key = foreign_key.split(".")[0].title()
                         if foreign_key != "":
-                            column_type = str(column_.foreign_keys).split("}")[
-                                              0
-                                          ][
-                                          1:
-                                          ]  # noqa 501
+                            column_type = str(column_.foreign_keys).split(
+                                "}")[0][1:]  # noqa 501
 
                         if column_type == "BLOB":
-                            model_path = (
-                                    "/".join(
-                                        os.path.dirname(
-                                            __file__).split("/")[:-1]
-                                    )
-                                    + " /app/"
-                                    + table_.info["bind_key"]
-                                    + "/"
-                                    + table_.name
-                                    + "/models.py"
-                            )
+                            model_path = ("/".join(
+                                os.path.dirname(__file__).split("/")[:-1]) +
+                                          " /app/" + table_.info["bind_key"] +
+                                          "/" + table_.name + "/models.py")
                             models = open(model_path, "rb").read()
                             if "ImageType" in models:
                                 column_type = "ImageType"
@@ -514,13 +490,14 @@ class ContentType(Resource):
                             "foreign_key": foreign_key,
                         }
                         column_list.append(obj)
-                    table_list.append(
-                        {
-                            "table_name": table_.name,
-                            "connection_name": table_.info["bind_key"],
-                            "columns": column_list,
-                        }
-                    )
+                    table_list.append({
+                        "table_name":
+                        table_.name,
+                        "connection_name":
+                        table_.info["bind_key"],
+                        "columns":
+                        column_list,
+                    })
 
         if not table_list:
             empty_apps = set(DB_DICT.keys())
@@ -541,13 +518,12 @@ class ContentType(Resource):
                 }
 
                 restricted_tables = RestrictedByJWT.query.filter_by(
-                    connection_name=bind_key
-                ).first()
+                    connection_name=bind_key).first()
 
                 if restricted_tables is not None:
                     table_list[bind_key]["jwt_info"][
-                        "restricted_tables"
-                    ] = restricted_tables.restricted_tables.split(",")
+                        "restricted_tables"] = restricted_tables.restricted_tables.split(
+                            ",")
 
         empty_apps = set(DB_DICT.keys()) - set(table_list.keys())
         empty_apps = empty_apps - {"default"}
@@ -625,9 +601,8 @@ class ContentType(Resource):
             notification.completed_action_at = dt.now()
             db.session.add(notification)
             db.session.commit()
-            triggerSocketioNotif(
-                admin_jwt["email"], notification.create_dict()
-            )
+            triggerSocketioNotif(admin_jwt["email"],
+                                 notification.create_dict())
             return (
                 {
                     "result": "Values for fields cannot be null.",
@@ -649,28 +624,26 @@ class ContentType(Resource):
             db.session.add(notification)
             db.session.commit()
             return {"result": "Module with this name is already present."}, 400
-        if (
-                table_.table_name in ["admin", "jwt", "restricted_by_jwt"]
-                and table_.connection_name == "default"
-        ):
+        if (table_.table_name in ["admin", "jwt", "restricted_by_jwt"]
+                and table_.connection_name == "default"):
             return (
                 {
-                    "result": "table_ with name {} is not allowed since it "
-                              "is used to manage admin login"
-                              " internally.".format(table_.table_name)
+                    "result":
+                    "table_ with name {} is not allowed since it "
+                    "is used to manage admin login"
+                    " internally.".format(table_.table_name)
                 },
                 400,
             )
 
         try:
             valid, msg, data["columns"] = relationship_validation(
-                data["columns"], table_.connection_name
-            )
+                data["columns"], table_.connection_name)
         except KeyError as err:
             return (
                 {
-                    "result": "Error, relationship definition incomplete."
-                              + " Please add required property.",
+                    "result": "Error, relationship definition incomplete." +
+                    " Please add required property.",
                     "property": err.args,
                 },
                 500,
@@ -680,9 +653,8 @@ class ContentType(Resource):
             return {"result": msg}, 400
 
         try:
-            valid, msg = column_validation(
-                data["columns"], table_.connection_name
-            )
+            valid, msg = column_validation(data["columns"],
+                                           table_.connection_name)
         except KeyError as err:
             return (
                 {
@@ -697,8 +669,9 @@ class ContentType(Resource):
         if base_jwt and restrict_by_jwt:
             return (
                 {
-                    "response": "Table_cannot be both jwt_base and "
-                                "restricted by jwt."
+                    "response":
+                    "Table_cannot be both jwt_base and "
+                    "restricted by jwt."
                 },
                 400,
             )
@@ -708,41 +681,35 @@ class ContentType(Resource):
             if check_jwt_present(table_.connection_name):
                 return (
                     {
-                        "result": "Only one table_ is allowed to set jwt per"
-                                  "database connection."
+                        "result":
+                        "Only one table_ is allowed to set jwt per"
+                        "database connection."
                     },
                     400,
                 )
 
-            if (
-                    data.get("filter_keys") is None
-                    or len(data.get("filter_keys", [])) == 0
-            ):
+            if (data.get("filter_keys") is None
+                    or len(data.get("filter_keys", [])) == 0):
                 data["filter_keys"] = ["id"]
 
-            if (
-                    validate_filter_keys_names(
-                        data["filter_keys"], data["columns"]
-                    )
-                    is False
-            ):
+            if (validate_filter_keys_names(data["filter_keys"],
+                                           data["columns"]) is False):
                 return (
                     {
-                        "result": "Only column names are allowed"
-                                  " in filter keys."
+                        "result":
+                        "Only column names are allowed"
+                        " in filter keys."
                     },
                     400,
                 )
 
-            if (
-                    validate_filter_keys_jwt(data["filter_keys"],
-                                             data["columns"])
-                    is False
-            ):
+            if (validate_filter_keys_jwt(data["filter_keys"], data["columns"])
+                    is False):
                 return (
                     {
-                        "result": "At least one of the filter_keys"
-                                  " should be unique and not null."
+                        "result":
+                        "At least one of the filter_keys"
+                        " should be unique and not null."
                     },
                     400,
                 )
@@ -758,18 +725,13 @@ class ContentType(Resource):
                 ",".join(data["filter_keys"]),
             )
 
-        if (
-                restrict_by_jwt
-                and check_jwt_present(table_.connection_name) is None
-        ):
+        if (restrict_by_jwt
+                and check_jwt_present(table_.connection_name) is None):
             return {"result": "JWT is not configured."}, 400
 
-        Thread(
-            target=create_contet_thread(
-                data, admin_jwt, table_, base_jwt, restrict_by_jwt,
-                notification
-            )
-        ).start()
+        Thread(target=create_contet_thread(data, admin_jwt, table_, base_jwt,
+                                           restrict_by_jwt,
+                                           notification)).start()
         return {"result": "Successfully created module."}, 200
 
     @jwt_required
@@ -833,8 +795,9 @@ class ContentType(Resource):
         if not check_table(table_.table_name, table_.connection_name):
             return (
                 {
-                    "result": "Module with this name not present. Please "
-                              "choose an existing one to edit."
+                    "result":
+                    "Module with this name not present. Please "
+                    "choose an existing one to edit."
                 },
                 400,
             )
@@ -844,22 +807,21 @@ class ContentType(Resource):
             return {"result": msg}, 400
 
         # check if the table that will be edited is the JWT restricted table
-        is_jwt = JWT.query.filter_by(
-            connection_name=table_.connection_name, table=table_.table_name
-        ).first()
+        is_jwt = JWT.query.filter_by(connection_name=table_.connection_name,
+                                     table=table_.table_name).first()
 
         if is_jwt is None and base_jwt is True:
             return (
                 {
-                    "result": "Only one table is allowed to set jwt per"
-                              "database connection."
+                    "result":
+                    "Only one table is allowed to set jwt per"
+                    "database connection."
                 },
                 400,
             )
 
         associated_tables = RestrictedByJWT.query.filter_by(
-            connection_name=table_.connection_name
-        ).first()
+            connection_name=table_.connection_name).first()
 
         if is_jwt is not None and base_jwt == False:  # noqa 711
             # regenerate all the endpoints that previously required JWT
@@ -885,8 +847,9 @@ class ContentType(Resource):
         if check:
             return (
                 {
-                    "result": "Since data is already present in the table, "
-                              "new datetime column should be nullable."
+                    "result":
+                    "Since data is already present in the table, "
+                    "new datetime column should be nullable."
                 },
                 400,
             )
@@ -896,35 +859,28 @@ class ContentType(Resource):
 
         if base_jwt:
 
-            if (
-                    data.get("filter_keys") is None
-                    or len(data.get("filter_keys", [])) == 0
-            ):
+            if (data.get("filter_keys") is None
+                    or len(data.get("filter_keys", [])) == 0):
                 data["filter_keys"] = ["id"]
 
-            if (
-                    validate_filter_keys_names(
-                        data["filter_keys"], data["columns"]
-                    )
-                    is False
-            ):
+            if (validate_filter_keys_names(data["filter_keys"],
+                                           data["columns"]) is False):
                 return (
                     {
-                        "result": "Only column names are allowed"
-                                  " in filter keys."
+                        "result":
+                        "Only column names are allowed"
+                        " in filter keys."
                     },
                     400,
                 )
 
-            if (
-                    validate_filter_keys_jwt(data["filter_keys"],
-                                             data["columns"])
-                    is False
-            ):
+            if (validate_filter_keys_jwt(data["filter_keys"], data["columns"])
+                    is False):
                 return (
                     {
-                        "result": "At least one of the filter_keys"
-                                  " should be unique and not null."
+                        "result":
+                        "At least one of the filter_keys"
+                        " should be unique and not null."
                     },
                     400,
                 )
@@ -941,10 +897,8 @@ class ContentType(Resource):
                 ",".join(data["filter_keys"]),
             )
 
-        if (
-                restrict_by_jwt
-                and check_jwt_present(table_.connection_name) is None
-        ):
+        if (restrict_by_jwt
+                and check_jwt_present(table_.connection_name) is None):
             return {"result": "JWT is not configured."}, 400
 
         dir_path = "app/" + database_name + "/" + table_.table_name
@@ -970,7 +924,7 @@ class ContentType(Resource):
             return (
                 {
                     "result": "JWT authorization invalid, user does not"
-                              " exist."
+                    " exist."
                 },
                 401,
             )
@@ -986,18 +940,17 @@ class ContentType(Resource):
         if len(tables_list) > 0:
             return (
                 {
-                    "result": "The table {} is linked to another table(s). "
-                              "Delete table(s) {} "
-                              "first.".format(content_type,
-                                              ", ".join(tables_list))
+                    "result":
+                    "The table {} is linked to another table(s). "
+                    "Delete table(s) {} "
+                    "first.".format(content_type, ", ".join(tables_list))
                 },
                 400,
             )
 
         try:
-            shutil.rmtree(
-                "app/" + db_name.lower() + "/" + content_type.lower()
-            )
+            shutil.rmtree("app/" + db_name.lower() + "/" +
+                          content_type.lower())
         except FileNotFoundError:
             return {"result": "Module does not exist."}, 400
 
@@ -1005,20 +958,11 @@ class ContentType(Resource):
             lines = f.readlines()
         with open("app/blueprints.py", "w") as f:
             for line in lines:
-                if (
-                        line.strip("\n")
-                        != "from app."
-                        + db_name
-                        + "."
-                        + content_type
-                        + ".resources import mod_model"
-                        and line.strip("\n")
-                        != "app.register_blueprint(mod_model, url_prefix='/"
-                        + db_name.lower()
-                        + "/"
-                        + content_type.lower()
-                        + "')"
-                ):
+                if (line.strip("\n") != "from app." + db_name + "." +
+                        content_type + ".resources import mod_model"
+                        and line.strip("\n") !=
+                        "app.register_blueprint(mod_model, url_prefix='/" +
+                        db_name.lower() + "/" + content_type.lower() + "')"):
                     f.write(line)
         remove_alembic_versions()
         move_migration_files()
@@ -1029,7 +973,6 @@ class ColumnRelations(Resource):
     """
     Defines the responses to identify tables to create relationships with
     """
-
     @jwt_required
     def post(self):
         if not verify_jwt(get_jwt_identity(), Admin):
@@ -1060,8 +1003,9 @@ class ColumnRelations(Resource):
         except ValueError:
             return (
                 {
-                    "result": "Error while fetching app data, make sure there"
-                              "is a connection for the app."
+                    "result":
+                    "Error while fetching app data, make sure there"
+                    "is a connection for the app."
                 },
                 500,
             )
@@ -1101,17 +1045,15 @@ class DatabaseInit(Resource):
                 username = value.split("@")[0].split("/")[-1].split(":")[0]
                 password = value.split("@")[0].split("/")[-1].split(":")[1]
 
-            connection_list.append(
-                {
-                    "connection_name": key,
-                    "database_type": database_type,
-                    "database_name": database_name,
-                    "host": host,
-                    "port": port,
-                    "username": username,
-                    "password": password,
-                }
-            )
+            connection_list.append({
+                "connection_name": key,
+                "database_type": database_type,
+                "database_name": database_name,
+                "host": host,
+                "port": port,
+                "username": username,
+                "password": password,
+            })
 
         return connection_list, 200
 
@@ -1168,8 +1110,9 @@ class DatabaseInit(Resource):
         if database_string == "":
             return (
                 {
-                    "result": "Please provide all parameters to connect/create"
-                              " db instance."
+                    "result":
+                    "Please provide all parameters to connect/create"
+                    " db instance."
                 },
                 500,
             )
@@ -1181,11 +1124,8 @@ class DatabaseInit(Resource):
             engine.dispose()
             db_created = ""
         except OperationalError as err:
-            if (
-                    "unknown database"
-                    or database.database_name + "does not exist"
-                    in str(err).lower()
-            ):
+            if ("unknown database" or database.database_name + "does not exist"
+                    in str(err).lower()):
                 try:
                     database_string = re.split(database.database_name,
                                                database_string)[0]
@@ -1195,21 +1135,22 @@ class DatabaseInit(Resource):
                     conn.execute("CREATE DATABASE " + database.database_name)
                     conn.invalidate()
                     engine.dispose()
-                    db_created = (
-                            " New database " + database.database_name 
-                            + " created."
-                    )
+                    db_created = (" New database " + database.database_name +
+                                  " created.")
                 except OperationalError:
                     return (
                         {
-                            "result": "Could not create database,"
-                                      " connection not valid."
+                            "result":
+                            "Could not create database,"
+                            " connection not valid."
                         },
                         400,
                     )
             else:
                 return (
-                    {"result": "The database credentials are not valid."},
+                    {
+                        "result": "The database credentials are not valid."
+                    },
                     400,
                 )
 
@@ -1219,21 +1160,15 @@ class DatabaseInit(Resource):
         with open("dbs.py", "w+") as f:
             for i, line in enumerate(lines):
                 if line.startswith("}"):
-                    line = (
-                            '    "'
-                            + database.connection_name
-                            + '": "'
-                            + database.db_string()
-                            + '",\n'
-                            + line
-                    )
+                    line = ('    "' + database.connection_name + '": "' +
+                            database.db_string() + '",\n' + line)
                 f.write(line)
 
         add_new_db(database.database_name)
 
         return {
-            "result": "Successfully created database connection string."
-                      + db_created
+            "result":
+            "Successfully created database connection string." + db_created
         }
 
     @jwt_required
@@ -1259,9 +1194,9 @@ class DatabaseInit(Resource):
         if data["connection_name"] not in DB_DICT:
             return (
                 {
-                    "result": "No connection with name: {} is present.".format(
-                        data["connection_name"]
-                    )
+                    "result":
+                    "No connection with name: {} is present.".format(
+                        data["connection_name"])
                 },
                 400,
             )
@@ -1275,9 +1210,10 @@ class DatabaseInit(Resource):
         if db_type != data["database_type"]:
             return (
                 {
-                    "result": "The type of database string cannot be "
-                              "changed. Create a new connection or choose the "
-                              "correct type."
+                    "result":
+                    "The type of database string cannot be "
+                    "changed. Create a new connection or choose the "
+                    "correct type."
                 },
                 400,
             )
@@ -1293,9 +1229,10 @@ class DatabaseInit(Resource):
                 # str(len(os.listdir(path))/2)
                 return (
                     {
-                        "result": "Found  content in the old database"
-                                  " connection"
-                                  " please remove them first."
+                        "result":
+                        "Found  content in the old database"
+                        " connection"
+                        " please remove them first."
                     },
                     400,
                 )
@@ -1341,18 +1278,17 @@ class DatabaseInit(Resource):
                 if line.startswith('    "' + data["connection_name"].lower()):
                     line = line.replace(
                         line,
-                        '    "'
-                        + data["connection_name"]
-                        + '": "'
-                        + database_string
-                        + '",\n',
+                        '    "' + data["connection_name"] + '": "' +
+                        database_string + '",\n',
                     )
                 f.write(line)
 
         remove_alembic_versions()
         move_migration_files()
         return (
-            {"result": "Successfully edited database connection string."},
+            {
+                "result": "Successfully edited database connection string."
+            },
             200,
         )
 
@@ -1363,30 +1299,30 @@ class ColumnType(Resource):
 
         available_types = column_types()
         for i in [
-            "INT",
-            "INTEGER",
-            "ARRAY",
-            "BOOLEAN",
-            "TEXT",
-            "CLOB",
-            "TIMESTAMP",
-            "Interval",
-            "CHAR",
-            "NCHAR",
-            "NVARCHAR",
-            "Concatenable",
-            "BINARY",
-            "FLOAT",
-            "BLOB",
-            "REAL",
-            "NUMERIC",
-            "DATETIME",
-            "TIME",
-            "DATE",
-            "BIGINT",
-            "SMALLINT",
-            "SmallInteger",
-            "Indexable",
+                "INT",
+                "INTEGER",
+                "ARRAY",
+                "BOOLEAN",
+                "TEXT",
+                "CLOB",
+                "TIMESTAMP",
+                "Interval",
+                "CHAR",
+                "NCHAR",
+                "NVARCHAR",
+                "Concatenable",
+                "BINARY",
+                "FLOAT",
+                "BLOB",
+                "REAL",
+                "NUMERIC",
+                "DATETIME",
+                "TIME",
+                "DATE",
+                "BIGINT",
+                "SMALLINT",
+                "SmallInteger",
+                "Indexable",
         ]:
             available_types.remove(i)
 
@@ -1398,7 +1334,6 @@ class ExportApp(Resource):
     """
     Endpoint that deals with deployment of the app to different platforms
     """
-
     @jwt_required
     def post(self, platform):
 
@@ -1406,7 +1341,7 @@ class ExportApp(Resource):
             return (
                 {
                     "result": "JWT authorization invalid, user does not"
-                              " exist."
+                    " exist."
                 },
                 400,
             )
@@ -1443,13 +1378,11 @@ class ExportApp(Resource):
             )
             db.session.add(notification)
             db.session.commit()
-            triggerSocketioNotif(
-                admin_jwt["email"], notification.create_dict()
-            )
+            triggerSocketioNotif(admin_jwt["email"],
+                                 notification.create_dict())
             try:
                 user_credentials = create_user_credentials(
-                    **json_request["user_credentials"]
-                )
+                    **json_request["user_credentials"])
                 missing_keys["user_credentials"] = []
             except KeyError as error:
                 missing_keys["user_credentials"] = list(error.args)[0]
@@ -1468,29 +1401,22 @@ class ExportApp(Resource):
             }
 
             missing_keys["ec2_config"] = list(
-                required_ec2_keys.difference(json_request["ec2_config"].keys())
-            )
+                required_ec2_keys.difference(
+                    json_request["ec2_config"].keys()))
             missing_keys["rds_config"] = list(
-                required_rds_keys.difference(json_request["rds_config"].keys())
-            )
+                required_rds_keys.difference(
+                    json_request["rds_config"].keys()))
 
-            if (
-                    missing_keys["user_credentials"] != []
+            if (missing_keys["user_credentials"] != []
                     or missing_keys["ec2_config"] != []
-                    or missing_keys["rds_config"] != []
-            ):
+                    or missing_keys["rds_config"] != []):
                 notification.action_status = "ERROR"
                 notification.completed_action_at = dt.now()
-                notification.message = (
-                        "Cannot process export missing "
-                        "parameters: " + missing_keys
-                )
+                notification.message = str(error)
                 db.session.add(notification)
                 db.session.commit()
-                triggerSocketioNotif(
-                    admin_jwt["email"], notification.create_dict()
-                )
-
+                triggerSocketioNotif(admin_jwt["email"],
+                                     notification.create_dict())
                 return (
                     {
                         "result": "Please Provide the following details: ",
@@ -1508,9 +1434,8 @@ class ExportApp(Resource):
                 notification.message = str(error)
                 db.session.add(notification)
                 db.session.commit()
-                triggerSocketioNotif(
-                    admin_jwt["email"], notification.create_dict()
-                )
+                triggerSocketioNotif(admin_jwt["email"],
+                                     notification.create_dict())
                 return (
                     {
                         "result": "Error creating config",
@@ -1533,7 +1458,9 @@ class ExportApp(Resource):
                 },
             ).start()
             return (
-                {"result": "Registered export request to " + platform + "."},
+                {
+                    "result": "Registered export request to " + platform + "."
+                },
                 200,
             )
         elif platform == "heroku":
@@ -1565,20 +1492,18 @@ class ExportApp(Resource):
             app_json = {
                 "name": "DOGA created deployment for " + app_name,
                 "description": "App: " + app_name + " with in Python"
-                                                    " using Flask",
+                " using Flask",
                 "repository": "",
                 "keywords": ["python", "flask", "DOGA"],
             }
 
             try:
-                create_app_dir(
-                    app_name,
-                    rds=None,
-                    user_credentials=None,
-                    config=None,
-                    platform=platform,
-                    **{"deploy_db": deploy}
-                )
+                create_app_dir(app_name,
+                               rds=None,
+                               user_credentials=None,
+                               config=None,
+                               platform=platform,
+                               **{"deploy_db": deploy})
             except DogaHerokuDeploymentError as error:
                 return (
                     {
@@ -1599,27 +1524,24 @@ class ExportApp(Resource):
 
             if deploy:
                 db_name = "pgsql" + app_name + random_string
-                subprocess.call(
-                    [
-                        "sh",
-                        file_location + "/export/heroku_postgres.sh",
-                        app_deployed.lower(),
-                        db_name.lower(),
-                        tier,
-                    ]
-                )
+                subprocess.call([
+                    "sh",
+                    file_location + "/export/heroku_postgres.sh",
+                    app_deployed.lower(),
+                    db_name.lower(),
+                    tier,
+                ])
 
             else:
-                subprocess.call(
-                    [
-                        "sh",
-                        file_location + "/export/heroku_deploy.sh",
-                        app_deployed.lower(),
-                    ]
-                )
+                subprocess.call([
+                    "sh",
+                    file_location + "/export/heroku_deploy.sh",
+                    app_deployed.lower(),
+                ])
 
             app_info = subprocess.Popen(
-                ["heroku", "apps:info", "-a", app_deployed.lower()],
+                ["heroku", "apps:info", "-a",
+                 app_deployed.lower()],
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
@@ -1627,7 +1549,7 @@ class ExportApp(Resource):
 
             out, err = app_info.communicate()
 
-            url_regex = "(https?:\\/\\/(?:www\\.|(?!www))[a-zA-Z0-9][a-zA-Z0-9""-]+[a-zA-Z0-9]\\.[^\\s]{2,}|www\\.[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\\.[^\\s]{2,}|https?:\\/\\/(?:www\\.|(?!www))[a-zA-Z0-9]+\\.[^\\s]{2,}|www\\.[a-zA-Z0-9]+\\.[^\\s]{2,})"  # noqa 401
+            url_regex = "(https?:\\/\\/(?:www\\.|(?!www))[a-zA-Z0-9][a-zA-Z0-9" "-]+[a-zA-Z0-9]\\.[^\\s]{2,}|www\\.[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\\.[^\\s]{2,}|https?:\\/\\/(?:www\\.|(?!www))[a-zA-Z0-9]+\\.[^\\s]{2,}|www\\.[a-zA-Z0-9]+\\.[^\\s]{2,})"  # noqa 401
             deployment_url = re.findall(url_regex, str(out))[1]
             deployment_url = deployment_url.split(".com")[0] + '.com/'
             write_to_deployments(app_name, platform, deployment_url)
@@ -1660,14 +1582,12 @@ class ExportApp(Resource):
             except KeyError as err:
                 path = None
 
-            create_app_dir(
-                app_name,
-                rds=None,
-                user_credentials="none",
-                config=None,
-                platform="local",
-                **{"path": path}
-            )
+            create_app_dir(app_name,
+                           rds=None,
+                           user_credentials="none",
+                           config=None,
+                           platform="local",
+                           **{"path": path})
 
         if platform == "local":
             if path is None:
@@ -1676,17 +1596,16 @@ class ExportApp(Resource):
             write_to_deployments(app_name, platform, None)
             return (
                 {
-                    "result": "App exported & to "
-                              + platform
-                              + " at "
-                              + path
-                              + "."
+                    "result":
+                    "App exported & to " + platform + " at " + path + "."
                 },
                 200,
             )
 
         return (
-            {"result": "Registered export request to " + platform + "."},
+            {
+                "result": "Registered export request to " + platform + "."
+            },
             200,
         )
 
@@ -1695,7 +1614,6 @@ class CreateNotifications(Resource):
     """
     Endpoint that Creates a script to send notifications
     """
-
     @jwt_required
     def post(self, platform):
 
@@ -1725,9 +1643,10 @@ class CreateNotifications(Resource):
         else:
             return (
                 {
-                    "response": "Currently we only create scripts for SMS "
-                                "notifications though Twilio and E-mail though"
-                                " SendGrid."
+                    "response":
+                    "Currently we only create scripts for SMS "
+                    "notifications though Twilio and E-mail though"
+                    " SendGrid."
                 },
                 400,
             )
@@ -1737,7 +1656,6 @@ class AdminDashboardStats(Resource):
     """
     Endpoint to return information that should be displayed to the Admin
     """
-
     @jwt_required
     def get(self, section, filter_=None):
 
@@ -1790,29 +1708,27 @@ class AdminDashboardStats(Resource):
                     }
                     app_type = "JWT"
                 restricted_tables = RestrictedByJWT.query.filter_by(
-                    connection_name=filter_
-                ).first()
+                    connection_name=filter_).first()
 
                 if restricted_tables is not None:
                     restricted_tables = restricted_tables.restricted_tables. \
                         split(",")
                     app_info["jwt_info"][
-                        "restricted_tables"
-                    ] = restricted_tables
+                        "restricted_tables"] = restricted_tables
                     app_info["jwt_info"]["no_restricted_tables"] = len(
-                        restricted_tables
-                    )
+                        restricted_tables)
 
                 app_info["tables"] = []
                 for table_ in tables[filter_]:
-                    table_d = {"table_name": table_.name,
-                               "no_fields": len(table_.columns),
-                               "columns": table_.columns.keys()}
+                    table_d = {
+                        "table_name": table_.name,
+                        "no_fields": len(table_.columns),
+                        "columns": table_.columns.keys()
+                    }
                     app_info["tables"].append(table_d)
 
                 deployment_info = Deployments.query.filter_by(
-                    app_name=filter_
-                ).first()
+                    app_name=filter_).first()
 
                 if deployment_info is not None:
                     timestamp = "{DD}-{M}-{YY} {HH}:{MM}:{SS}".format(
@@ -1826,9 +1742,8 @@ class AdminDashboardStats(Resource):
                     app_info["deployment_info"] = {
                         "most_recent_deployment": timestamp,
                         "platform": deployment_info.platform.split(","),
-                        "deployment_url": deployment_info.deployment_url.split(
-                            ","
-                        ),
+                        "deployment_url":
+                        deployment_info.deployment_url.split(","),
                         "total_no_exports": deployment_info.exports,
                     }
                 else:
@@ -1840,25 +1755,22 @@ class AdminDashboardStats(Resource):
                     }
 
                 relation_ = Relationship.query.filter_by(
-                    app_name=filter_
-                ).all()  # noqa 501
+                    app_name=filter_).all()  # noqa 501
 
                 if relation_ is not None:
                     r = []
                     for rel in relation_:
-                        relation = {"relation_type": rel.relationship,
-                                    "relation_from": {
-                                        "table_name":
-                                            rel.table1_column.split(",")[0],
-                                        "column_name":
-                                            rel.table1_column.split(",")[1],
-                                    },
-                                    "relation_to": {
-                                        "table_name": rel.table2_column.split(
-                                            ",")[0],
-                                        "column_name": rel.table2_column.split(
-                                            ",")[1],
-                                    }}
+                        relation = {
+                            "relation_type": rel.relationship,
+                            "relation_from": {
+                                "table_name": rel.table1_column.split(",")[0],
+                                "column_name": rel.table1_column.split(",")[1],
+                            },
+                            "relation_to": {
+                                "table_name": rel.table2_column.split(",")[0],
+                                "column_name": rel.table2_column.split(",")[1],
+                            }
+                        }
                         r.append(relation)
                     app_info["relationships"] = r
                 else:
@@ -1872,8 +1784,9 @@ class AdminDashboardStats(Resource):
             if filter_ not in [None, "", "all"]:
                 return (
                     {
-                        "result": "Error, filters are not available for this "
-                                  "resource"
+                        "result":
+                        "Error, filters are not available for this "
+                        "resource"
                     },
                     400,
                 )
@@ -1894,14 +1807,12 @@ class AdminDashboardStats(Resource):
             return {"result": "Error resource not created yet."}, 400
 
 
-api_admin.add_resource(
-    AdminApi, "/admin_profile", "/admin_profile/<string:email>"
-)
+api_admin.add_resource(AdminApi, "/admin_profile",
+                       "/admin_profile/<string:email>")
 api_admin.add_resource(Login, "/login")
 
-api_admin.add_resource(
-    DatabaseInit, "/dbinit", "/dbinit/types/<string:content_type>"
-)
+api_admin.add_resource(DatabaseInit, "/dbinit",
+                       "/dbinit/types/<string:content_type>")
 
 api_admin.add_resource(
     ContentType,
@@ -1917,6 +1828,5 @@ api_admin.add_resource(ExportApp, "/export/<string:platform>")
 
 api_admin.add_resource(CreateNotifications, "/notify/<string:platform>")
 
-api_admin.add_resource(
-    AdminDashboardStats, "/dashboard/stats/<string:section>/<string:filter_>"
-)
+api_admin.add_resource(AdminDashboardStats,
+                       "/dashboard/stats/<string:section>/<string:filter_>")
