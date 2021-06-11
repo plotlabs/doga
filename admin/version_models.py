@@ -1,5 +1,5 @@
 from sqlalchemy import *
-from app import db, app
+from app import db
 
 Base = db.Model
 Column = db.Column
