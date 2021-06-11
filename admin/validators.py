@@ -126,7 +126,7 @@ def column_validation(schema_list, connection_name, table_columns=None):
 
             if column["type"].upper() in ["DATE"]:
                 try:
-                    date_val = datetime.datetime.strptime(
+                    datetime.datetime.strptime(
                         column["default"], "%Y-%m-%d"
                     )
                 except ValueError:
@@ -149,7 +149,7 @@ def column_validation(schema_list, connection_name, table_columns=None):
             if column["type"].upper() in ["DATETIME"]:
                 try:
                     if column["default"].lower() != "current":
-                        date_val = datetime.datetime.strptime(
+                        datetime.datetime.strptime(
                             column["default"], "%Y-%m-%d %H:%M:%S"
                         )
                 except ValueError:
@@ -252,7 +252,7 @@ def foreign_key_options(app_name, _type):
     raise ValueError
 
 
-def relationship_validation(schema_list, connection_name, table_columns=None):
+def relationship_validation(schema_list, connection_name):
     valid = True
     msg = ""
     relations = ["one-one", "many-one", "many-many", "one-many"]

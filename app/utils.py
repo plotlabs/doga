@@ -47,7 +47,7 @@ class AlchemyEncoder(json.JSONEncoder):
                                     relation_name = relation.direction.name.\
                                                         split("TO")
                                     relation_name.insert(1, "TO")
-                                    realted_table = data.__table__.name.title()
+                                    related_table = data.__table__.name.title()
                                     related_value = {
                                         c.key: str(getattr(data, c.key))
                                         for c in inspect(
@@ -56,7 +56,7 @@ class AlchemyEncoder(json.JSONEncoder):
                                     }
                                     fields["relation_name"] = relation_name
                                     fields["related_value"] = [related_value]
-                                    fields["related_table"] = realted_table
+                                    fields["related_table"] = related_table
                         elif isinstance(data, InstrumentedList):
                             relationships = inspect(
                                 data[0]
@@ -70,12 +70,12 @@ class AlchemyEncoder(json.JSONEncoder):
                                 if data[0].__table__.name in str(
                                     relation._reverse_property
                                 ) or field in str(relation._reverse_property):
-                                    realted_table = data[
+                                    related_table = data[
                                         0
                                     ].__table__.name.title()
-                                    realted_values = []
+                                    related_values = []
                                     for item in data:
-                                        realted_values.append(
+                                        related_values.append(
                                             {
                                                 c.key: str(
                                                     getattr(item, c.key)
@@ -87,8 +87,8 @@ class AlchemyEncoder(json.JSONEncoder):
                                         )
 
                                     rel["relation_name"] = relation_name
-                                    rel["realted_table"] = realted_table
-                                    rel["realted_values"] = realted_values
+                                    rel["related_table"] = related_table
+                                    rel["related_values"] = related_values
                             try:
                                 fields["related_content"].append(rel)
                             except KeyError:

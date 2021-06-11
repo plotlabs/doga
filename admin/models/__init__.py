@@ -34,7 +34,7 @@ class Admin(Base):
         for notif in unread_notifs:
             notifs.append(
                 {
-                    "title": notif.foramt_notification(),
+                    "title": notif.format_notification(),
                     "received_at": humanize.naturaltime(
                         datetime.now() - notif.received_at
                     ),
@@ -62,16 +62,11 @@ class JWT(Base):
     table = Column(String(255), nullable=False, unique=False)
     filter_keys = Column(String(255), nullable=False, unique=False)
     UniqueConstraint("database_name", "table", name="uix_1")
-
-    # confirm length for the filter key fields ( and find a better way
-    # to store the filter keys keep in mind Arrays are not allowed in SQLite)
-
-    filter_keys = Column(String(255), nullable=False)
     create_dt = Column(DateTime(), server_default=text("CURRENT_TIMESTAMP"))
 
 
-class Restricted_by_JWT(Base):
-    """ Defines a table Restricted_by_JWT to store the tables restricted by a
+class RestrictedByJWT(Base):
+    """ Defines a table RestrictedByJWT to store the tables restricted by a
     JWT for a particular connection/app
     """
 
@@ -145,7 +140,7 @@ class Notifications(Base):
     mark_read = Column(Boolean, server_default=text("False"))
     full_notif = Column(String(255))
 
-    def foramt_notification(self):
+    def format_notification(self):
         self.full_notif = (
             f"{self.action_status.title()}: "
             f"{self.app_name} "
@@ -162,7 +157,7 @@ class Notifications(Base):
             completed_action_at = self.completed_action_at.strftime(
                 "%m/%d/%Y, %H:%M:%S"
             )
-        self.foramt_notification()
+        self.format_notification()
         return {
             "id": self.id,
             "app_name": self.app_name,
@@ -177,7 +172,7 @@ class Notifications(Base):
         }
 
 
-class Assets_Table(Base):
+class AssetsTable(Base):
     """ Defines a table Notifications to store the info regarding apps and
     any new events that need to be passes to the user
     """

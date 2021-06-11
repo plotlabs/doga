@@ -6,7 +6,7 @@ from admin import utils
 from admin.models.base_model_ import Model
 
 
-class Sms_Notify(Model):
+class SmsNotify(Model):
     def __init__(
         self,
         account_sid=None,
@@ -42,13 +42,13 @@ class Sms_Notify(Model):
         self.errors = {}
 
     @classmethod
-    def from_dict(cls, dikt) -> "Email_Notify":
+    def from_dict(cls, dikt) -> "EmailNotify":
         """Returns the dict as a model
 
         :param dikt: A dict.
         :type: dict
-        :return: The Admin of this Email_Notify.
-        :rtype: Email_Notify
+        :return: The Admin of this EmailNotify.
+        :rtype: EmailNotify
         """
         return utils.deserialize_model(dikt, cls)
 
@@ -154,23 +154,23 @@ class Sms_Notify(Model):
 
         parent_dir = os.sep.join(__file__.split(os.sep)[:-3])
         # create folder
-        Sms_Notifications = open(parent_dir + "/templates/Twilio_sms.py", "r")
-        Sms_Notify_Contents = Sms_Notifications.read()
-        Sms_Notifications.close()
+        sms_notifications = open(parent_dir + "/templates/Twilio_sms.py", "r")
+        sms_notify_contents = sms_notifications.read()
+        sms_notifications.close()
 
-        Sms_Notify_Contents = Sms_Notify_Contents.replace(
+        sms_notify_contents = sms_notify_contents.replace(
             "REPLACE_WITH_SID", self._account_sid
         )
-        Sms_Notify_Contents = Sms_Notify_Contents.replace(
+        sms_notify_contents = sms_notify_contents.replace(
             "REPLACE_WITH_AUTH_TOKEN", self._auth_token
         )
-        Sms_Notify_Contents = Sms_Notify_Contents.replace(
+        sms_notify_contents = sms_notify_contents.replace(
             "REPLACE_WITH_TO", self._to
         )
-        Sms_Notify_Contents = Sms_Notify_Contents.replace(
+        sms_notify_contents = sms_notify_contents.replace(
             "REPLACE_WITH_MESSAGE", self._message
         )
-        Sms_Notify_Contents = Sms_Notify_Contents.replace(
+        sms_notify_contents = sms_notify_contents.replace(
             "REPLACE_WITH_FROM", self.__from
         )
 
@@ -180,7 +180,7 @@ class Sms_Notify(Model):
             os.makedirs(_dir)
 
         file = open(_dir + "SmsNotifications.py", "w+")
-        file.write(Sms_Notify_Contents)
+        file.write(sms_notify_contents)
         file.close()
 
         return {"result": "Success create SMS notification module."}, 200

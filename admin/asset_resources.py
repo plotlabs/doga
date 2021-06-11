@@ -10,7 +10,7 @@ from sqlalchemy.exc import IntegrityError
 from app.utils import verify_jwt
 
 
-from admin.models import Admin, Assets_Table
+from admin.models import Admin, AssetsTable
 
 from app import db
 
@@ -39,7 +39,7 @@ class ListAssets(Resource):
                 401,
             )
 
-        assets_ = Assets_Table.query.filter_by(asset_type=asset_type)
+        assets_ = AssetsTable.query.filter_by(asset_type=asset_type)
         if assets_:
             obj = []
             for asset in assets_:
@@ -116,7 +116,7 @@ class UploadAssets(Resource):
             img.save(dest)
 
             try:
-                asset = Assets_Table(
+                asset = AssetsTable(
                     asset_name=filename,
                     asset_type="image",
                     image_data=base64.b64encode(open(dest, "rb").read()),
@@ -182,9 +182,9 @@ class UploadAssets(Resource):
                 }, 400
 
             try:
-                db.session.query(Assets_Table).filter(
-                    Assets_Table.asset_name == image_name,
-                    Assets_Table.asset_type == "Image"
+                db.session.query(AssetsTable).filter(
+                    AssetsTable.asset_name == image_name,
+                    AssetsTable.asset_type == "Image"
                     ).delete()
                 db.session.commit()
             except Exception as e:

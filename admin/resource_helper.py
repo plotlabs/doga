@@ -30,33 +30,33 @@ def triggerSocketioNotif(admin_id, notification):
 
 
 def create_contet_thread(
-    data, admin_jwt, Table, base_jwt, restrict_by_jwt, notification
+    data, admin_jwt, table_, base_jwt, restrict_by_jwt, notification
 ):
 
-    dir_path = create_dir(Table.connection_name + "/" + Table.table_name)
+    dir_path = create_dir(table_.connection_name + "/" + table_.table_name)
 
-    isExisting = os.path.isfile(dir_path)
+    dir_exists = os.path.isfile(dir_path)
 
-    if isExisting:
+    if dir_exists:
         return {
             "result": "Content must be unique for databases with the"
             " same name."
         }
 
     if restrict_by_jwt:
-        add_jwt_list(Table.connection_name, Table.table_name)
+        add_jwt_list(table_.connection_name, table_.table_name)
 
     create_model(dir_path, data)
     create_resources(
-        Table.connection_name + "." + Table.table_name,
-        Table.connection_name,
+        table_.connection_name + "." + table_.table_name,
+        table_.connection_name,
         dir_path,
         base_jwt,
         data.get("expiry", {}),
         restrict_by_jwt,
         data.get("filter_keys", []),
     )
-    append_blueprint(Table.connection_name + "." + Table.table_name)
+    append_blueprint(table_.connection_name + "." + table_.table_name)
     remove_alembic_versions()
     move_migration_files()
     notification.action_status = "SUCCESS"

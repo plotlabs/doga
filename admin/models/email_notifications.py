@@ -10,7 +10,7 @@ from admin import utils
 from admin.models.base_model_ import Model
 
 
-class Email_Notify(Model):
+class EmailNotify(Model):
     def __init__(
         self,
         api_key=None,
@@ -19,9 +19,8 @@ class Email_Notify(Model):
         template_key=None,
         subject=None,
         content=None,
-        errors=None,
     ):
-        """Email_Notify
+        """EmailNotify
 
         api_key
         _from
@@ -59,13 +58,13 @@ class Email_Notify(Model):
         self.errors = {}
 
     @classmethod
-    def from_dict(cls, dikt) -> "Email_Notify":
+    def from_dict(cls, dikt) -> "EmailNotify":
         """Returns the dict as a model
 
         :param dikt: A dict.
         :type: dict
         :return: The Admin of this Email_Notify.
-        :rtype: Email_Notify
+        :rtype: EmailNotify
         """
         return utils.deserialize_model(dikt, cls)
 
@@ -175,7 +174,7 @@ class Email_Notify(Model):
     def content(self, content):
 
         try:
-            eval_json = json.loads(content.replace("'", '"'))
+            json.loads(content.replace("'", '"'))
         except JSONDecodeError:
             pass
         except Exception as error:
@@ -189,48 +188,48 @@ class Email_Notify(Model):
         parent_dir = os.sep.join(__file__.split(os.sep)[:-3])
 
         if self._template_key in ["None", None, ""]:
-            Email_Notifications = open(
+            email_notifications = open(
                 parent_dir + "/templates/nt_SendGrid_email.py", "r"
             )
-            Email_Notify_Contents = Email_Notifications.read()
-            Email_Notifications.close()
-            Email_Notify_Contents = Email_Notify_Contents.replace(
+            email_notify_contents = email_notifications.read()
+            email_notifications.close()
+            email_notify_contents = email_notify_contents.replace(
                 "REPLACE_CONTENT", self.content
             )
 
         else:
             # create folder
-            Email_Notifications = open(
+            email_notifications = open(
                 parent_dir + "/templates/SendGrid_email.py", "r"
             )
-            Email_Notify_Contents = Email_Notifications.read()
-            Email_Notifications.close()
-            Email_Notify_Contents = Email_Notify_Contents.replace(
+            email_notify_contents = email_notifications.read()
+            email_notifications.close()
+            email_notify_contents = email_notify_contents.replace(
                 "REPLACE_TEMPLATE_ID", self._template_key
             )
             file_json = open(parent_dir + "dynamic_data.json", "w+")
             json.dump(self.content, file_json)
             file_json.close()
 
-        Email_Notify_Contents = Email_Notify_Contents.replace(
+        email_notify_contents = email_notify_contents.replace(
             "REPLACE_SENDGRID_API_KEY", self._api_key
         )
-        Email_Notify_Contents = Email_Notify_Contents.replace(
+        email_notify_contents = email_notify_contents.replace(
             "REPLACE_EMAIL_ID", self.__from
         )
-        Email_Notify_Contents = Email_Notify_Contents.replace(
+        email_notify_contents = email_notify_contents.replace(
             '"REPLACE_RECIPIENT_EMAILS"', self._to_emails
         )
-        Email_Notify_Contents = Email_Notify_Contents.replace(
+        email_notify_contents = email_notify_contents.replace(
             "REPLACE_EMAIL_SUBJECT", self._subject
         )
 
         _dir = parent_dir + "/Exports/Notifications/"
         if not os.path.exists(_dir):
             os.makedirs(_dir)
-        print(Email_Notify_Contents)
+        print(email_notify_contents)
         file = open(_dir + "EmailNotifications.py", "w+")
-        file.write(Email_Notify_Contents)
+        file.write(email_notify_contents)
         file.close()
 
         return (

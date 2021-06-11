@@ -121,7 +121,7 @@ invalid_filter_keys = {
     ]
 }
 
-invalid_colum_type = {
+invalid_column_type = {
     "table_name": "student",
     "app_name": "default",
     "filter_keys": ["desc"],

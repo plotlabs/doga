@@ -9,8 +9,7 @@ def setup_database():
 
     engine = create_engine('sqlite://')
     declarative_base().metadata.create_all(engine)
-    Session = sessionmaker(bind=engine)
-    session = Session()
+    session = sessionmaker(bind=engine)()
     yield session
     session.remove()
     session.delete()

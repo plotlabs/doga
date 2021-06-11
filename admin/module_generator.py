@@ -5,7 +5,7 @@ from sqlalchemy.exc import OperationalError, ProgrammingError
 
 from admin.version_models import *
 from dbs import ALEMBIC_LIST, DB_DICT
-from admin.models import JWT, Restricted_by_JWT, Relationship
+from admin.models import JWT, RestrictedByJWT, Relationship
 from admin.utils import extract_database_name
 from admin.errors import *
 from admin.export.utils import extract_engine_or_fail
@@ -689,8 +689,8 @@ def delete_restricted_by_jwt(connection_name):
     """Delete the from the jwt database if the datavase jwt is removed
     """
     try:
-        db.session.query(Restricted_by_JWT).filter(
-            Restricted_by_JWT.connection_name == connection_name
+        db.session.query(RestrictedByJWT).filter(
+            RestrictedByJWT.connection_name == connection_name
         ).delete()
         db.session.commit()
     except Exception as e:
@@ -701,12 +701,12 @@ def add_jwt_list(connection_name, table_name):
     """Function to add the restricted by JWT content(table) to the
     restrict_by_JWT table in the dafault connection
     """
-    restricted_tables = Restricted_by_JWT.query.filter_by(
+    restricted_tables = RestrictedByJWT.query.filter_by(
         connection_name=connection_name
     ).first()
     if restricted_tables is None:
         try:
-            restricted_jwt = Restricted_by_JWT(
+            restricted_jwt = RestrictedByJWT(
                 connection_name=connection_name, restricted_tables=table_name
             )
             db.session.add(restricted_jwt)

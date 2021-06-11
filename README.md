@@ -1,4 +1,4 @@
-﻿<img alt="Pytrhon 3.4+" src="https://img.shields.io/badge/Python-3.4%2B-blue"/>
+﻿<img alt="Python 3.4+" src="https://img.shields.io/badge/Python-3.4%2B-blue"/>
 
 # [Doga](https://plotlabs.github.io/doga/) A headless CMS created in Flask
 
@@ -76,7 +76,7 @@ database servers, upon specifying their HOST, PORT addresses along with your
 login credentials for the same, and adding a connection to the system though
 the `admin/dbinit/` endpoint.
 
-Theere is a default connection created in SQLite. A sqlite file named
+There is a default connection created in SQLite. A sqlite file named
 **test.db** is created in the **/tmp** folder in the system and the a `default`
 connection is stored in DOGA to stay connected to it. This database file is
 used by DOGA internally to store information about the content created and

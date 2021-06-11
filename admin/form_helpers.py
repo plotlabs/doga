@@ -43,7 +43,7 @@ class AWSFormHelper(Resource):
         Credentials required by AWS to establish the request it is receiving is
         from a particular aws user.
         you should be able to see them in your aws IAM roles for the new role
-        It is reccomended you create a new role to deploy your app and make
+        It is recommended you create a new role to deploy your app and make
         sure you have all the necessary permissions to create and modify both
         RDS and EC2 instances as well as send commands over SSM.
         provide the aws:
@@ -58,15 +58,15 @@ class AWSFormHelper(Resource):
         #       This indicates the region where the EC2 instance as well as RDS
         #       will be created in, please ensure you choose a region that has
         #       SSM, RDS and EC2 services.
-        #       Detialed information of the services can be found
-        #       (on amazons webpage)[https://aws.amazon.com/about-aws/gl
-        #       obal-infrastructure/regional-product-services/]
+        #       Detailed information of the services can be found
+        #       (on amazons webpage)[https://aws.amazon.com/about-aws/
+        #       global-infrastructure/regional-product-services/]
         s = Session()
         aws_region_names = s.get_available_regions("ssm")
 
         #   signature_version
         #       this outlines the method used by AWS for authenticating
-        #       requests. Version 4 is the most stable and reccomended
+        #       requests. Version 4 is the most stable and recommended
         #       protocol.
         #       For mode details refer to (how aws signs api requests.)
         #       [https://docs.aws.amazon.com/general/latest/gr/signing_
@@ -115,13 +115,14 @@ class AWSFormHelper(Resource):
         # similarly max is 1634
 
         # The admin username and password for the master user of the RDS
-        # instace
+        # instance
 
         """
         Elastic Compute Cloud 2 services provide the users a virtual machine
-        of their choice. These servers have varying downtimes, responsetimes
-        as well as computation power. AWS also provides certain free tier
-        instances and configurations, those will be provided as defaults.
+        of their choice. These servers have varying downtimes, response 
+        times as well as computation power. AWS also provides certain free
+        tier instances and configurations, those will be provided as
+        defaults.
         """
 
         ec2_config = {
@@ -149,7 +150,7 @@ class AWSFormHelper(Resource):
         # storage, each block device needs to be added to the list separately.
         # the defaults provided:
 
-        # *DeleteOnTermination* if true all backed up sotrage and snapshots of
+        # *DeleteOnTermination* if true all backed up storage and snapshots of
         #   volume are lost and instance cannot be reverted to it's initial
         #   AMI state.
 

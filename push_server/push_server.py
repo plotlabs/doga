@@ -46,7 +46,7 @@ def conn_event():
 
 
 @socketio.on("message")
-def handleNotidications(data):
+def handleNotifications(data):
     socketio.emit("broadcast message", data["notif"], room=data["admin_id"])
 
 
@@ -60,7 +60,7 @@ def relayMessage():
     if token is None:
         return {"result": "Invalid admin"}, 500
 
-    handleNotidications({"notif": message, "admin_id": admin["email"]})
+    handleNotifications({"notif": message, "admin_id": admin["email"]})
 
     return {"result": "Successfully created notification"}, 200
 

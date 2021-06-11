@@ -4,7 +4,7 @@ from flask_restful import Api, Resource
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.utils import verify_jwt
 
-from admin.models import Admin, JWT, Restricted_by_JWT
+from admin.models import Admin, JWT, RestrictedByJWT
 
 from app import db
 
@@ -37,7 +37,7 @@ class ListDocs(Resource):
 
         jwt_configured = JWT.query.filter_by(connection_name=app_name).first()
 
-        restricted_tables = Restricted_by_JWT.query.filter_by(
+        restricted_tables = RestrictedByJWT.query.filter_by(
             connection_name=app_name
         ).first()
 

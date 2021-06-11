@@ -14,8 +14,8 @@ from . import headers, endpoints
 
 
 @pytest.mark.usefixtures('client')
-class Test_Content:
-    """Tests post valid contet table, retreive it and add content to it.
+class TestContent:
+    """Tests post valid content table, retrieve it and add content to it.
        * database tested : SQLite
     """
 
@@ -84,10 +84,10 @@ def test_invalid_filterkey(client):
 """
 
 
-def test_invalid_colum_type(client):
+def test_invalid_column_type(client):
     client.post('/admin/dbinit', json=dbinit_sqlite, headers=headers)
     response = client.post('admin/content/types',
-                           json=invalid_colum_type,
+                           json=invalid_column_type,
                            headers=headers)
     assert b'Invalid column type for column desc.' in response.data
 

@@ -15,7 +15,7 @@ def generate_secret_key():
         secrets.choice(
             string.ascii_uppercase + string.ascii_lowercase + string.digits
         )
-        for i in range(length)
+        for _ in range(length)
     )
     return res
 

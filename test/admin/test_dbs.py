@@ -12,7 +12,7 @@ from . import headers, endpoints
 
 
 @pytest.mark.usefixtures('client')
-class Test_DBinit:
+class TestDBinit:
 
     def test_setup(self, client):
         client.post('/admin/admin_profile', json=admin)

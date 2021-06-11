@@ -12,7 +12,7 @@ from test.conftest import ResponsesStored
 
 
 @pytest.mark.usefixtures('client')
-class Test_RelatedContent:
+class TestRelatedContent:
 
     def test_setup(self, client):
         client.post('/admin/admin_profile', json=admin)
@@ -55,7 +55,7 @@ class Test_RelatedContent:
         assert b'Successfully created module.'\
             in response.data
 
-    # add a one-one relateion
+    # add a one-one relation
 
     # test out the relation by adding values
 

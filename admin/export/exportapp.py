@@ -5,7 +5,7 @@ from app import db
 from admin.export.utils import *
 from admin.export.errors import DogaHerokuDeploymentError, DogaAppNotFound
 
-from admin.models import JWT, Restricted_by_JWT, Deployments
+from admin.models import JWT, RestrictedByJWT, Deployments
 
 from config import PORT
 
@@ -330,7 +330,7 @@ def create_docs(
 
     jwt_configured = JWT.query.filter_by(connection_name=app_name).first()
 
-    restricted_tables = Restricted_by_JWT.query.filter_by(
+    restricted_tables = RestrictedByJWT.query.filter_by(
         connection_name=app_name
     ).first()
 

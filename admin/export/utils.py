@@ -494,13 +494,15 @@ def create_rds(user_credentials, aws_config, app_name, **kwargs):
     enable_iam_database_authentication = kwargs.get(
         "EnableIAMDatabaseAuthentication", True
     )
-    EnablePerformanceInsights = kwargs.get("EnablePerformanceInsights", False)
+
     multi_az = kwargs.get("MultiAZ", False)
     publicly_accessible = kwargs.get("PubliclyAccessible", True)
 
     # NOT PASSED FOR NOW: what should be the default
     # EnableCloudwatchLogsExports = kwargs.get()
     # PerformanceInsightsKMSKeyId
+    # EnablePerformanceInsights
+
     try:
         rds_client = boto3.client(
             "rds",
