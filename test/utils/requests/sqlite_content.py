@@ -162,6 +162,14 @@ columns_with_defaults = {
                     "default": "this"*3,
                     "foreign_key": ""
     },
+    "ImageType": {
+        "name": "test_image",
+        "type": "ImageType",
+        "nullable": "True",
+        "unique": "False",
+        "default": "",
+        "foreign_key": ""
+    },
 }
 
 columns_without_defaults = {

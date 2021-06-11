@@ -1,12 +1,11 @@
-import os
-import requests
+from collections import defaultdict
 
 from app import db
 
 from admin.export.utils import *
 from admin.export.errors import DogaHerokuDeploymentError, DogaAppNotFound
 
-from admin.models import JWT, Deployments
+from admin.models import JWT, Restricted_by_JWT, Deployments
 
 from config import PORT
 
@@ -35,8 +34,6 @@ def create_export_files(
     deploy,
     rds_engine,
     rds,
-    user_credentials,
-    config,
 ):
     to_copy = [
         "app/types.py",
@@ -251,8 +248,6 @@ def create_app_dir(
             deploy,
             db_engine,
             None,
-            None,
-            None,
         )
 
     elif platform == "local":
@@ -271,8 +266,6 @@ def create_app_dir(
             False,
             db_engine,
             None,
-            None,
-            None,
         )
 
     else:
@@ -284,8 +277,6 @@ def create_app_dir(
             False,
             rds["Engine"].lower(),
             rds,
-            user_credentials,
-            config,
         )
 
 
@@ -309,6 +300,7 @@ def write_to_deployments(app_name, platform, url=""):
     else:
         url = "localhost"
         deployment_url = "localexport"
+        return
 
     if old_entry is None:
         app_deployed = Deployments(
@@ -330,15 +322,8 @@ def write_to_deployments(app_name, platform, url=""):
 
 
 def create_docs(
-    platform,
-    parent_dir,
     dest_dir,
     app_name,
-    deploy,
-    rds_engine,
-    rds,
-    user_credentials,
-    config,
 ):
 
     app_type = "Basic"
@@ -358,12 +343,11 @@ def create_docs(
 
     tables = tables[app_name]
 
-    result = {}
-    result["app_name"] = app_name
-    result["app_type"] = app_type
-    result["unrestricted_tables"] = []
-    result["locked_tables"] = []
-    result["base_table"] = []
+    result = {"app_name": app_name,
+              "app_type": app_type,
+              "unrestricted_tables": [],
+              "locked_tables": [],
+              "base_table": []}
 
     if app_type == "JWT Authenticated":
         base_table = tables[jwt_configured.table]
@@ -649,3 +633,4 @@ def create_docs(
 
     d = dest_dir + "/exported_app/app/api_docs.md"
     os.makedirs(os.path.dirname(d), exist_ok=True)
+    shutil.copy2(str(result), d)

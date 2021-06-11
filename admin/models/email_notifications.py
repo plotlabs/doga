@@ -1,7 +1,5 @@
 from __future__ import absolute_import
 
-import ast
-
 import os
 import re
 
@@ -140,7 +138,8 @@ class Email_Notify(Model):
         to_emails = to_emails.replace("'", '"')
         to_emails = json.loads(to_emails)
         for name, email in to_emails.items():
-            to_emails_formatted = to_emails_formatted + "(" + '"' + name + '", "' + email + '"),\n'
+            to_emails_formatted = to_emails_formatted + "(" + '"' + name + \
+                                  '", "' + email + '"),\n'
         self._to_emails = to_emails_formatted
 
     @property

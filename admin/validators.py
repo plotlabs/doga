@@ -5,8 +5,6 @@ import requests
 
 
 from sqlalchemy import types
-from sqlalchemy import create_engine, MetaData
-from sqlalchemy.pool import StaticPool
 from templates.models import metadata
 
 from dbs import DB_DICT

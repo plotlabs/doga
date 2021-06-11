@@ -3,14 +3,11 @@
 import os
 
 import pytest
-import json
 
 from flask_testing import TestCase
 
-from test.utils.assertions import assert_valid_schema, load_json
 from test.utils.requests.admin import admin
 from test.utils.requests.test_content import *
-import test.utils.requests.sqlite_content as sqlite_request
 from test.utils.requests.dbinit_sqlite import dbinit_sqlite
 
 from . import headers, endpoints
@@ -45,7 +42,7 @@ class Test_Content:
     def test_retreive_content_empty(self, client):
         response = client.get('admin/content/types',
                               headers=headers)
-        assert b'No apps and content created yet.' in response.data
+        assert b'{}' in response.data
 
 
 """Tests to check that the admin model's constraints at endpoint:

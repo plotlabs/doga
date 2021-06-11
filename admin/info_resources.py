@@ -4,7 +4,6 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.utils import verify_jwt
 
 from admin.models import Admin, Notifications, Deployments
-from admin.utils import *
 
 from app import db
 
@@ -81,15 +80,14 @@ class MarkRead(Resource):
                     db.session.add(notif)
                     db.session.commit()
                 return {"response": "Marked All Read"}, 200
-            else:
-                return (
+
+            return (
                     {
                         "response": "Invalid notification id {section} check"
                         + " url parameters.".format(section)
                     },
                     400,
-                )
-        return
+            )
 
 
 class DeploymentInfo(Resource):

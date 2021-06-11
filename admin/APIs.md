@@ -8,7 +8,7 @@ The following APIs are available to register and login as admin users:
 	- **Method-** POST(Create)
 	- **Request JSON**:
 		```json
-		data = {
+		    {
     			"email":"email@webpage.com",
     			"password": "password",
     			"name": "admin_name"
@@ -28,7 +28,7 @@ The following APIs are available to register and login as admin users:
 		`/admin/login`
 	- **Method-** POST (Login)
 		```json
-		data = {
+		 {
     			"email":"email@webpage.com",
    		 		"password": "password"
 				}
@@ -62,7 +62,7 @@ generated when the admin user created, logs-in:
 	**Request JSON**:
 
  	```json
-		data = {
+		{
 			"table_name": "table_name",
 			"connection_name": "user defined connection name",
 			"columns": [
@@ -71,10 +71,11 @@ generated when the admin user created, logs-in:
 					"type": "column_type",
 					"nullable": "True/False",
 					"unique": "True/False",
-					"default": "value" or "",
+					"default": "value/None",
 					"foreign_key": "foreign key table name"
 				}	,
-				{}.....
+				{}
+  
 			]
 		}
 	```
