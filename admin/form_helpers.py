@@ -20,11 +20,11 @@ class DBDefaults(Resource):
     """
 
     def get(self):
-        DEFAULT_HOST = {}
+        default_host = {}
         for key, value in DEFAULT_PORTS.items():
-            DEFAULT_HOST[key] = "localhost"
+            default_host[key] = "localhost"
 
-        return {"host": DEFAULT_HOST, "port": DEFAULT_PORTS}
+        return {"host": default_host, "port": DEFAULT_PORTS}
 
 
 class AWSFormHelper(Resource):
@@ -36,9 +36,8 @@ class AWSFormHelper(Resource):
     def post(self, section=None):
 
         if not verify_jwt(get_jwt_identity(), Admin):
-            return {
-                "result": "JWT authorization invalid, user does not exist."
-            }
+            return {"result": "JWT authorization invalid, user does not exist."
+                    }
 
         """
         Credentials required by AWS to establish the request it is receiving is
@@ -75,16 +74,14 @@ class AWSFormHelper(Resource):
         signature_version = "v4"
 
         #   retries:
-        retries = {}
+        retries = {"max_attempts": 10, "mode": "standard"}
         #       max_attempts
         #       In case the calls to AWS services fail due to unexpected issues
         #       This field allows users to specify the maximum attempts he
         #       would like to resend the request.
-        retries["max_attempts"] = 10
 
         #       mode
         #       This indicates the retry handler you would like to use
-        retries["mode"] = "standard"
 
         """
         Relational Data Service (RDS) configuration
@@ -93,11 +90,17 @@ class AWSFormHelper(Resource):
         chose from an array of options.
         A few basic configurations are:
         """
-        rds_config = {}
-        rds_config["Engine"] = ["MySQL", "postgres"]
+        rds_config = {
+            "Engine": ["MySQL", "postgres"],
+            "DBInstanceIdentifier": "",
+            "DBInstanceClass": "db.t2.micro",
+            "AllocatedStorage": 20,
+            "MaxAllocatedStorage": 1634,
+            "MasterUsername": "admin",
+            "MasterUserPassword": "password",
+        }
 
         # Name of the DB to be given by the user the default should be app name
-        rds_config["DBInstanceIdentifier"] = ""
 
         # Database Engine Instance Class
         # depending on the region and the engine chosen, AWS will allow users
@@ -106,18 +109,13 @@ class AWSFormHelper(Resource):
         # Refer to (this)[https://docs.aws.amazon.com/AmazonRDS/latest/Us
         # erGuide/Concepts.DBInstanceClass.html]
         # doc for further details
-        rds_config["DBInstanceClass"] = "db.t2.micro"
 
         # Minimum storage allocated in GB s
         # minimum is 20
         # similarly max is 1634
-        rds_config["AllocatedStorage"] = 20
-        rds_config["MaxAllocatedStorage"] = 1634
 
         # The admin username and password for the master user of the RDS
         # instace
-        rds_config["MasterUsername"] = "admin"
-        rds_config["MasterUserPassword"] = "password"
 
         """
         Elastic Compute Cloud 2 services provide the users a virtual machine
@@ -126,16 +124,26 @@ class AWSFormHelper(Resource):
         instances and configurations, those will be provided as defaults.
         """
 
-        ec2_config = {}
+        ec2_config = {
+            "InstanceType": "t2.micro",
+            "ImageId": "ami-0885b1f6bd170450c",
+            "BlockDeviceMappings": [
+                {
+                    "DeviceName": "/dev/sda1",
+                    "Ebs": {
+                        "DeleteOnTermination": True,
+                        "VolumeSize": 8,
+                        "VolumeType": "gp2",
+                    },
+                }
+            ],
+        }
 
         # Base machine for the instance, this specifies hardware and size
         # the default is for a free tier micro instance
 
-        ec2_config["InstanceType"] = "t2.micro"
-
         # The image ID determines what OS and configuration should be loaded
         # onto the instance, the default AMI is for an Ubuntu 20.4 Image
-        ec2_config["ImageId"] = "ami-0885b1f6bd170450c"
 
         # This specifies values that need to be configured for the instances
         # storage, each block device needs to be added to the list separately.
@@ -151,17 +159,6 @@ class AWSFormHelper(Resource):
         #   one of io2, io1 for a Provisioned IOPS SSD, more information can
         #   be found [at](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/
         #   ebs-volume-types.html)
-
-        ec2_config["BlockDeviceMappings"] = [
-            {
-                "DeviceName": "/dev/sda1",
-                "Ebs": {
-                    "DeleteOnTermination": True,
-                    "VolumeSize": 8,
-                    "VolumeType": "gp2",
-                },
-            }
-        ]
 
         response = {
             "config": {

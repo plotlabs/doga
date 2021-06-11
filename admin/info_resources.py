@@ -80,15 +80,14 @@ class MarkRead(Resource):
                     db.session.add(notif)
                     db.session.commit()
                 return {"response": "Marked All Read"}, 200
-            else:
-                return (
+
+            return (
                     {
                         "response": "Invalid notification id {section} check"
                         + " url parameters.".format(section)
                     },
                     400,
-                )
-        return
+            )
 
 
 class DeploymentInfo(Resource):

@@ -1,6 +1,7 @@
 import os
 
 import random
+from requests import get
 import shutil
 import string
 from time import sleep
@@ -18,14 +19,12 @@ from paramiko.ssh_exception import NoValidConnectionsError
 
 from admin.aws_config import *
 from admin.export.errors import *
-from admin.models import Restricted_by_JWT
 from admin.utils import extract_database_name
 
 from admin.export.aws_defaults import *
 
 from dbs import DB_DICT
 
-from config import PORT
 
 KEY_NAME = "doga_key"
 SG_GROUP_NAME = "sg_doga"

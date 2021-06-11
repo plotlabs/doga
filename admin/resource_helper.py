@@ -20,7 +20,7 @@ def triggerSocketioNotif(admin_id, notification):
     token = jwt.encode({"email": admin_id}, JWT_SECRET_KEY, algorithm="HS256")
 
     try:
-        request = requests.post(
+        requests.post(
             "http://{}:{}/relayMessage".format(NOTIF_HOST, NOTIF_PORT),
             json=json.dumps({"notif": notification}),
             headers={"Authorization": token},
