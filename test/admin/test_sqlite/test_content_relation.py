@@ -2,10 +2,7 @@ import subprocess
 import pytest
 import json
 
-from flask_testing import TestCase
-from sqlalchemy import create_engine
 
-from test.utils.assertions import assert_valid_schema, load_json
 from test.utils.requests.dbinit_sqlite import *
 from test.utils.requests.admin import admin
 from test.utils.requests.sqlite_content import *
