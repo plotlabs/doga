@@ -1,29 +1,32 @@
 from twilio.rest import Client
 
 
-account_sid = REPLACE_WITH_SID
-auth_token = REPLACE_WITH_AUTH_TOKEN
+account_sid = "REPLACE_WITH_SID"
+auth_token = "REPLACE_WITH_AUTH_TOKEN"
 
-_from = REPLACE_WITH_FROM
+_from = "REPLACE_WITH_FROM"
+
+# Specify country code with the phone numbers. ex. for india prefix +91
 to = REPLACE_WITH_TO
+message = "REPLACE_WITH_MESSAGE"
 
-message = REPLACE_WITH_MESSAGE
 
+def send_sms(msg="Doga event occurred"):
+    if not isinstance(to, list):
+        print("Could not find any recipients. Please make sure a list of recipients are provided in the `to` "
+              "variable.")
 
-def send_sms(
-    account_sid, auth_token, from_="", to=None, message="Doga event occured"
-):
-    if to is None:
-        to = []
     client = Client(account_sid, auth_token)
 
     for number in to:
-        message = client.messages.create(body=message, from_=_from, to=number)
+        msg = client.messages.create(body=msg, from_=_from, to=number)
 
-        if message.error_code is not None:
-            print("ERROR " + message.error_message)
+        if msg.error_code is not None:
+            print("ERROR " + msg.error_message)
 
-    return message.sid
+        else:
+            print("Successfully send SMS !")
+    return msg.sid
 
 
-send_sms(account_sid, auth_token, _from, to, message)
+send_sms(message)
