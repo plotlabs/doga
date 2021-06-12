@@ -19,7 +19,7 @@ with open("dynamic_data.json", "r+") as fp:
 
 
 def SendEmails(
-    dynamic_data, from_email, recepient_emails, subject, template_id
+    dynamic_data, subject, template_id
 ):
     """ Send a dynamic email to a list of email addresses
 
@@ -28,7 +28,7 @@ def SendEmails(
 
     # create Mail object and populate
     message = Mail(
-        from_email=from_email, to_emails=recepient_emails, subject=subject
+        from_email=FROM_EMAIL, to_emails=RECIPIENT_EMAILS, subject=subject
     )
 
     # pass custom values for HTML placeholders
@@ -50,11 +50,12 @@ def SendEmails(
 
     except Exception as e:
         print("Error: {0}".format(e))
+        return str(e)
 
     return str(response.status_code)
 
 
 if __name__ == "__main__":
     SendEmails(
-        DYNAMIC_DATA, FROM_EMAIL, RECIPIENT_EMAILS, EMAIL_SUBJECT, TEMPLATE_ID
+        DYNAMIC_DATA, EMAIL_SUBJECT, TEMPLATE_ID
     )

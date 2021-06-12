@@ -13,9 +13,7 @@ EMAIL_SUBJECT = "REPLACE_EMAIL_SUBJECT"
 EMAIL_CONTENT = PlainTextContent("REPLACE_CONTENT")
 
 
-def SendEmails(
-    api_key, from_email, recipient_emails, subject, plain_text_content
-):
+def SendEmails(subject, content):
     """ Send a dynamic email to a list of email addresses
 
     :returns API response code
@@ -23,10 +21,10 @@ def SendEmails(
 
     # create Mail object and populate
     message = Mail(
-        from_email=from_email,
-        to_emails=recipient_emails,
+        from_email=FROM_EMAIL,
+        to_emails=RECIPIENT_EMAILS,
         subject=subject,
-        plain_text_content=plain_text_content,
+        plain_text_content=content,
     )
 
     try:
@@ -43,15 +41,13 @@ def SendEmails(
 
     except Exception as e:
         print("Error: {0}".format(e))
+        return str(e)
 
     return str(response.status_code)
 
 
 if __name__ == "__main__":
     SendEmails(
-        SENDGRID_API_KEY,
-        FROM_EMAIL,
-        RECIPIENT_EMAILS,
         EMAIL_SUBJECT,
         EMAIL_CONTENT,
     )
