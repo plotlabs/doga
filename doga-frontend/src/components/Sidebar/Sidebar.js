@@ -148,7 +148,7 @@ function Sidebar(props) {
               return dropMenu.includes(index) ? (
                 <NavLink
                   to={`/application/${value.app_name}/${prop}`}
-                  key={`${val}-table`}
+                  key={`${prop}-table`}
                 >
                   <MotionBox
                     transition={{ ease: "easeOut", duration: 0.3 }}

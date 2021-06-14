@@ -189,8 +189,7 @@ const App = (props) => {
       <QueryClientProvider client={queryClient}>
         <ChakraProvider>
           <ThemeProvider theme={theme}>
-            <ReactQueryDevtools initialIsOpen={false} />
-
+            {/* <ReactQueryDevtools initialIsOpen={false} /> */}
             <Box>{show}</Box>
           </ThemeProvider>
         </ChakraProvider>
