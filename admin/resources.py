@@ -1781,7 +1781,7 @@ class AdminDashboardStats(Resource):
                 app_info = {}
                 app_type = "basic"
 
-                jwt_base = JWT.query.filter_by(connection_name=filter).first()
+                jwt_base = JWT.query.filter_by(connection_name=filter_).first()
 
                 if jwt_base is not None:
                     app_info["jwt_info"] = {
