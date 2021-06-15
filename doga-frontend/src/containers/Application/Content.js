@@ -474,7 +474,7 @@ const Content = () => {
                                   </Box>
                                   <Box type="column">
                                     {val["related_content"] &&
-                                      Object.entries(v["realted_values"]).map(
+                                      Object.entries(v["related_values"]).map(
                                         ([i, values]) => {
                                           return (
                                             <>
