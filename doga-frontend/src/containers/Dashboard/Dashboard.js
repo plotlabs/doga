@@ -35,13 +35,14 @@ const Dashboard = () => {
             Hi {localStorage.getItem("userName")}!
           </H2>
           <Para mt={4}>
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
-            eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim
-            ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut
-            aliquip ex ea commodo consequat. Duis aute irure dolor in
-            reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla
-            pariatur. Excepteur sint occaecat cupidatat non proident, sunt in
-            culpa qui officia deserunt mollit anim id est laborum.
+              <p>Welcome to DOGA</p>
+              <p>DOGA is a headless content management system written in and to
+              create Flask Application.</p>It helps you model your data to  fit
+              your requirements, with features like tabular content
+              definition , simple definition of relationships, easy addition
+              of data, simple deployments and monitoring and managing data
+              on your remote apps too.<p>To get started click on
+              Create a New App and begin creating your backed with no code !</p>
           </Para>
           <Box type="row" style={{ marginTop: "55px" }}>
             <NavLink to={`/create-new-app`}>
