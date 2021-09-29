@@ -1410,13 +1410,16 @@ class ExportApp(Resource):
             if (missing_keys["user_credentials"] != []
                     or missing_keys["ec2_config"] != []
                     or missing_keys["rds_config"] != []):
+
                 notification.action_status = "ERROR"
                 notification.completed_action_at = dt.now()
-                notification.message = str(error)
+                notification.message = ("Cannot process export missing "
+                                        "parameters: " + missing_keys)
                 db.session.add(notification)
                 db.session.commit()
                 triggerSocketioNotif(admin_jwt["email"],
                                      notification.create_dict())
+
                 return (
                     {
                         "result": "Please Provide the following details: ",
