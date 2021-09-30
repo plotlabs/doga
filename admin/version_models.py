@@ -1,5 +1,6 @@
 from sqlalchemy import *
-from app import db
+from flask_sqlalchemy import SQLAlchemy
+from app import db, app
 
 Base = db.Model
 Column = db.Column

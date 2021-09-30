@@ -9,7 +9,7 @@ from sqlalchemy.exc import IntegrityError
 
 from app.utils import verify_jwt
 
-from admin.models import Admin, Assets_Table
+from admin.models import Admin, AssetsTable
 
 from app import db
 
@@ -37,7 +37,7 @@ class ListAssets(Resource):
                 401,
             )
 
-        assets_ = Assets_Table.query.filter_by(asset_type=asset_type)
+        assets_ = AssetsTable.query.filter_by(asset_type=asset_type)
         if assets_:
             obj = []
             for asset in assets_:
