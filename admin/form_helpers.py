@@ -8,7 +8,6 @@ from boto3.session import Session
 from admin.models import Admin
 from admin.default_values import DEFAULT_PORTS
 
-
 utils = Blueprint("utils", __name__)
 api_utils = Api()
 api_utils.init_app(utils)
@@ -18,7 +17,6 @@ class DBDefaults(Resource):
     """
     Return default host and port for all doga databases
     """
-
     def get(self):
         default_host = {}
         for key, value in DEFAULT_PORTS.items():
@@ -31,14 +29,13 @@ class AWSFormHelper(Resource):
     """
     Endpoint to provide default values and info regarding the aws exports
     """
-
     @jwt_required
     def post(self, section=None):
 
         if not verify_jwt(get_jwt_identity(), Admin):
-            return {"result": "JWT authorization invalid, user does not exist."
-                    }
-
+            return {
+                "result": "JWT authorization invalid, user does not exist."
+            }
         """
         Credentials required by AWS to establish the request it is receiving is
         from a particular aws user.
@@ -82,7 +79,6 @@ class AWSFormHelper(Resource):
 
         #       mode
         #       This indicates the retry handler you would like to use
-
         """
         Relational Data Service (RDS) configuration
         AWS provides users a hassle free way to configure remote data storage
@@ -115,8 +111,7 @@ class AWSFormHelper(Resource):
         # similarly max is 1634
 
         # The admin username and password for the master user of the RDS
-        # instance
-
+        # instace
         """
         Elastic Compute Cloud 2 services provide the users a virtual machine
         of their choice. These servers have varying downtimes, response 
@@ -126,18 +121,18 @@ class AWSFormHelper(Resource):
         """
 
         ec2_config = {
-            "InstanceType": "t2.micro",
-            "ImageId": "ami-0885b1f6bd170450c",
-            "BlockDeviceMappings": [
-                {
-                    "DeviceName": "/dev/sda1",
-                    "Ebs": {
-                        "DeleteOnTermination": True,
-                        "VolumeSize": 8,
-                        "VolumeType": "gp2",
-                    },
-                }
-            ],
+            "InstanceType":
+            "t2.micro",
+            "ImageId":
+            "ami-0885b1f6bd170450c",
+            "BlockDeviceMappings": [{
+                "DeviceName": "/dev/sda1",
+                "Ebs": {
+                    "DeleteOnTermination": True,
+                    "VolumeSize": 8,
+                    "VolumeType": "gp2",
+                },
+            }],
         }
 
         # Base machine for the instance, this specifies hardware and size
@@ -175,7 +170,9 @@ class AWSFormHelper(Resource):
             return {section: response[section]}, 200
         except KeyError:
             return (
-                {"error": "The section " + section + " does not exist."},
+                {
+                    "error": "The section " + section + " does not exist."
+                },
                 400,
             )
 

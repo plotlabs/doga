@@ -25,7 +25,6 @@ from admin.export.aws_defaults import *
 
 from dbs import DB_DICT
 
-
 KEY_NAME = "doga_key"
 SG_GROUP_NAME = "sg_doga"
 
@@ -35,8 +34,7 @@ def create_random_string(length: int) -> str:
     """
     random_string = "".join(
         random.choice(string.ascii_uppercase + string.digits)
-        for _ in range(length)
-    )
+        for _ in range(length))
     return random_string
 
 
@@ -111,7 +109,9 @@ def create_dockerfile(port, platform, target_dir):
 
 
 def export_blueprints(
-    app_name: str, parent_dir: str, target_dir: str,
+    app_name: str,
+    parent_dir: str,
+    target_dir: str,
 ):
     """
     Creates the blueprints file for the exported app
@@ -173,19 +173,8 @@ def create_dbs_file(app_name, destination, rds_instance):
     server = rds_instance["Endpoint"]["Address"]
     port = str(rds_instance["Endpoint"]["Port"])
 
-    url = (
-        engine
-        + "://"
-        + username
-        + ":"
-        + password
-        + "@"
-        + server
-        + ":"
-        + port
-        + "/"
-        + app_name
-    )
+    url = (engine + "://" + username + ":" + password + "@" + server + ":" +
+           port + "/" + app_name)
 
     content = 'DB_DICT = { "' + app_name + '": "' + url + '"}'
 
@@ -252,13 +241,11 @@ def create_aws_config(**kwargs):
     # check for the required kwargs
 
     kwargs["region_name"] = kwargs.get("region_name", region_name)
-    kwargs["signature_version"] = kwargs.get(
-        "signature_version", signature_version
-    )
+    kwargs["signature_version"] = kwargs.get("signature_version",
+                                             signature_version)
     kwargs["retries"] = kwargs.get("retries", {})
-    kwargs["retries"]["max_attempts"] = kwargs.get(
-        "max_attempts", max_attempts
-    )
+    kwargs["retries"]["max_attempts"] = kwargs.get("max_attempts",
+                                                   max_attempts)
     kwargs["retries"]["mode"] = kwargs.get("mode", mode)
 
     # PASSED AS KWARGS for now :
@@ -296,9 +283,8 @@ def validate_ec2_instance_id(user_credentials, aws_config, image_id) -> str:
             config=aws_config,
         )
     except ClientError as e:
-        raise EC2CreationError(
-            "Error connecting to EC2 with given kwargs ", str(e)
-        )
+        raise EC2CreationError("Error connecting to EC2 with given kwargs ",
+                               str(e))
 
     images = ec2_client.describe_instances(InstanceIds=[image_id])
     image_dict = images["Reservations"][0]["Instances"][0]
@@ -367,9 +353,11 @@ def create_and_store_keypair(ec2_instance, key_name=KEY_NAME) -> str:
     return doga_key.name
 
 
-def create_security_group(
-    ec2_client, ec2, db_port, group_id="sg_id", **kwargs
-):
+def create_security_group(ec2_client,
+                          ec2,
+                          db_port,
+                          group_id="sg_id",
+                          **kwargs):
 
     waiter = ec2_client.get_waiter("instance_running")
     waiter.wait(InstanceIds=[ec2.instance_id])
@@ -385,31 +373,41 @@ def create_security_group(
                 "IpProtocol": sg_defaults["SG_IP_PROTOCOL"],
                 "FromPort": sg_defaults["SG_FROM_PORT"],
                 "ToPort": sg_defaults["SG_TO_PORT"],
-                "IpRanges": [{"CidrIp": sg_defaults["SG_IP"]}],
+                "IpRanges": [{
+                    "CidrIp": sg_defaults["SG_IP"]
+                }],
             },
             {
                 "IpProtocol": "tcp",
                 "FromPort": 80,
                 "ToPort": 80,
-                "IpRanges": [{"CidrIp": "0.0.0.0/0"}],
+                "IpRanges": [{
+                    "CidrIp": "0.0.0.0/0"
+                }],
             },
             {
                 "IpProtocol": "tcp",
                 "FromPort": 443,
                 "ToPort": 443,
-                "IpRanges": [{"CidrIp": "0.0.0.0/0"}],
+                "IpRanges": [{
+                    "CidrIp": "0.0.0.0/0"
+                }],
             },
             {
                 "IpProtocol": "tcp",
                 "FromPort": 8080,
                 "ToPort": 8080,
-                "IpRanges": [{"CidrIp": "0.0.0.0/0"}],
+                "IpRanges": [{
+                    "CidrIp": "0.0.0.0/0"
+                }],
             },
             {
                 "IpProtocol": "tcp",
                 "FromPort": db_port,
                 "ToPort": db_port,
-                "IpRanges": [{"CidrIp": ec2.public_ip_address + "/32"}],
+                "IpRanges": [{
+                    "CidrIp": ec2.public_ip_address + "/32"
+                }],
             },
         ],
         DryRun=False,
@@ -433,19 +431,25 @@ def create_security_group(
                 "IpProtocol": sg_defaults["SG_IP_PROTOCOL"],
                 "FromPort": sg_defaults["SG_FROM_PORT"],
                 "ToPort": sg_defaults["SG_TO_PORT"],
-                "IpRanges": [{"CidrIp": sg_defaults["SG_IP"]}],
+                "IpRanges": [{
+                    "CidrIp": sg_defaults["SG_IP"]
+                }],
             },
             {
                 "IpProtocol": "tcp",
                 "FromPort": 80,
                 "ToPort": 80,
-                "IpRanges": [{"CidrIp": "0.0.0.0/0"}],
+                "IpRanges": [{
+                    "CidrIp": "0.0.0.0/0"
+                }],
             },
             {
                 "IpProtocol": "tcp",
                 "FromPort": db_port,
                 "ToPort": db_port,
-                "IpRanges": [{"CidrIp": "0.0.0.0/0"}]
+                "IpRanges": [{
+                    "CidrIp": "0.0.0.0/0"
+                }]
                 # ec2.public_ip_address + '/32'}]
             },
         ],
@@ -492,8 +496,7 @@ def create_rds(user_credentials, aws_config, app_name, **kwargs):
     db_instance_class = kwargs.get("DBInstanceClass", "db.t2.micro")
     delete_protection = kwargs.get("DeletionProtection", False)
     enable_iam_database_authentication = kwargs.get(
-        "EnableIAMDatabaseAuthentication", True
-    )
+        "EnableIAMDatabaseAuthentication", True)
 
     multi_az = kwargs.get("MultiAZ", False)
     publicly_accessible = kwargs.get("PubliclyAccessible", True)
@@ -528,24 +531,21 @@ def create_rds(user_credentials, aws_config, app_name, **kwargs):
 
         waiter = rds_client.get_waiter("db_instance_available")
         waiter.wait(
-            DBInstanceIdentifier=rds["DBInstance"]["DBInstanceIdentifier"]
-        )
+            DBInstanceIdentifier=rds["DBInstance"]["DBInstanceIdentifier"])
 
         rds_instance = rds_client.describe_db_instances(
-            DBInstanceIdentifier=rds["DBInstance"]["DBInstanceIdentifier"]
-        )["DBInstances"][0]
+            DBInstanceIdentifier=rds["DBInstance"]
+            ["DBInstanceIdentifier"])["DBInstances"][0]
 
         return rds_instance
 
     except ParamValidationError as e:
-        raise RDSCreationError(
-            "Error creating RDS with given arguments", str(e)
-        )
+        raise RDSCreationError("Error creating RDS with given arguments",
+                               str(e))
 
     except ClientError as e:
-        raise RDSCreationError(
-            "Error creating RDS with given arguments", str(e)
-        )
+        raise RDSCreationError("Error creating RDS with given arguments",
+                               str(e))
 
 
 def create_ec2(user_credentials, aws_config, rds_port, **kwargs):
@@ -582,9 +582,8 @@ def create_ec2(user_credentials, aws_config, rds_port, **kwargs):
 
     group_id = security_group.id
     try:
-        key_name = create_and_store_keypair(
-            ec2_instance=ec2, key_name=KEY_NAME + random_string
-        )
+        key_name = create_and_store_keypair(ec2_instance=ec2,
+                                            key_name=KEY_NAME + random_string)
     except ClientError as error:
         raise EC2CreationError("Unable to create EC2 instance: " + str(error))
 
@@ -606,32 +605,37 @@ def create_ec2(user_credentials, aws_config, rds_port, **kwargs):
         MinCount=kwargs["MinCount"],
         Monitoring=kwargs["Monitoring"],
         KeyName=key_name,
-        SecurityGroupIds=[group_id, ],
+        SecurityGroupIds=[
+            group_id,
+        ],
     )
 
-    ec2, vpc_sg = create_security_group(
-        ec2_client=ec2_client,
-        ec2=ec2_instance[0],
-        db_port=rds_port,
-        group_id=security_group.id,
-        **{
-            "aws_access_key_id": user_credentials["aws_access_key"],
-            "aws_secret_access_key": user_credentials["aws_secret_key"],
-            "region_name": aws_config.region_name,
-            "config": aws_config,
-        }
-    )
+    ec2, vpc_sg = create_security_group(ec2_client=ec2_client,
+                                        ec2=ec2_instance[0],
+                                        db_port=rds_port,
+                                        group_id=security_group.id,
+                                        **{
+                                            "aws_access_key_id":
+                                            user_credentials["aws_access_key"],
+                                            "aws_secret_access_key":
+                                            user_credentials["aws_secret_key"],
+                                            "region_name":
+                                            aws_config.region_name,
+                                            "config":
+                                            aws_config,
+                                        })
 
-    platform = validate_ec2_instance_id(
-        user_credentials, aws_config, ec2.instance_id
-    )
+    platform = validate_ec2_instance_id(user_credentials, aws_config,
+                                        ec2.instance_id)
 
     return key_name, sg_name, ec2, vpc_sg, platform
 
 
-def deploy_to_aws(
-    user_credentials, aws_config, ec2, key_name=KEY_NAME, platform="ubuntu"
-):
+def deploy_to_aws(user_credentials,
+                  aws_config,
+                  ec2,
+                  key_name=KEY_NAME,
+                  platform="ubuntu"):
     while ec2.state["Name"] != "running":
         ec2.load()
     try:
@@ -645,12 +649,12 @@ def deploy_to_aws(
 
     except ClientError as e:
         raise EC2CreationError(
-            "Error connecting to EC2 with given key word" " arguments.", str(e)
-        )
+            "Error connecting to EC2 with given key word"
+            " arguments.", str(e))
 
-    ec2_client.reboot_instances(
-        InstanceIds=[ec2.instance_id, ]
-    )
+    ec2_client.reboot_instances(InstanceIds=[
+        ec2.instance_id,
+    ])
     waiter = ec2_client.get_waiter("instance_running")
     waiter.wait(InstanceIds=[ec2.instance_id])
 
@@ -672,9 +676,8 @@ def deploy_to_aws(
 
     user = platforms[platform]
 
-    key = paramiko.RSAKey.from_private_key_file(
-        this_folder + "/" + key_name + ".pem"
-    )
+    key = paramiko.RSAKey.from_private_key_file(this_folder + "/" + key_name +
+                                                ".pem")
     client = paramiko.SSHClient()
     client.load_system_host_keys()
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -686,7 +689,9 @@ def deploy_to_aws(
     while done is False:
         try:
             client.connect(
-                hostname=ec2.public_dns_name, username=user, pkey=key,
+                hostname=ec2.public_dns_name,
+                username=user,
+                pkey=key,
             )
             done = True
         except NoValidConnectionsError as e:
@@ -694,24 +699,13 @@ def deploy_to_aws(
     stdin, stdout, stderr = client.exec_command("mkdir -p $HOME/exported_app")
     stdout.channel.recv_exit_status()
 
-    os.system(
-        "scp -o UserKnownHostsFile=/dev/null -o "
-        "StrictHostKeyChecking=no -r -i "
-        + this_folder
-        + "/"
-        + key_name
-        + ".pem "
-        + app_folder
-        + " "
-        + user
-        + "@"
-        + ec2.public_dns_name
-        + ":exported_app/"
-    )
+    os.system("scp -o UserKnownHostsFile=/dev/null -o "
+              "StrictHostKeyChecking=no -r -i " + this_folder + "/" +
+              key_name + ".pem " + app_folder + " " + user + "@" +
+              ec2.public_dns_name + ":exported_app/")
 
     stdin_, stdout_, stderr_ = client.exec_command(
-        "curl -sSL https://get.docker.com/ | sh"
-    )
+        "curl -sSL https://get.docker.com/ | sh")
     stdout_.channel.recv_exit_status()
     client.close()
 
@@ -745,8 +739,7 @@ def connect_rds_to_ec2(
             ApplyImmediately=True,
         )
         rds_client.reboot_db_instance(
-            DBInstanceIdentifier=rds["DBInstanceIdentifier"]
-        )
+            DBInstanceIdentifier=rds["DBInstanceIdentifier"])
 
         waiter = rds_client.get_waiter("db_instance_available")
         waiter.wait(DBInstanceIdentifier=rds["DBInstanceIdentifier"])
@@ -774,16 +767,13 @@ def connect_rds_to_ec2(
         client.connect(hostname=ec2.public_dns_name, username=user, pkey=key)
 
         stdin, stdout, stderr = client.exec_command(
-            "cd exported_app && " + "sudo docker build --tag app:latest ."
-        )
+            "cd exported_app && " + "sudo docker build --tag app:latest .")
         stdout.channel.recv_exit_status()
 
-        stdin, stdout, stderr = client.exec_command(
-            "sudo docker swarm init "
-            + "&& sudo docker service"
-            + " create --name app -p "
-            + "8080:8080 app:latest"
-        )
+        stdin, stdout, stderr = client.exec_command("sudo docker swarm init " +
+                                                    "&& sudo docker service" +
+                                                    " create --name app -p " +
+                                                    "8080:8080 app:latest")
         stdout.channel.recv_exit_status()
     except Exception:
         return False
