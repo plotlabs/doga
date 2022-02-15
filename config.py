@@ -22,6 +22,15 @@ PROPAGATE_EXCEPTIONS = True
 CSRF_ENABLED = True
 CSRF_SESSION_KEY = ""
 
+#TODO check this out
+SECRET_KEY = "powerful secretkey"
+WTF_CSRF_SECRET_KEY = "secret-key"
+
 JWTSET = True
 # TODO: fix this
-JWT_SECRET_KEY = " x4BlDzv02dKx"
+JWT_SECRET_KEY = "x4BlDzv02dKx"
+
+RECAPTCHA_USE_SSL = False
+RECAPTCHA_PUBLIC_KEY = 'public'
+RECAPTCHA_PRIVATE_KEY = 'private'
+RECAPTCHA_OPTIONS = {'theme': 'white'}

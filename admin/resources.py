@@ -49,7 +49,10 @@ from dbs import DB_DICT
 
 ALGORITHM = sha512_crypt
 
-mod_admin = Blueprint("admin", __name__)
+mod_admin = Blueprint(
+    "admin",
+    __name__,
+)
 api_admin = Api()
 api_admin.init_app(mod_admin)
 
@@ -1810,26 +1813,21 @@ class AdminDashboardStats(Resource):
             return {"result": "Error resource not created yet."}, 400
 
 
+#TODO: can we do this iteratively or neater ?
+
 api_admin.add_resource(AdminApi, "/admin_profile",
                        "/admin_profile/<string:email>")
 api_admin.add_resource(Login, "/login")
-
 api_admin.add_resource(DatabaseInit, "/dbinit",
                        "/dbinit/types/<string:content_type>")
-
 api_admin.add_resource(
     ContentType,
     "/content/types",
     "/content/types/<string:db_name>/<string:content_type>",
 )
-
 api_admin.add_resource(ColumnType, "/columntypes")
-
 api_admin.add_resource(ColumnRelations, "/content/relations")
-
 api_admin.add_resource(ExportApp, "/export/<string:platform>")
-
 api_admin.add_resource(CreateNotifications, "/notify/<string:platform>")
-
 api_admin.add_resource(AdminDashboardStats,
                        "/dashboard/stats/<string:section>/<string:filter_>")
