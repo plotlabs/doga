@@ -7,8 +7,7 @@ from datetime import datetime
 mod_frontend = Blueprint("frontend",
                          __name__,
                          template_folder="templates",
-                         static_folder='static',
-                         static_url_path='/static')
+                         static_folder="static")
 
 api_frontend = Api()
 api_frontend.init_app(mod_frontend)
