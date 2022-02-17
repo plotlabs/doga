@@ -19,10 +19,8 @@ from flask_jwt_extended import (
 
 from sqlalchemy.exc import UnsupportedCompilationError
 
-from passlib.handlers.sha2_crypt import sha512_crypt
 
 from admin.models import Admin, Deployments
-from admin.models.admin_model import Admin as AdminObject
 from admin.models.table_model import Table as TableModel
 from admin.models.database_model import Database as DatabaseObject
 from admin.models.email_notifications import EmailNotify
@@ -36,18 +34,15 @@ from admin.validators import (
     foreign_key_options,
     relationship_validation,
 )
-
 from admin.export.exportapp import (
     check_if_exist, )
-
+from admin.admin_forms import *
 from admin.resource_helper import *
 
 from app.utils import AlchemyEncoder, verify_jwt
+
 from templates.models import metadata
 
-from dbs import DB_DICT
-
-ALGORITHM = sha512_crypt
 
 mod_admin = Blueprint(
     "admin",
@@ -142,109 +137,6 @@ class AdminApi(Resource):
             return {"result": json.loads(user_obj)}, 200
 
         return {"result": "Admin does not exist."}, 400
-
-    def post(self) -> Tuple[Dict[str, str], int]:
-        """
-        Defines responses for the `/admin/admin_adminprofile`
-        endpoint
-        It creates a Admin object from the request body it receives,
-        checking if all values satisfy the model constraints and then writing
-        data to the `amin` database.
-
-        Parameters:
-        ----------
-        - name:
-          in: json body
-          type: string
-          required: true
-          description: Name of the Admin User
-
-        - email:
-          in: json body
-          type: string
-          format: email
-          required: true
-          description: E-mail id (unique) corresponding to the user
-
-        - password:
-          in : json body
-          type: string
-          format: length
-          required: true
-
-        Returns:
-        -------
-            json serializable dict
-            integer response code
-
-            responses:
-            - 200
-              description: Success registering admin
-              schema:
-                type: json
-                parameters:
-                - result
-                  type: string
-                - id
-                  type: integer
-                - email
-                  type: string
-                  format: email
-            - 400
-              description: Error message
-              schema:
-              type: json
-              parameters:
-              - result
-                type: string
-                description: Error message
-            - 403
-              description: Admin already registered
-        """
-        json_request = request.get_json()
-        if json_request is None:
-            return {"result": "Error json body cannot be None."}, 400
-
-        required_keys = {"name", "email", "password"}
-
-        missed_keys = required_keys.difference(json_request.keys())
-
-        if len(missed_keys) != 0:
-            return (
-                {
-                    "result": "Values for fields cannot be null",
-                    "required values": list(missed_keys),
-                },
-                400,
-            )
-
-        try:
-            admin = AdminObject.from_dict(json_request)
-        except ValueError as err:
-            return {"result": "Error: ".join(err.args)}, 400
-
-        admin_exists = Admin.query.filter_by(email=admin.email.lower()).first()
-        if admin_exists is None:
-            password_hash = ALGORITHM.hash(admin.password)
-            admin = Admin(
-                email=admin.email.lower(),
-                password=password_hash,
-                name=admin.name,
-                create_dt=dt.now(),
-            )
-            db.session.add(admin)
-            db.session.commit()
-            return (
-                {
-                    "result": "Admin created successfully.",
-                    "id": admin.id,
-                    "email": admin.email,
-                },
-                200,
-            )
-
-        else:
-            return {"result": "Admin already exists."}, 403
 
 
 class Login(Resource):
