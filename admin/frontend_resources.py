@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, make_response, redirect, url_for, request, flash
+from flask import Blueprint, Response, render_template, make_response, redirect, url_for, request, flash
 from flask_restful import Api, Resource, marshal_with, fields
 
 from flask_jwt_extended import (
@@ -150,9 +150,8 @@ class Signup(Resource):
             )
             db.session.add(admin)
             db.session.commit()
-
-            return redirect(url_for("frontend.login"),
-                            message="Admin created successfully.")
+            flash("Admin created successfully.")
+            return redirect(url_for("frontend.login"))
 
         else:
 
@@ -207,10 +206,13 @@ class Login(Resource):
                     access_token = create_access_token(
                         identity=filter_keys, expires_delta=expiry_time)
                     refresh_token = create_refresh_token(identity=filter_keys)
-                    response = make_response(
-                        redirect(url_for("dashboard.stats")))
-                    response.set_cookie('access_token', access_token)
-                    response.set_cookie('refresh_token', refresh_token)
+                    response = redirect(
+                        url_for("dashboard.admindashboardstats"))
+                    response.headers['headers'] = {
+                        'Authorization': "Bearer " + access_token
+                    }
+                    print(response.headers)
+                    return response
 
         except KeyError as e:
             return {"result": "Key error", "error": str(e)}, 500

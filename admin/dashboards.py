@@ -1,12 +1,36 @@
-from admin.utils import extract_database_name, extract_engine_or_fail
+from flask import Blueprint, render_template, make_response, redirect, url_for, request, flash
+from flask_restful import Api, Resource, marshal_with, fields
+
+from flask_jwt_extended import (
+    jwt_required,
+    get_jwt_identity,
+)
+
+from admin.utils import extract_database_name
+from admin.export.utils import extract_engine_or_fail
+from admin.models import Admin
+
+from app.utils import verify_jwt
+
+from logging import getLogger
+
+mod_dashboard = Blueprint("dashboard",
+                          __name__,
+                          template_folder="templates",
+                          static_folder="static")
+
+api_dashboard = Api()
+api_dashboard.init_app(mod_dashboard)
 
 
 class AdminDashboardStats(Resource):
     """
     Endpoint to return information that should be displayed to the Admin
     """
-    @jwt_required
-    def get(self, section, filter_=None):
+    def get(self):
+        print(request.headers)
+        print(request.data)
+        print(get_jwt_identity())
 
         if not verify_jwt(get_jwt_identity(), Admin):
             return {
@@ -14,6 +38,7 @@ class AdminDashboardStats(Resource):
             }
 
         result = {}
+        """
         if section.lower() == "db":
             for connection_name, connection_string in DB_DICT.items():
                 db_name = extract_database_name(connection_name)
@@ -154,7 +179,14 @@ class AdminDashboardStats(Resource):
 
         else:
             return {"result": "Error resource not created yet."}, 400
+        """
+
+        return render_template("dashboard.jinja2")
 
 
-api_admin.add_resource(AdminDashboardStats,
-                       "/dashboard/stats/<string:section>/<string:filter_>")
+api_dashboard.add_resource(AdminDashboardStats, "/dashboard/stats")
+
+
+@api_dashboard.representation("text/html")
+def out_html(data, code, headers):
+    return make_response(data)

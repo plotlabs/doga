@@ -3,8 +3,7 @@ from app import app
 from app.utils import migrate as run_migration
 
 import subprocess
-
-
+"""
 @app.before_first_request
 def run_db_function():
     subprocess.run(["flask", "db", "init", "--multidb"])
@@ -17,3 +16,4 @@ def teardown(request):
     run_migration()
     global to_reload
     to_reload = True
+"""
