@@ -26,3 +26,16 @@ class SignupForm(FlaskForm):
         [EqualTo(password, message="Passwords must match.")])
     name = StringField("Name", [DataRequired()])
     submit = SubmitField("Submit")
+
+
+class LoginForm(FlaskForm):
+    """Signup for existing admin"""
+
+    email = StringField(
+        "Email", [Email(message="Not a valid email address."),
+                  DataRequired()])
+    password = PasswordField(
+        "Password",
+        [DataRequired(message="Please enter a password.")],
+    )
+    submit = SubmitField("Submit")

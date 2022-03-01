@@ -1,13 +1,24 @@
 from flask import Blueprint, render_template, make_response, redirect, url_for, request, flash
 from flask_restful import Api, Resource, marshal_with, fields
 
+from flask_jwt_extended import (
+    create_access_token,
+    create_refresh_token,
+)
+
+from datetime import datetime as dt
+from datetime import timedelta
+
 from admin.models.admin_model import Admin as AdminObject
+from admin.models import Admin
 
 from admin.admin_forms import *
 
 from app import db
 
 from passlib.handlers.sha2_crypt import sha512_crypt
+
+from typing import Tuple, Dict
 
 ALGORITHM = sha512_crypt
 
@@ -95,6 +106,7 @@ class Signup(Resource):
               description: Admin already registered
         """
         """TODO: delete unnecessary validation code
+
         json_request = request.get_json()
         if json_request is None:
             return {"result": "Error json body cannot be None."}, 400
@@ -111,6 +123,7 @@ class Signup(Resource):
                 },
                 400,
             )"""
+
         form = SignupForm(request.form)
         try:
             admin = AdminObject.from_dict({
@@ -124,8 +137,9 @@ class Signup(Resource):
                                    form=form,
                                    template="form-template",
                                    title="Signup Form")
-        print(admin)
+
         admin_exists = Admin.query.filter_by(email=admin.email.lower()).first()
+
         if admin_exists is None:
             password_hash = ALGORITHM.hash(admin.password)
             admin = Admin(
@@ -136,18 +150,75 @@ class Signup(Resource):
             )
             db.session.add(admin)
             db.session.commit()
-            return {
-                "result": "Admin created successfully.",
-                "id": admin.id,
-                "email": admin.email,
-            }, 200
+
+            return redirect(url_for("frontend.login"),
+                            message="Admin created successfully.")
 
         else:
+
+            #refresh signup and notification of error
             return {"result": "Admin already exists."}, 403
+
+
+class Login(Resource):
+    """API to login admin."""
+    def get(self):
+        form = LoginForm(request.form)
+        return render_template("login.jinja2", form=form)
+
+    def post(self) -> Tuple[Dict[str, str], int]:
+        # def post(self) -> Tuple[Dict[str, str], int]:
+        """
+        Defines responses for the `/admin/login/` endpoint.
+        It allows a registered Admin user to login and receive a jwt, that can
+        be used to access the other restricted endpoints.
+
+        Parameters:
+        -----------
+        - email:
+          in: json body
+          required: true
+          type: string
+          format: email
+
+        - password
+          in: json body
+          required: true
+          type: string
+
+        Returns:
+        -------
+            responses:
+            - 200
+        """
+
+        form = LoginForm(request.form)
+        try:
+            admin = Admin.query.filter_by(email=form.email.data).first()
+            if admin is None:
+                return {"result": "Admin does not exist."}, 404
+            else:
+                match = ALGORITHM.verify(form.password.data, admin.password)
+                expiry_time = timedelta(hours=4)
+                if not match:
+                    return {"result": "Invalid password."}, 401
+                else:
+                    filter_keys = {"email": form.email.data}
+                    access_token = create_access_token(
+                        identity=filter_keys, expires_delta=expiry_time)
+                    refresh_token = create_refresh_token(identity=filter_keys)
+                    response = make_response(
+                        redirect(url_for("dashboard.stats")))
+                    response.set_cookie('access_token', access_token)
+                    response.set_cookie('refresh_token', refresh_token)
+
+        except KeyError as e:
+            return {"result": "Key error", "error": str(e)}, 500
 
 
 api_frontend.add_resource(test, "/test")
 api_frontend.add_resource(Signup, "/signup")
+api_frontend.add_resource(Login, "/login")
 
 
 @api_frontend.representation("text/html")
