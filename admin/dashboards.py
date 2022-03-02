@@ -28,9 +28,7 @@ class AdminDashboardStats(Resource):
     Endpoint to return information that should be displayed to the Admin
     """
     def get(self):
-        print(request.headers)
-        print(request.data)
-        print(get_jwt_identity())
+        print(request.cookies.get("access_token"))
 
         if not verify_jwt(get_jwt_identity(), Admin):
             return {

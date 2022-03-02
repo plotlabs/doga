@@ -139,7 +139,6 @@ class Signup(Resource):
                                    title="Signup Form")
 
         admin_exists = Admin.query.filter_by(email=admin.email.lower()).first()
-
         if admin_exists is None:
             password_hash = ALGORITHM.hash(admin.password)
             admin = Admin(
@@ -156,7 +155,8 @@ class Signup(Resource):
         else:
 
             #refresh signup and notification of error
-            return {"result": "Admin already exists."}, 403
+            flash("Admin already exists.")
+            return redirect(url_for("frontend.signup"))
 
 
 class Login(Resource):
@@ -193,7 +193,8 @@ class Login(Resource):
 
         form = LoginForm(request.form)
         try:
-            admin = Admin.query.filter_by(email=form.email.data).first()
+            admin = Admin.query.filter_by(
+                email=form.email.data.lower()).first()
             if admin is None:
                 return {"result": "Admin does not exist."}, 404
             else:
@@ -203,15 +204,18 @@ class Login(Resource):
                     return {"result": "Invalid password."}, 401
                 else:
                     filter_keys = {"email": form.email.data}
+
                     access_token = create_access_token(
                         identity=filter_keys, expires_delta=expiry_time)
                     refresh_token = create_refresh_token(identity=filter_keys)
-                    response = redirect(
+
+                    response = 
+                    
+                    redirect(
                         url_for("dashboard.admindashboardstats"))
                     response.headers['headers'] = {
                         'Authorization': "Bearer " + access_token
                     }
-                    print(response.headers)
                     return response
 
         except KeyError as e:
