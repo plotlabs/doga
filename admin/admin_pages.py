@@ -217,9 +217,15 @@ class Login(Resource):
             return {"result": "Key error", "error": str(e)}, 500
 
 
+class Index(Resource):
+    def get(self):
+        return (render_template("landing.jinja2"))
+
+
 api_frontend.add_resource(test, "/test")
 api_frontend.add_resource(Signup, "/signup")
 api_frontend.add_resource(Login, "/login")
+api_frontend.add_resource(Index, "/")
 
 
 @api_frontend.representation("text/html")

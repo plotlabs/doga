@@ -1,3 +1,8 @@
+@import './styles/colors.css';
+@import './styles/typography.css';
+@import './styles/button.css';
+
+
 body {
     background: rgba(0, 0, 0, .9);
     position: fixed;
@@ -9,4 +14,4 @@ body {
     top: 0;
     left: 0;
     z-index: 999;
-    }
+}
