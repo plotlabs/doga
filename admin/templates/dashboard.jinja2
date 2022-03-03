@@ -5,3 +5,13 @@
         type="text/css"
     />
 {% endblock %}
+
+{% extends "navbar.jinja2" %}
+{% set active_page = "dashboard" %}
+
+
+{% block content %}
+<body>
+{{app}}
+</body>
+{% endblock %}

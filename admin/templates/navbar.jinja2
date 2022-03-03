@@ -1,16 +1,16 @@
 {% set navigation_bar = [
     ('/', 'index', 'Index'),
-    ('/apps', 'apps', 'Apps'),
+    ('/dashboard', 'dashboard', 'Dashboard'),
     ('/logout', 'logout', 'Logout'),
     ('/docs', 'docs', 'Docs'),
-] -%}
+]-%}
 
-{% set active_page = active_page|default('index'))] -%}
-...
+{% set active_page = active_page|default('index') -%}
+
 <ul id="navigation">
-    {% for hred,id,caption in navigation_bar %}
+    {% for href,id,caption in navigation_bar %}
         <li{% if id== active_page %} class="active" {% endif%}>
-        <a href="{{ href|e }}">{{ caption|a }}</a>
+        <a href="{{ href|e }}">{{ caption|e }}</a>
         </li>
     {% endfor %}
 </ul>

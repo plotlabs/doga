@@ -37,5 +37,5 @@ RECAPTCHA_USE_SSL = False
 RECAPTCHA_PUBLIC_KEY = 'public'
 RECAPTCHA_PRIVATE_KEY = 'private'
 RECAPTCHA_OPTIONS = {'theme': 'white'}
-JWT_TOKEN_LOCATION = ["cookies"
+JWT_TOKEN_LOCATION = ["cookies", "headers"
                       ]  # ["headers", "cookies", "json", "query_string"]
