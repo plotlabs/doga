@@ -10,3 +10,17 @@
   border-width: 2px;
   border-style: solid;
 }
+
+.app-card {
+  font-family: 'Fira Code', monospace;
+  border-radius: var(--rounded-2xl);
+  border-color: var(--accentColor);
+  border-style: solid;
+  border-width: 2px;
+  box-shadow: -2px var(--glow-spacing-x) var(--glow-spacing-y) var(--glowColor);
+  padding-top: 24px;
+  padding-right: 32px;
+  padding-bottom: 24px;
+  padding-left: 32px;
+  color: car(--accentColor)
+}

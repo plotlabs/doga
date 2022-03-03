@@ -30,6 +30,9 @@ from admin.validators import (
     foreign_key_options,
     relationship_validation,
 )
+
+from admin.resource_forms import DatabaseCreation
+
 from admin.export.exportapp import (
     check_if_exist, )
 from admin.admin_forms import *
@@ -892,10 +895,7 @@ class DatabaseInit(Resource):
                 "result": "JWT authorization invalid, user does not exist."
             }
 
-        json_request = request.get_json()
-
-        if json_request is None:
-            return {"result": "Error, request body cannot be empty."}, 500
+        form = DatabaseCreation(request.form)
 
         required_keys = {
             "database_type",
@@ -903,21 +903,24 @@ class DatabaseInit(Resource):
             "password",
             "database_name",
         }
-        missed_keys = required_keys.difference(json_request)
-
-        if len(missed_keys) != 0:
-            return (
-                {
-                    "result": "Values for fields cannot be null",
-                    "required values": list(missed_keys),
-                },
-                500,
-            )
-
-        json_request["connection_name"] = json_request["database_name"]
 
         try:
-            database = DatabaseObject.from_dict(json_request)
+            database = DatabaseObject.from_dict({
+                "database_name":
+                form.app_name.data,
+                "connection_name":
+                form.app_name.data,
+                "database_type":
+                form.database_type.data,
+                "host":
+                form.host.data,
+                "port":
+                form.port.data,
+                "username":
+                form.username.data,
+                "password":
+                form.password.data,
+            })
 
         except ValueError as err:
             return {"result": "Error: " + "".join(err.args)}, 400

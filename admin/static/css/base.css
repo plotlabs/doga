@@ -1,6 +1,20 @@
+@import './styles/sizes.css';
 @import './styles/colors.css';
+@import './styles/borders.css';
+@import './styles/display.css';
 @import './styles/typography.css';
 @import './styles/button.css';
+@import './styles/badge.css';
+@import './styles/input.css';
+@import './styles/select.css';
+@import './styles/anchor.css';
+@import './styles/avatar.css';
+@import './styles/radio-checkbox-switch.css';
+@import './styles/scrollbar.css';
+@import './styles/card.css';
+@import './styles/tabs.css';
+@import './styles/table.css';
+@import './styles/list.css';
 
 
 body {
@@ -15,3 +29,4 @@ body {
     left: 0;
     z-index: 999;
 }
+

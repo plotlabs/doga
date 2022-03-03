@@ -158,7 +158,7 @@ class AdminDashboardStats(Resource):
                                        title="Dashbard")
 
 
-api_dashboard.add_resource(AdminDashboardStats, "/dashboard/stats")
+api_dashboard.add_resource(AdminDashboardStats, "/dashboard")
 
 
 @api_dashboard.representation("text/html")

@@ -1,17 +1,20 @@
-{% block styles %}
-    <link
-        rel="stylesheet"
-        href="{{ url_for('static', filename='static/css/base.css') }}"
-        type="text/css"
-    />
-{% endblock %}
+{% include "navbar.jinja2" %}
+  <div class="card app-card">
+    <table class="table table-purple">
+      <thead>
+        <tr>
+        {% for info in app %}
+            <tbody>
+            <td class="text text-purple">{{info}}</td>
+            <td class="text text-purple">{{app[info]}}</td>
 
-{% extends "navbar.jinja2" %}
-{% set active_page = "dashboard" %}
-
-
-{% block content %}
-<body>
-{{app}}
-</body>
-{% endblock %}
+            {%for items in app["info"]%}
+                <td class="text text-white">{{items}}</td>
+            {%endfor%}
+            </td>
+        </tr>
+        {% endfor %}
+        </thead>
+    </table>
+  </div>
+{% block body %}{% endblock %}

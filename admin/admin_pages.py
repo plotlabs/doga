@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, make_response, redirect, url_for, 
 from flask_restful import Api, Resource, marshal_with, fields
 
 from flask_jwt_extended import (create_access_token, create_refresh_token,
-                                set_access_cookies)
+                                set_access_cookies, jwt_required)
 
 from datetime import datetime as dt
 from datetime import timedelta
@@ -11,6 +11,7 @@ from admin.models.admin_model import Admin as AdminObject
 from admin.models import Admin
 
 from admin.admin_forms import *
+from admin.resource_forms import *
 
 from app import db
 
@@ -27,13 +28,6 @@ mod_frontend = Blueprint("frontend",
 
 api_frontend = Api()
 api_frontend.init_app(mod_frontend)
-
-
-class test(Resource):
-    def get(self):
-        return render_template("home.html",
-                               my_string="Wheeeee!",
-                               my_list=[0, 1, 2, 3, 4, 5])
 
 
 class Signup(Resource):
@@ -217,12 +211,19 @@ class Login(Resource):
             return {"result": "Key error", "error": str(e)}, 500
 
 
+class CreateApp(Resource):
+    @jwt_required
+    def get(self):
+        form = DatabaseCreation(request.form)
+        return render_template("create_app.jinja2", form=form)
+
+
 class Index(Resource):
     def get(self):
         return (render_template("landing.jinja2"))
 
 
-api_frontend.add_resource(test, "/test")
+api_frontend.add_resource(CreateApp, "/create_app")
 api_frontend.add_resource(Signup, "/signup")
 api_frontend.add_resource(Login, "/login")
 api_frontend.add_resource(Index, "/")

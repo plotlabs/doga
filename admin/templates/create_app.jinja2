@@ -1,3 +1,5 @@
+{% include "navbar.jinja2" %}
+
 {% block styles %}
     <link
         rel="stylesheet"
@@ -6,18 +8,19 @@
     />
 {% endblock %}
 
-{% block content %}
+{% block body %}
     <div class="form-wrapper">
         <div class="formHolder">
           <div class="category">{{ msg|safe }}</div>
-          <form method="POST" action=#>
+          <form method="POST" action="/admin/dbinit">
             {{ form.csrf_token }}
-              <heading class="heading-xl" >Sign Up</heading>
+              <heading class="heading-xl" >Create App Database</heading>
               <div class="tab"></div>
-              <fieldset class="form-field">{{ form.name.label(class='formLabel')}} {{form.name(class='formInput')}}
-                {% if form.email.errors %}
+
+              <fieldset class="form-field">{{ form.database_type.label(class='formLabel') }} {{ form.database_type(class='formInput')}}
+                {% if form.database_type.errors %}
                   <ul class="errors">
-                    {% for error in form.email.errors %}
+                    {% for error in form.database_types.errors %}
                       <li class="error">
                           <i class="fas fa-exclamation"></i> <span class="error-message">{{ error }}</span>
                       </li>
@@ -26,10 +29,10 @@
                 {% endif %}
               </fieldset>
 
-              <fieldset class="form-field">{{ form.email.label(class='formLabel') }} {{ form.email(class='formInput')}}
-                {% if form.email.errors %}
+              <fieldset class="form-field">{{ form.username.label(class='formLabel') }} {{ form.username(class='formInput')}}
+                {% if form.username.errors %}
                   <ul class="errors">
-                    {% for error in form.email.errors %}
+                    {% for error in form.username.errors %}
                       <li class="error">
                           <i class="fas fa-exclamation"></i> <span class="error-message">{{ error }}</span>
                       </li>
@@ -41,7 +44,7 @@
               <fieldset class="form-field">{{ form.password.label(class='formLabel') }} {{ form.password(class='formInput')}}
                 {% if form.password.errors %}
                   <ul class="errors">
-                    {% for error in form.email.errors %}
+                    {% for error in form.password.errors %}
                       <li class="error">
                           <i class="fas fa-exclamation"></i> <span class="error-message">{{ error }}</span>
                       </li>
@@ -50,10 +53,10 @@
                 {% endif %}
               </fieldset>
 
-              <fieldset class="form-field">{{ form.confirmPassword.label(class='formLabel') }} {{ form.confirmPassword(class='formInput')}}
-                {% if form.confirmPassword.errors %}
+              <fieldset class="form-field">{{ form.host.label(class='formLabel') }} {{ form.host(class='formInput')}}
+                {% if form.host.errors %}
                   <ul class="errors">
-                    {% for error in form.email.errors %}
+                    {% for error in form.host.errors %}
                       <li class="error">
                           <i class="fas fa-exclamation"></i> <span class="error-message">{{ error }}</span>
                       </li>
@@ -61,6 +64,31 @@
                   </ul>
                 {% endif %}
               </fieldset>
+
+              <fieldset class="form-field">{{ form.port.label(class='formLabel') }} {{ form.port(class='formInput')}}
+                {% if form.port.errors %}
+                  <ul class="errors">
+                    {% for error in form.port.errors %}
+                      <li class="error">
+                          <i class="fas fa-exclamation"></i> <span class="error-message">{{ error }}</span>
+                      </li>
+                    {% endfor %}
+                  </ul>
+                {% endif %}
+              </fieldset>
+
+              <fieldset class="form-field">{{ form.app_name.label(class='formLabel') }} {{ form.app_name(class='formInput')}}
+                {% if form.password.errors %}
+                  <ul class="errors">
+                    {% for error in form.app_name.errors %}
+                      <li class="error">
+                          <i class="fas fa-exclamation"></i> <span class="error-message">{{ error }}</span>
+                      </li>
+                    {% endfor %}
+                  </ul>
+                {% endif %}
+              </fieldset>
+
               <div>
               <div class="tab"></div>
 
