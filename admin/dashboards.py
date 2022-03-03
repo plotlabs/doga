@@ -1,10 +1,12 @@
-from flask import Blueprint, render_template, make_response, redirect, url_for, request, flash
+from flask import Blueprint, render_template, make_response, redirect, url_for, flash
 from flask_restful import Api, Resource, marshal_with, fields
 
 from flask_jwt_extended import (
     jwt_required,
     get_jwt_identity,
 )
+
+from json import loads
 
 from admin.utils import extract_database_name
 from admin.export.utils import extract_engine_or_fail
@@ -27,15 +29,18 @@ class AdminDashboardStats(Resource):
     """
     Endpoint to return information that should be displayed to the Admin
     """
+    @jwt_required
     def get(self):
-        print(request.cookies.get("access_token"))
 
+        #make sure the dict in populated
         if not verify_jwt(get_jwt_identity(), Admin):
-            return {
-                "result": "JWT authorization invalid, user does not exist."
-            }
+            flash("JWT authorization invalid, user does not exist.")
+            return redirect(url_for('frontend.login'))
 
-        result = {}
+        else:
+            return render_template("dashboard.jinja2",
+                                   template="dashboard-template",
+                                   title="Dashbard")
         """
         if section.lower() == "db":
             for connection_name, connection_string in DB_DICT.items():

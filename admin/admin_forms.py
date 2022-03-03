@@ -1,4 +1,7 @@
-"""Form object declaration."""
+"""Form objects declaration for the admin user. These will be used to create
+and login to DOGA. 
+"""
+
 from flask_wtf import FlaskForm, RecaptchaField
 from wtforms import (
     DateField,

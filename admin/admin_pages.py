@@ -1,10 +1,8 @@
-from flask import Blueprint, Response, render_template, make_response, redirect, url_for, request, flash
+from flask import Blueprint, render_template, make_response, redirect, url_for, request, flash
 from flask_restful import Api, Resource, marshal_with, fields
 
-from flask_jwt_extended import (
-    create_access_token,
-    create_refresh_token,
-)
+from flask_jwt_extended import (create_access_token, create_refresh_token,
+                                set_access_cookies)
 
 from datetime import datetime as dt
 from datetime import timedelta
@@ -209,13 +207,10 @@ class Login(Resource):
                         identity=filter_keys, expires_delta=expiry_time)
                     refresh_token = create_refresh_token(identity=filter_keys)
 
-                    response = 
-                    
-                    redirect(
-                        url_for("dashboard.admindashboardstats"))
-                    response.headers['headers'] = {
-                        'Authorization': "Bearer " + access_token
-                    }
+                    response = make_response(
+                        redirect(url_for("dashboard.admindashboardstats")))
+                    set_access_cookies(response, access_token)
+
                     return response
 
         except KeyError as e:

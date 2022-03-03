@@ -6,7 +6,7 @@ from admin.resources import mod_admin
 from admin.return_docs import docs
 from admin.asset_resources import assets
 
-from admin.frontend_resources import mod_frontend
+from admin.admin_pages import mod_frontend
 from admin.dashboards import mod_dashboard
 
 app.register_blueprint(mod_admin, url_prefix="/admin")
