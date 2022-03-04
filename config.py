@@ -39,3 +39,4 @@ RECAPTCHA_PRIVATE_KEY = 'private'
 RECAPTCHA_OPTIONS = {'theme': 'white'}
 JWT_TOKEN_LOCATION = ["cookies", "headers"
                       ]  # ["headers", "cookies", "json", "query_string"]
+JWT_COOKIE_CSRF_PROTECT = False

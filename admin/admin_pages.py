@@ -2,7 +2,8 @@ from flask import Blueprint, render_template, make_response, redirect, url_for, 
 from flask_restful import Api, Resource, marshal_with, fields
 
 from flask_jwt_extended import (create_access_token, create_refresh_token,
-                                set_access_cookies, jwt_required)
+                                set_refresh_cookies, set_access_cookies,
+                                jwt_required)
 
 from datetime import datetime as dt
 from datetime import timedelta
@@ -204,6 +205,7 @@ class Login(Resource):
                     response = make_response(
                         redirect(url_for("dashboard.admindashboardstats")))
                     set_access_cookies(response, access_token)
+                    set_refresh_cookies(response, refresh_token)
 
                     return response
 
@@ -218,6 +220,34 @@ class CreateApp(Resource):
         return render_template("create_app.jinja2", form=form)
 
 
+class AddTables(Resource):
+    """Add tables to the database / resources to the created app"""
+    @jwt_required
+    def get(self, app_name):
+        # check some app name so that you aren't just putting things
+        form = TableForm(request.form)
+        return render_template("create_table.jinja2",
+                               form=form,
+                               app_name=app_name)
+
+
+class AddColumn(Resource):
+    """Add  table column"""
+    @jwt_required
+    def get(self, app_name, table_name):
+
+        form = ColumnForm(request.form)
+        form.app_name.app_name = app_name
+        form.table_name.data = table_name
+
+        return render_template(
+            "create_column.jinja2",
+            app_name=app_name,
+            table_name=table_name,
+            form=form,
+        )
+
+
 class Index(Resource):
     def get(self):
         return (render_template("landing.jinja2"))
@@ -227,6 +257,9 @@ api_frontend.add_resource(CreateApp, "/create_app")
 api_frontend.add_resource(Signup, "/signup")
 api_frontend.add_resource(Login, "/login")
 api_frontend.add_resource(Index, "/")
+api_frontend.add_resource(AddTables, "/add_tables/<string:app_name>")
+api_frontend.add_resource(
+    AddColumn, "/add_data_content/<string:app_name>/<string:table_name>")
 
 
 @api_frontend.representation("text/html")

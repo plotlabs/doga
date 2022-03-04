@@ -7,7 +7,7 @@ from threading import Thread
 
 from typing import Dict, Tuple
 
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, redirect, url_for
 from flask_restful import Api, Resource
 from flask_jwt_extended import (
     jwt_required,
@@ -31,7 +31,7 @@ from admin.validators import (
     relationship_validation,
 )
 
-from admin.resource_forms import DatabaseCreation
+from admin.resource_forms import *
 
 from admin.export.exportapp import (
     check_if_exist, )
@@ -406,6 +406,8 @@ class ContentType(Resource):
             return {"response": "JSON body cannot be empty."}, 500
 
         required_keys = {"table_name", "app_name", "columns"}
+
+        ColumnForm(request.form)
 
         notification = Notifications(
             user=admin_jwt["email"],
@@ -986,10 +988,7 @@ class DatabaseInit(Resource):
 
         add_new_db(database.database_name)
 
-        return {
-            "result":
-            "Successfully created database connection string." + db_created
-        }
+        return redirect(url_for("admin.contenttypes", app=database.name))
 
     @jwt_required
     def put(self):
@@ -1111,43 +1110,6 @@ class DatabaseInit(Resource):
             },
             200,
         )
-
-
-class ColumnType(Resource):
-    def get(self):
-        """Get a list of all valid column types available."""
-
-        available_types = column_types()
-        for i in [
-                "INT",
-                "INTEGER",
-                "ARRAY",
-                "BOOLEAN",
-                "TEXT",
-                "CLOB",
-                "TIMESTAMP",
-                "Interval",
-                "CHAR",
-                "NCHAR",
-                "NVARCHAR",
-                "Concatenable",
-                "BINARY",
-                "FLOAT",
-                "BLOB",
-                "REAL",
-                "NUMERIC",
-                "DATETIME",
-                "TIME",
-                "DATE",
-                "BIGINT",
-                "SMALLINT",
-                "SmallInteger",
-                "Indexable",
-        ]:
-            available_types.remove(i)
-
-        available_types.append("ImageType")
-        return {"result": available_types}, 200
 
 
 class ExportApp(Resource):
@@ -1484,7 +1446,6 @@ api_admin.add_resource(
     "/content/types",
     "/content/types/<string:db_name>/<string:content_type>",
 )
-api_admin.add_resource(ColumnType, "/columntypes")
 api_admin.add_resource(ColumnRelations, "/content/relations")
 api_admin.add_resource(ExportApp, "/export/<string:platform>")
 api_admin.add_resource(CreateNotifications, "/notify/<string:platform>")
