@@ -15,5 +15,3 @@ def run_db_function():
 @app.teardown_request
 def teardown(request):
     run_migration()
-    global to_reload
-    to_reload = True

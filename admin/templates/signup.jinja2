@@ -1,0 +1,85 @@
+{% block styles %}
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='static/css/forms.css') }}"
+        type="text/css"
+    />
+{% endblock %}
+
+{% block content %}
+    <div class="form-wrapper">
+        <div class="formHolder">
+          <div class="category">{{ msg|safe }}</div>
+          <form method="POST" action=#>
+            {{ form.csrf_token }}
+              <heading class="heading-xl" >Sign Up</heading>
+              <div class="tab"></div>
+              <fieldset class="form-field">{{ form.name.label(class='formLabel')}} {{form.name(class='formInput')}}
+                {% if form.email.errors %}
+                  <ul class="errors">
+                    {% for error in form.email.errors %}
+                      <li class="error">
+                          <i class="fas fa-exclamation"></i> <span class="error-message">{{ error }}</span>
+                      </li>
+                    {% endfor %}
+                  </ul>
+                {% endif %}
+              </fieldset>
+
+              <fieldset class="form-field">{{ form.email.label(class='formLabel') }} {{ form.email(class='formInput')}}
+                {% if form.email.errors %}
+                  <ul class="errors">
+                    {% for error in form.email.errors %}
+                      <li class="error">
+                          <i class="fas fa-exclamation"></i> <span class="error-message">{{ error }}</span>
+                      </li>
+                    {% endfor %}
+                  </ul>
+                {% endif %}
+              </fieldset>
+
+              <fieldset class="form-field">{{ form.password.label(class='formLabel') }} {{ form.password(class='formInput')}}
+                {% if form.password.errors %}
+                  <ul class="errors">
+                    {% for error in form.email.errors %}
+                      <li class="error">
+                          <i class="fas fa-exclamation"></i> <span class="error-message">{{ error }}</span>
+                      </li>
+                    {% endfor %}
+                  </ul>
+                {% endif %}
+              </fieldset>
+
+              <fieldset class="form-field">{{ form.confirmPassword.label(class='formLabel') }} {{ form.confirmPassword(class='formInput')}}
+                {% if form.confirmPassword.errors %}
+                  <ul class="errors">
+                    {% for error in form.email.errors %}
+                      <li class="error">
+                          <i class="fas fa-exclamation"></i> <span class="error-message">{{ error }}</span>
+                      </li>
+                    {% endfor %}
+                  </ul>
+                {% endif %}
+              </fieldset>
+              <div>
+              <div class="tab"></div>
+
+              {{ form.submit(class='btn-ghost-purple')}}
+          </form>
+          {% with messages = get_flashed_messages() %}
+          {% if messages %}
+          <ul class=flashes>
+          <a href="" class="close">
+          <div class="errorMessage">
+          {% for message in messages %}
+             <text>{{message}}<text>
+          {% endfor %}
+          </ul>
+          {% endif %}
+          {% endwith %}
+          </div>
+          </a>
+        </div>
+    </div>
+
+{% endblock %}

@@ -5,7 +5,10 @@ from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 
 # Define application object
-app = Flask(__name__)
+app = Flask(__name__,
+            static_folder='/static',
+            static_url_path='',
+            )
 
 # Define app configuration
 app.config.from_pyfile("../config.py")

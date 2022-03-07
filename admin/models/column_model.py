@@ -136,23 +136,16 @@ class Column(Model):
         """
         if name is None:
             raise ValueError(
-                "Invalid value for column name, `name` must not be `None`"
-            )
+                "Invalid value for column name, `name` must not be `None`")
         if name is not None and len(name) > 32:
-            raise ValueError(
-                "Invalid value for column `name`, length must be"
-                " less than or equal to `32`."
-            )
+            raise ValueError("Invalid value for column `name`, length must be"
+                             " less than or equal to `32`.")
         if name is not None and len(name) < 1:
-            raise ValueError(
-                "Invalid value for column `name`, length must be "
-                "greater than or equal to `6`."
-            )
+            raise ValueError("Invalid value for column `name`, length must be "
+                             "greater than or equal to `6`.")
         if not re.match("^([a-z]+[0-9_]*)*$", name):
-            raise ValueError(
-                "Invalid value for column_name: {}, must contain"
-                " only alphabets, numbers and _".format(name)
-            )
+            raise ValueError("Invalid value for column_name: {}, must contain"
+                             " only alphabets, numbers and _".format(name))
 
         self._name = name.lower()
 
@@ -176,10 +169,9 @@ class Column(Model):
         """
         if nullable is None:
             raise ValueError(
-                "Invalid value for `nullable`, must not be `None`"
-            )
+                "Invalid value for `nullable`, must not be `None`")
 
-        self._nullable = nullable
+        self._nullable = not nullable
 
     @property
     def type(self) -> str:

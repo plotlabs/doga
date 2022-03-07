@@ -1,0 +1,22 @@
+
+{% block styles %}
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='static/css/base.css') }}"
+        type="text/css"
+    />
+{% endblock %}
+
+{% block content %}
+  <head>
+  <title>doga{% block title %}{% endblock %} </title>
+  </head>
+  <body>
+    <div class="container">
+      <a href="{{ url_for('frontend.login')}}" class="btn btn-ghost-purple">Login</a>
+      <br>
+      <a href="{{ url_for('frontend.signup')}}"class="btn btn-ghost-purple">Signup</a>
+      <br>
+    </div>
+  </body>
+{% endblock %}

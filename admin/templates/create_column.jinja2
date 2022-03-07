@@ -1,0 +1,137 @@
+{% include "navbar.jinja2" %}
+
+{% block styles %}
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='static/css/forms.css') }}"
+        type="text/css"
+    />
+{% endblock %}
+
+{% block body %}
+    <div class="form-wrapper">
+        <div class="formHolder">
+          <div class="category">{{ msg|safe }}</div>
+          <form method="POST" action="/admin/content/types">
+            {{ form.csrf_token }}
+              <heading class="heading-xl" >Create App Database</heading>
+              <div class="tab"></div>
+
+              <fieldset class="form-field">{{ form.app_name.label(class='formLabel') }} {{ form.app_name(class='formInput')}}
+                {% if form.app_name.errors %}
+                  <ul class="errors">
+                    {% for error in form.app_name.errors %}
+                      <li class="error">
+                          <i class="fas fa-exclamation"></i> <span class="error-message">{{ error }}</span>
+                      </li>
+                    {% endfor %}
+                  </ul>
+                {% endif %}
+              </fieldset>
+
+              <fieldset class="form-field">{{ form.table_name.label(class='formLabel') }} {{ form.table_name(class='formInput')}}
+                {% if form.table_name.errors %}
+                  <ul class="errors">
+                    {% for error in form.table_name.errors %}
+                      <li class="error">
+                          <i class="fas fa-exclamation"></i> <span class="error-message">{{ error }}</span>
+                      </li>
+                    {% endfor %}
+                  </ul>
+                {% endif %}
+              </fieldset>
+
+              <fieldset class="form-field">{{ form.column_name.label(class='formLabel') }} {{ form.column_name(class='formInput')}}
+                {% if form.column_name.errors %}
+                  <ul class="errors">
+                    {% for error in form.column_name.errors %}
+                      <li class="error">
+                          <i class="fas fa-exclamation"></i> <span class="error-message">{{ error }}</span>
+                      </li>
+                    {% endfor %}
+                  </ul>
+                {% endif %}
+              </fieldset>
+
+              <fieldset class="form-field">{{ form.column_types.label(class='formLabel') }} {{ form.column_types(class='formInput')}}
+                {% if form.column_types.errors %}
+                  <ul class="errors">
+                    {% for error in form.column_types.errors %}
+                      <li class="error">
+                          <i class="fas fa-exclamation"></i> <span class="error-message">{{ error }}</span>
+                      </li>
+                    {% endfor %}
+                  </ul>
+                {% endif %}
+              </fieldset>
+
+              <fieldset class="form-field">{{ form.nullable.label(class='formLabel') }} {{ form.nullable(class='formInput')}}
+                {% if form.nullable.errors %}
+                  <ul class="errors">
+                    {% for error in form.nullable.errors %}
+                      <li class="error">
+                          <i class="fas fa-exclamation"></i> <span class="error-message">{{ error }}</span>
+                      </li>
+                    {% endfor %}
+                  </ul>
+                {% endif %}
+              </fieldset>
+
+              <fieldset class="form-field">{{ form.unique.label(class='formLabel') }} {{ form.unique(class='formInput')}}
+                {% if form.unique.errors %}
+                  <ul class="errors">
+                    {% for error in form.unique.errors %}
+                      <li class="error">
+                          <i class="fas fa-exclamation"></i> <span class="error-message">{{ error }}</span>
+                      </li>
+                    {% endfor %}
+                  </ul>
+                {% endif %}
+              </fieldset>
+
+              <fieldset class="form-field">{{ form.default.label(class='formLabel') }} {{ form.default(class='formInput')}}
+                {% if form.default.errors %}
+                  <ul class="errors">
+                    {% for error in form.default.errors %}
+                      <li class="error">
+                          <i class="fas fa-exclamation"></i> <span class="error-message">{{ error }}</span>
+                      </li>
+                    {% endfor %}
+                  </ul>
+                {% endif %}
+              </fieldset>
+
+              <fieldset class="form-field">{{ form.foreign_key.label(class='formLabel') }} {{ form.foreign_key(class='formInput')}}
+                {% if form.foreign_key.errors %}
+                  <ul class="errors">
+                    {% for error in form.foreign_key.errors %}
+                      <li class="error">
+                          <i class="fas fa-exclamation"></i> <span class="error-message">{{ error }}</span>
+                      </li>
+                    {% endfor %}
+                  </ul>
+                {% endif %}
+              </fieldset>
+
+              <div>
+              <div class="tab"></div>
+
+              {{ form.submit(class='btn-ghost-purple')}}
+          </form>
+          {% with messages = get_flashed_messages() %}
+          {% if messages %}
+          <ul class=flashes>
+          <a href="" class="close">
+          <div class="errorMessage">
+          {% for message in messages %}
+             <text>{{message}}<text>
+          {% endfor %}
+          </ul>
+          {% endif %}
+          {% endwith %}
+          </div>
+          </a>
+        </div>
+    </div>
+
+{% endblock %}

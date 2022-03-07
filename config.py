@@ -22,6 +22,21 @@ PROPAGATE_EXCEPTIONS = True
 CSRF_ENABLED = True
 CSRF_SESSION_KEY = ""
 
+#TODO check this out
+#TODO: remove this from exported app
+SECRET_KEY = "powerful secretkey"
+WTF_CSRF_SECRET_KEY = "secret-key"
+
 JWTSET = True
 # TODO: fix this
-JWT_SECRET_KEY = " x4BlDzv02dKx"
+JWT_SECRET_KEY = "x4BlDzv02dKx"
+
+#TODO: remove this from exported app
+
+RECAPTCHA_USE_SSL = False
+RECAPTCHA_PUBLIC_KEY = 'public'
+RECAPTCHA_PRIVATE_KEY = 'private'
+RECAPTCHA_OPTIONS = {'theme': 'white'}
+JWT_TOKEN_LOCATION = ["cookies", "headers"
+                      ]  # ["headers", "cookies", "json", "query_string"]
+JWT_COOKIE_CSRF_PROTECT = False

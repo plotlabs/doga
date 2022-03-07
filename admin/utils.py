@@ -12,11 +12,8 @@ def generate_secret_key():
     length = random.randint(7, 15)
     # length of secret key in range [7,15]
     res = "".join(
-        secrets.choice(
-            string.ascii_uppercase + string.ascii_lowercase + string.digits
-        )
-        for _ in range(length)
-    )
+        secrets.choice(string.ascii_uppercase + string.ascii_lowercase +
+                       string.digits) for _ in range(length))
     return res
 
 
@@ -50,7 +47,7 @@ def extract_database_name(connection_name):
         end = len(connection_string)
     else:
         end = connection_string.rfind(".db")
-    return connection_string[start + 1: end]
+    return connection_string[start + 1:end]
 
 
 def _deserialize_dict(data, boxed_type):
@@ -85,11 +82,8 @@ def deserialize_model(data, klass):
         return data
 
     for attr, attr_type in six.iteritems(instance.param_types):
-        if (
-            data is not None
-            and instance.attribute_map[attr] in data
-            and isinstance(data, (list, dict))
-        ):
+        if (data is not None and instance.attribute_map[attr] in data
+                and isinstance(data, (list, dict))):
             value = data[instance.attribute_map[attr]]
             setattr(instance, attr, _deserialize(value, attr_type))
 
