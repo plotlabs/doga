@@ -80,3 +80,45 @@ class ColumnForm(FlaskForm):
 
 class TableForm(FlaskForm):
     """Add the table name"""
+
+    app_name = StringField(
+        "Name of the application the data belongs to ",
+        render_kw={'disabled': ''},
+    )
+
+    table_name = StringField("Name of the collection the data belongs to ", [
+        DataRequired(message="Please specify the name of the Data Collection")
+    ])
+
+    column_name = StringField(
+        "Data Group Name",
+        [DataRequired(message="Please specify the name of the Data Field")])
+
+    col_types = all_coltypes()
+
+    column_types = SelectField("Data Type", [
+        DataRequired(
+            message="Please specify the Type of data you'd like in this field")
+    ],
+                               choices=col_types)
+
+    #TODO make these columns should show if something is selected to indicate JWT
+    jwt_required = BooleanField(
+        "Allow null values",
+        [
+            DataRequired(),
+        ],
+    )
+
+    base_jwt = BooleanField(
+        "Allow duplicate values",
+        [
+            DataRequired(),
+        ],
+    )
+
+    #todo: get all the foreign key candidates and display appropriately
+    foreign_key = StringField("Add foreign_key values", )
+
+    default = StringField("Default value", )
+    submit = SubmitField("Save")

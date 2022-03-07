@@ -237,15 +237,23 @@ class AddColumn(Resource):
     def get(self, app_name, table_name):
 
         form = ColumnForm(request.form)
-        form.app_name.app_name = app_name
-        form.table_name.data = table_name
 
-        return render_template(
-            "create_column.jinja2",
-            app_name=app_name,
-            table_name=table_name,
-            form=form,
-        )
+        if app_name in DB_DICT:
+            #todo: add and and condition locking the table name too
+
+            form.app_name.app_name = app_name
+            form.table_name.data = table_name
+
+            return render_template(
+                "create_column.jinja2",
+                app_name=app_name,
+                table_name=table_name,
+                form=form,
+            )
+
+        else:
+            flash("Please create an app first.")
+            return render_template("")
 
 
 class Index(Resource):
